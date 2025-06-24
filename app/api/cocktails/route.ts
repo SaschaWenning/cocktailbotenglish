@@ -4,7 +4,7 @@ import path from "path"
 import { cocktails as defaultCocktails } from "@/data/cocktails"
 import type { Cocktail } from "@/types/cocktail"
 
-const COCKTAILS_DIR = "/home/pi/cocktailbot/cocktailbot-main/data/saved-cocktails"
+const COCKTAILS_DIR = "/home/pi/cocktailbot/data/saved-cocktails"
 
 // Ensure directories exist
 async function ensureDirectories() {
