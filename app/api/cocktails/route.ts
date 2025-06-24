@@ -19,7 +19,8 @@ async function ensureDirectories() {
 export async function GET() {
   // ALWAYS return the English cocktails from cocktails.ts
   // This ensures we always get the latest English version
-  console.log("🇬🇧 Loading cocktails from cocktails.ts (English)")
+  console.log("🇬🇧 FORCE LOADING ENGLISH COCKTAILS FROM COCKTAILS.TS")
+  console.log("🇬🇧 First cocktail:", defaultCocktails[0]?.name, defaultCocktails[0]?.description)
   return NextResponse.json(defaultCocktails)
 }
 
