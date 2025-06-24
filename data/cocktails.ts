@@ -1,5 +1,6 @@
 import type { Cocktail } from "@/types/cocktail"
 
+// Cache buster - English version v2.0
 export const cocktails: Cocktail[] = [
   {
     id: "big-john",
@@ -159,6 +160,31 @@ export const cocktails: Cocktail[] = [
       { ingredientId: "dark-rum", amount: 40 },
       { ingredientId: "malibu", amount: 40 },
       { ingredientId: "passion-fruit-juice", amount: 200 },
+    ],
+  },
+  {
+    id: "gin-tonic",
+    name: "Gin & Tonic",
+    description: "Classic long drink with gin and tonic water",
+    image: "/images/cocktails/gin_tonic.jpg",
+    alcoholic: true,
+    ingredients: ["50ml Gin", "150ml Tonic Water", "Lime slice"],
+    recipe: [
+      { ingredientId: "gin", amount: 50 },
+      { ingredientId: "tonic-water", amount: 150 },
+    ],
+  },
+  {
+    id: "cuba-libre",
+    name: "Cuba Libre",
+    description: "Rum-Cola with a splash of lime",
+    image: "/images/cocktails/cuba_libre.jpg",
+    alcoholic: true,
+    ingredients: ["50ml Dark Rum", "150ml Cola", "10ml Lime Juice"],
+    recipe: [
+      { ingredientId: "dark-rum", amount: 50 },
+      { ingredientId: "cola", amount: 150 },
+      { ingredientId: "lime-juice", amount: 10 },
     ],
   },
   {
