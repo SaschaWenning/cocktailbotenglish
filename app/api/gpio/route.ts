@@ -6,17 +6,17 @@ import path from "path"
 
 const execAsync = promisify(exec)
 
-// Path to Python script
-const PYTHON_SCRIPT = path.join(process.cwd(), "pump_control.py")
+// Pfad zum Python-Skript
+const PYTHON_SCRIPT = path.join(process.cwd(), "scripts/gpio_controller.py")
 
 export async function GET(request: Request) {
   try {
-    // Simple test to check if API route works
-    return NextResponse.json({ success: true, message: "GPIO API is active" })
+    // Einfacher Test, um zu prüfen, ob die API-Route funktioniert
+    return NextResponse.json({ success: true, message: "GPIO API ist aktiv" })
   } catch (error) {
-    console.error("Error in GPIO API route (GET):", error)
+    console.error("Fehler in der GPIO API-Route (GET):", error)
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unbekannter Fehler" },
       { status: 500 },
     )
   }
@@ -24,26 +24,40 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    // Check if Python script exists
+    // Prüfe, ob das Python-Skript existiert
     if (!fs.existsSync(PYTHON_SCRIPT)) {
-      console.error(`Python script not found: ${PYTHON_SCRIPT}`)
-      return NextResponse.json({ success: false, error: `Python script not found: ${PYTHON_SCRIPT}` }, { status: 500 })
+      console.error(`Python-Skript nicht gefunden: ${PYTHON_SCRIPT}`)
+      return NextResponse.json(
+        { success: false, error: `Python-Skript nicht gefunden: ${PYTHON_SCRIPT}` },
+        { status: 500 },
+      )
     }
 
-    // Parse request body
+    // Prüfe, ob das Python-Skript ausführbar ist
+    try {
+      fs.accessSync(PYTHON_SCRIPT, fs.constants.X_OK)
+    } catch (error) {
+      console.error(`Python-Skript ist nicht ausführbar: ${PYTHON_SCRIPT}`)
+      return NextResponse.json(
+        { success: false, error: `Python-Skript ist nicht ausführbar: ${PYTHON_SCRIPT}` },
+        { status: 500 },
+      )
+    }
+
+    // Parse den Request-Body
     let data
     try {
       data = await request.json()
     } catch (error) {
-      console.error("Error parsing request body:", error)
-      return NextResponse.json({ success: false, error: "Invalid request body" }, { status: 400 })
+      console.error("Fehler beim Parsen des Request-Body:", error)
+      return NextResponse.json({ success: false, error: "Ungültiger Request-Body" }, { status: 400 })
     }
 
     const { action, pin, duration } = data
 
-    // Validate parameters
+    // Validiere die Parameter
     if (!action) {
-      return NextResponse.json({ success: false, error: "Action is required" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Aktion ist erforderlich" }, { status: 400 })
     }
 
     let result
@@ -51,34 +65,67 @@ export async function POST(request: Request) {
 
     try {
       switch (action) {
+        case "setup":
+          console.log("Führe Setup-Aktion aus...")
+          const setupCmd = `python3 ${PYTHON_SCRIPT} setup`
+          console.log(`Befehl: ${setupCmd}`)
+          const setupResult = await execAsync(setupCmd)
+          cmdOutput = setupResult.stdout.trim()
+          console.log(`Setup-Ausgabe: ${cmdOutput}`)
+          break
+
         case "activate":
           if (!pin || !duration) {
-            return NextResponse.json({ success: false, error: "Pin and duration are required" }, { status: 400 })
+            return NextResponse.json({ success: false, error: "Pin und Dauer sind erforderlich" }, { status: 400 })
           }
-          console.log(`Activating pin ${pin} for ${duration}ms...`)
+          console.log(`Aktiviere Pin ${pin} für ${duration}ms...`)
           const activateCmd = `python3 ${PYTHON_SCRIPT} activate ${pin} ${duration}`
-          console.log(`Command: ${activateCmd}`)
+          console.log(`Befehl: ${activateCmd}`)
           const activateResult = await execAsync(activateCmd)
           cmdOutput = activateResult.stdout.trim()
-          console.log(`Activation output: ${cmdOutput}`)
+          console.log(`Aktivierungs-Ausgabe: ${cmdOutput}`)
+          break
 
-          // Return success for pump control
-          return NextResponse.json({ success: true, message: `Pin ${pin} activated for ${duration}ms` })
+        case "cleanup":
+          console.log("Führe Cleanup-Aktion aus...")
+          const cleanupCmd = `python3 ${PYTHON_SCRIPT} cleanup`
+          console.log(`Befehl: ${cleanupCmd}`)
+          const cleanupResult = await execAsync(cleanupCmd)
+          cmdOutput = cleanupResult.stdout.trim()
+          console.log(`Cleanup-Ausgabe: ${cmdOutput}`)
+          break
 
         case "test":
-          // Simple test that doesn't require Python script
-          console.log("Running test action...")
-          return NextResponse.json({ success: true, message: "Test successful" })
+          // Einfacher Test, der kein Python-Skript benötigt
+          console.log("Führe Test-Aktion aus...")
+          return NextResponse.json({ success: true, message: "Test erfolgreich" })
 
         default:
-          return NextResponse.json({ success: false, error: `Invalid action: ${action}` }, { status: 400 })
+          return NextResponse.json({ success: false, error: `Ungültige Aktion: ${action}` }, { status: 400 })
       }
+
+      // Parse die Ausgabe des Python-Skripts
+      try {
+        result = JSON.parse(cmdOutput)
+      } catch (error) {
+        console.error(`Fehler beim Parsen der Python-Ausgabe: ${cmdOutput}`, error)
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Ungültige Ausgabe vom Python-Skript",
+            output: cmdOutput,
+          },
+          { status: 500 },
+        )
+      }
+
+      return NextResponse.json(result)
     } catch (error) {
-      console.error(`Error executing action ${action}:`, error)
+      console.error(`Fehler bei der Ausführung der Aktion ${action}:`, error)
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
+          error: error instanceof Error ? error.message : "Unbekannter Fehler",
           command: action,
           output: cmdOutput,
         },
@@ -86,9 +133,9 @@ export async function POST(request: Request) {
       )
     }
   } catch (error) {
-    console.error("General error in GPIO API route:", error)
+    console.error("Allgemeiner Fehler in der GPIO API-Route:", error)
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: error instanceof Error ? error.message : "Unbekannter Fehler" },
       { status: 500 },
     )
   }
