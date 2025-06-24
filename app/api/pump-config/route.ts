@@ -1,40 +1,49 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
+import { NextResponse } from "next/server"
+import { pumpConfig as defaultPumpConfig } from "@/data/pump-config"
 import type { PumpConfig } from "@/types/pump"
+import fs from "fs"
+import path from "path"
 
-const PUMP_CONFIG_FILE = "/home/pi/cocktailbot/cocktailbot-main/data/pump-config.json"
+const PUMP_CONFIG_PATH = path.join(process.cwd(), "data", "pump-config.json")
 
 // Ensure directories exist
 async function ensureDirectories() {
   try {
-    await fs.mkdir(path.dirname(PUMP_CONFIG_FILE), { recursive: true })
+    await fs.promises.mkdir(path.dirname(PUMP_CONFIG_PATH), { recursive: true })
   } catch (error) {
     console.error("Error creating directories:", error)
   }
 }
 
 export async function GET() {
-  await ensureDirectories()
-
   try {
-    const content = await fs.readFile(PUMP_CONFIG_FILE, "utf-8")
-    return NextResponse.json(JSON.parse(content))
+    await ensureDirectories()
+
+    // Check if pump config file exists
+    if (fs.existsSync(PUMP_CONFIG_PATH)) {
+      const data = fs.readFileSync(PUMP_CONFIG_PATH, "utf8")
+      const pumpConfig: PumpConfig[] = JSON.parse(data)
+      return NextResponse.json(pumpConfig)
+    } else {
+      // Save default config and return it
+      fs.writeFileSync(PUMP_CONFIG_PATH, JSON.stringify(defaultPumpConfig, null, 2), "utf8")
+      return NextResponse.json(defaultPumpConfig)
+    }
   } catch (error) {
     console.error("Error loading pump config:", error)
-    // Return default config if file doesn't exist
-    const { pumpConfig } = await import("@/data/pump-config")
-    return NextResponse.json(pumpConfig)
+    return NextResponse.json(defaultPumpConfig)
   }
 }
 
-export async function POST(request: NextRequest) {
-  await ensureDirectories()
-
+export async function POST(request: Request) {
   try {
-    const config: PumpConfig[] = await request.json()
-    await fs.writeFile(PUMP_CONFIG_FILE, JSON.stringify(config, null, 2))
-    console.log("Pump configuration saved")
+    await ensureDirectories()
+
+    const pumpConfig: PumpConfig[] = await request.json()
+
+    // Save pump configuration
+    fs.writeFileSync(PUMP_CONFIG_PATH, JSON.stringify(pumpConfig, null, 2), "utf8")
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error saving pump config:", error)

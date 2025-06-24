@@ -1,75 +1,86 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
+import fs from "fs"
 import path from "path"
 import { cocktails as defaultCocktails } from "@/data/cocktails"
 import type { Cocktail } from "@/types/cocktail"
 
-const COCKTAILS_DIR = "/home/pi/cocktailbot/cocktailbot-main/data/saved-cocktails"
+const COCKTAILS_PATH = path.join(process.cwd(), "data", "custom-cocktails.json")
 
 // Ensure directories exist
 async function ensureDirectories() {
   try {
-    await fs.mkdir(path.dirname(COCKTAILS_DIR), { recursive: true })
-    await fs.mkdir(COCKTAILS_DIR, { recursive: true })
+    await fs.promises.mkdir(path.dirname(COCKTAILS_PATH), { recursive: true })
   } catch (error) {
     console.error("Error creating directories:", error)
   }
 }
 
 export async function GET() {
-  await ensureDirectories()
-
   try {
-    // Try to read saved cocktails
-    const files = await fs.readdir(COCKTAILS_DIR)
-    const cocktailFiles = files.filter((file) => file.endsWith(".json"))
+    await ensureDirectories()
 
-    if (cocktailFiles.length === 0) {
-      // No saved cocktails, return defaults (English)
-      console.log("No saved cocktails found, using defaults (English)")
-      return NextResponse.json(defaultCocktails)
-    }
+    // Load default cocktails
+    let allCocktails = [...defaultCocktails]
 
-    // Load saved cocktails
-    const savedCocktails: Cocktail[] = []
-    for (const file of cocktailFiles) {
-      try {
-        const filePath = path.join(COCKTAILS_DIR, file)
-        const content = await fs.readFile(filePath, "utf-8")
-        const cocktail = JSON.parse(content)
-        savedCocktails.push(cocktail)
-      } catch (error) {
-        console.error(`Error reading cocktail file ${file}:`, error)
+    // Check if custom cocktails file exists
+    if (fs.existsSync(COCKTAILS_PATH)) {
+      const data = fs.readFileSync(COCKTAILS_PATH, "utf8")
+      const customCocktails: Cocktail[] = JSON.parse(data)
+
+      // Create a map to avoid duplicates (custom cocktails override defaults)
+      const cocktailMap = new Map<string, Cocktail>()
+
+      // Add default cocktails first
+      for (const cocktail of allCocktails) {
+        cocktailMap.set(cocktail.id, cocktail)
       }
+
+      // Add/override with custom cocktails
+      for (const cocktail of customCocktails) {
+        cocktailMap.set(cocktail.id, cocktail)
+      }
+
+      allCocktails = Array.from(cocktailMap.values())
     }
 
-    // If we have saved cocktails, use them, otherwise use defaults
-    if (savedCocktails.length > 0) {
-      console.log(`Loaded ${savedCocktails.length} saved cocktails`)
-      return NextResponse.json(savedCocktails)
-    } else {
-      console.log("No valid saved cocktails, using defaults (English)")
-      return NextResponse.json(defaultCocktails)
-    }
+    return NextResponse.json(allCocktails)
   } catch (error) {
     console.error("Error loading cocktails:", error)
-    // Fallback to default cocktails
     return NextResponse.json(defaultCocktails)
   }
 }
 
 export async function POST(request: NextRequest) {
-  await ensureDirectories()
-
   try {
+    await ensureDirectories()
+
     const cocktail: Cocktail = await request.json()
-    const filePath = path.join(COCKTAILS_DIR, `${cocktail.id}.json`)
-    await fs.writeFile(filePath, JSON.stringify(cocktail, null, 2))
-    console.log(`Saved cocktail: ${cocktail.name}`)
+
+    // Load existing custom cocktails or create empty array
+    let customCocktails: Cocktail[] = []
+    if (fs.existsSync(COCKTAILS_PATH)) {
+      const data = fs.readFileSync(COCKTAILS_PATH, "utf8")
+      customCocktails = JSON.parse(data)
+    }
+
+    // Check if cocktail already exists
+    const index = customCocktails.findIndex((c) => c.id === cocktail.id)
+
+    if (index !== -1) {
+      // Update existing cocktail
+      customCocktails[index] = cocktail
+    } else {
+      // Add new cocktail
+      customCocktails.push(cocktail)
+    }
+
+    // Save updated cocktails
+    fs.writeFileSync(COCKTAILS_PATH, JSON.stringify(customCocktails, null, 2), "utf8")
+
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error saving recipe:", error)
-    return NextResponse.json({ success: false, error: "Failed to save recipe" }, { status: 500 })
+    console.error("Error saving cocktail:", error)
+    return NextResponse.json({ success: false, error: "Failed to save cocktail" }, { status: 500 })
   }
 }
 
@@ -79,15 +90,34 @@ export async function DELETE(request: NextRequest) {
     const cocktailId = searchParams.get("id")
 
     if (!cocktailId) {
-      return NextResponse.json({ success: false, error: "Missing cocktail ID" }, { status: 400 })
+      return NextResponse.json({ success: false, error: "Cocktail ID is required" }, { status: 400 })
     }
 
-    const filePath = path.join(COCKTAILS_DIR, `${cocktailId}.json`)
-    await fs.unlink(filePath)
-    console.log(`Deleted cocktail: ${cocktailId}`)
+    // Check if custom cocktails file exists
+    if (!fs.existsSync(COCKTAILS_PATH)) {
+      return NextResponse.json({ success: false, error: "No custom cocktails found" }, { status: 404 })
+    }
+
+    // Load existing custom cocktails
+    const data = fs.readFileSync(COCKTAILS_PATH, "utf8")
+    const customCocktails: Cocktail[] = JSON.parse(data)
+
+    // Find cocktail index
+    const index = customCocktails.findIndex((c) => c.id === cocktailId)
+
+    if (index === -1) {
+      return NextResponse.json({ success: false, error: "Cocktail not found" }, { status: 404 })
+    }
+
+    // Remove cocktail
+    customCocktails.splice(index, 1)
+
+    // Save updated cocktails
+    fs.writeFileSync(COCKTAILS_PATH, JSON.stringify(customCocktails, null, 2), "utf8")
+
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting recipe:", error)
-    return NextResponse.json({ success: false, error: "Failed to delete recipe" }, { status: 500 })
+    console.error("Error deleting cocktail:", error)
+    return NextResponse.json({ success: false, error: "Failed to delete cocktail" }, { status: 500 })
   }
 }
