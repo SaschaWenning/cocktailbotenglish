@@ -278,7 +278,7 @@ export const cocktails: Cocktail[] = [
     id: "mai-tai",
     name: "Mai Tai",
     description: "Classic Tiki cocktail with dark rum and almond syrup",
-    image: "/images/cocktails/Mai_Tai.jpg",
+    image: "/images/cocktails/mai_tai.jpg",
     alcoholic: true,
     ingredients: [
       "60ml Dark Rum",
