@@ -93,6 +93,43 @@ export default function CocktailMachine() {
     return Array.from(allIngredients)
   }
 
+  // Function to reset cocktails to English
+  const handleResetCocktails = async () => {
+    if (!confirm("Reset all cocktails to English defaults? This will delete any custom cocktails!")) {
+      return
+    }
+
+    try {
+      const response = await fetch("/api/reset-cocktails", {
+        method: "POST",
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: "Success!",
+          description: "All cocktails have been reset to English defaults.",
+        })
+        // Reload cocktails
+        await loadCocktails()
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to reset cocktails.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error resetting cocktails:", error)
+      toast({
+        title: "Error",
+        description: "Connection problem when resetting cocktails.",
+        variant: "destructive",
+      })
+    }
+  }
+
   // Load fill levels, pump configuration and cocktails on first render
   useEffect(() => {
     const loadData = async () => {
@@ -812,6 +849,18 @@ export default function CocktailMachine() {
           CocktailBot
         </h1>
         <p className="text-center text-[hsl(var(--cocktail-text-muted))]">Your personal cocktail assistant</p>
+
+        {/* Add Reset Button */}
+        <div className="text-center mt-4">
+          <Button
+            onClick={handleResetCocktails}
+            variant="outline"
+            size="sm"
+            className="bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-600"
+          >
+            🔄 Reset to English
+          </Button>
+        </div>
       </header>
 
       <div className="mb-8">

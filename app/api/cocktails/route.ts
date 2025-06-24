@@ -4,7 +4,7 @@ import path from "path"
 import { cocktails as defaultCocktails } from "@/data/cocktails"
 import type { Cocktail } from "@/types/cocktail"
 
-const COCKTAILS_DIR = "/home/pi/cocktailbot/data/saved-cocktails"
+const COCKTAILS_DIR = "/home/pi/cocktailbot/cocktailbot-main/data/saved-cocktails"
 
 // Ensure directories exist
 async function ensureDirectories() {
@@ -17,11 +17,45 @@ async function ensureDirectories() {
 }
 
 export async function GET() {
-  // ALWAYS return the English cocktails from cocktails.ts
-  // This ensures we always get the latest English version
-  console.log("🇬🇧 FORCE LOADING ENGLISH COCKTAILS FROM COCKTAILS.TS")
-  console.log("🇬🇧 First cocktail:", defaultCocktails[0]?.name, defaultCocktails[0]?.description)
-  return NextResponse.json(defaultCocktails)
+  await ensureDirectories()
+
+  try {
+    // Try to read saved cocktails
+    const files = await fs.readdir(COCKTAILS_DIR)
+    const cocktailFiles = files.filter((file) => file.endsWith(".json"))
+
+    if (cocktailFiles.length === 0) {
+      // No saved cocktails, return defaults (English)
+      console.log("No saved cocktails found, using defaults (English)")
+      return NextResponse.json(defaultCocktails)
+    }
+
+    // Load saved cocktails
+    const savedCocktails: Cocktail[] = []
+    for (const file of cocktailFiles) {
+      try {
+        const filePath = path.join(COCKTAILS_DIR, file)
+        const content = await fs.readFile(filePath, "utf-8")
+        const cocktail = JSON.parse(content)
+        savedCocktails.push(cocktail)
+      } catch (error) {
+        console.error(`Error reading cocktail file ${file}:`, error)
+      }
+    }
+
+    // If we have saved cocktails, use them, otherwise use defaults
+    if (savedCocktails.length > 0) {
+      console.log(`Loaded ${savedCocktails.length} saved cocktails`)
+      return NextResponse.json(savedCocktails)
+    } else {
+      console.log("No valid saved cocktails, using defaults (English)")
+      return NextResponse.json(defaultCocktails)
+    }
+  } catch (error) {
+    console.error("Error loading cocktails:", error)
+    // Fallback to default cocktails
+    return NextResponse.json(defaultCocktails)
+  }
 }
 
 export async function POST(request: NextRequest) {
