@@ -325,7 +325,7 @@ export const cocktails: Cocktail[] = [
     id: "tropical-sunset",
     name: "Tropical Sunset",
     description: "Beautiful color gradient with pineapple, orange and grenadine",
-    image: "/tropical-blend.png",
+    image: "/tropical-sunset.png",
     alcoholic: false,
     ingredients: ["120ml Pineapple Juice", "80ml Orange Juice", "15ml Grenadine"],
     recipe: [

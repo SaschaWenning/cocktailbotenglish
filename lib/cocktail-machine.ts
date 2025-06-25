@@ -1,6 +1,6 @@
 // lib/cocktail-machine.ts
 
-import type { Ingredient, Cocktail } from "./ingredient"
+import type { Ingredient } from "./ingredient"
 
 export class CocktailMachine {
   private pumps: { [ingredientName: string]: Pump } = {}
@@ -61,16 +61,5 @@ export class Pump {
     // Activate the pump for the specified duration
     console.log(`Activating pump on GPIO pin ${this.gpioPin} for ${durationMs}ms`)
     return new Promise((resolve) => setTimeout(resolve, durationMs))
-  }
-}
-
-// Funktion zum Laden aller Cocktails (vereinfacht)
-export async function getAllCocktails(): Promise<Cocktail[]> {
-  try {
-    const { cocktails } = await import("@/data/cocktails")
-    return cocktails
-  } catch (error) {
-    console.error("Fehler beim Laden der Cocktails:", error)
-    return []
   }
 }
