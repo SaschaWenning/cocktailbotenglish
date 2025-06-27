@@ -7,7 +7,7 @@ export const cocktails: Cocktail[] = [
     description: "Fruity cocktail with rum, pineapple and passion fruit",
     image: "/images/cocktails/big_john.jpg",
     alcoholic: true,
-    ingredients: ["60ml Rum", "120ml Pineapple Juice", "120ml Passion Fruit Juice", "10ml Lime Juice"],
+    ingredients: ["60ml Dark Rum", "120ml Pineapple Juice", "120ml Passion Fruit Juice", "10ml Lime Juice"],
     recipe: [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "pineapple-juice", amount: 120 },
@@ -325,7 +325,7 @@ export const cocktails: Cocktail[] = [
     id: "tropical-sunset",
     name: "Tropical Sunset",
     description: "Beautiful color gradient with pineapple, orange and grenadine",
-    image: "/tropical-sunset.png",
+    image: "/tropical_sunset.png",
     alcoholic: false,
     ingredients: ["120ml Pineapple Juice", "80ml Orange Juice", "15ml Grenadine"],
     recipe: [
@@ -350,7 +350,7 @@ export const cocktails: Cocktail[] = [
     id: "pineapple-lime-fizz",
     name: "Pineapple Lime Fizz",
     description: "Refreshing cocktail with pineapple and lime",
-    image: "/pineapple-lime-fizz.png",
+    image: "/pineapple_lime_fizz.png",
     alcoholic: false,
     ingredients: ["150ml Pineapple Juice", "30ml Lime Juice", "10ml Vanilla Syrup"],
     recipe: [
@@ -375,7 +375,7 @@ export const cocktails: Cocktail[] = [
     id: "passion-paradise",
     name: "Passion Paradise",
     description: "Exotic cocktail with passion fruit and tropical fruits",
-    image: "/passion-paradise.png",
+    image: "/passion_paradise.png",
     alcoholic: false,
     ingredients: ["100ml Passion Fruit Juice", "80ml Pineapple Juice", "40ml Orange Juice", "15ml Almond Syrup"],
     recipe: [
@@ -401,7 +401,7 @@ export const cocktails: Cocktail[] = [
     id: "vanilla-orange-dream",
     name: "Vanilla Orange Dream",
     description: "Creamy dream with vanilla and orange",
-    image: "/vanilla-orange-dream.png",
+    image: "/vanilla_orange_dream.png",
     alcoholic: false,
     ingredients: ["120ml Orange Juice", "60ml Pineapple Juice", "25ml Vanilla Syrup", "10ml Lime Juice"],
     recipe: [
@@ -427,7 +427,7 @@ export const cocktails: Cocktail[] = [
     id: "grenadine-sunrise",
     name: "Grenadine Sunrise",
     description: "Beautiful sunrise in a glass",
-    image: "/grenadine-sunrise.png",
+    image: "/grenadine_sunrise.png",
     alcoholic: false,
     ingredients: ["100ml Orange Juice", "80ml Pineapple Juice", "20ml Grenadine", "10ml Lime Juice"],
     recipe: [
@@ -453,7 +453,7 @@ export const cocktails: Cocktail[] = [
     id: "almond-citrus-cooler",
     name: "Almond Citrus Cooler",
     description: "Refreshing almond-citrus mix",
-    image: "/almond-citrus-cooler.png",
+    image: "/almond_citrus_cooler.png",
     alcoholic: false,
     ingredients: ["80ml Orange Juice", "40ml Lime Juice", "60ml Pineapple Juice", "20ml Almond Syrup"],
     recipe: [
