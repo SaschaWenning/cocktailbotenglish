@@ -206,20 +206,20 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
     setShowFileBrowser(false)
   }
 
-  // Define keyboards
+  // Define keyboards - kompakter für Display
   const alphaKeys = [
-    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
     ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"],
     ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
     ["y", "x", "c", "v", "b", "n", "m"],
-    [" ", "-", "_", ".", "/"],
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    [" ", "-", "_", ".", "/", "@"],
   ]
 
   const numericKeys = [
     ["1", "2", "3"],
     ["4", "5", "6"],
     ["7", "8", "9"],
-    ["0", "00", "."],
+    ["0", ".", "00"],
   ]
 
   const keys = isNumericKeyboard ? numericKeys : alphaKeys
@@ -227,14 +227,14 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && !showFileBrowser && onClose()}>
-        <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-2xl">
+        <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-5xl max-h-[95vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Create New Recipe</DialogTitle>
           </DialogHeader>
 
           {!showKeyboard ? (
             // FORM VIEW
-            <div className="space-y-4 my-4 max-h-[60vh] overflow-y-auto pr-2">
+            <div className="space-y-4 my-4 max-h-[70vh] overflow-y-auto pr-2">
               <div className="space-y-2">
                 <Label className="text-white">Name</Label>
                 <Input
@@ -373,92 +373,99 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
               ))}
             </div>
           ) : (
-            // KEYBOARD VIEW
-            <div className="space-y-4 my-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {keyboardMode === "name" && "Enter name"}
-                  {keyboardMode === "description" && "Enter description"}
-                  {keyboardMode === "imageUrl" && "Enter image path"}
-                  {keyboardMode.startsWith("amount-") && "Enter amount (ml)"}
-                </h3>
-                <div className="bg-white text-black text-lg p-2 rounded mb-3 min-h-[40px] break-all">
-                  {keyboardValue || <span className="text-gray-400">Input...</span>}
+            // KEYBOARD VIEW - Seitliches Layout
+            <div className="flex gap-3 my-2 max-h-[75vh]">
+              {/* Tastatur links */}
+              <div className="flex-1">
+                <div className="text-center mb-2">
+                  <h3 className="text-base font-semibold text-white mb-1">
+                    {keyboardMode === "name" && "Enter name"}
+                    {keyboardMode === "description" && "Enter description"}
+                    {keyboardMode === "imageUrl" && "Enter image path"}
+                    {keyboardMode.startsWith("amount-") && "Enter amount (ml)"}
+                  </h3>
+                  <div className="bg-white text-black text-sm p-2 rounded mb-2 min-h-[30px] break-all">
+                    {keyboardValue || <span className="text-gray-400">Input...</span>}
+                  </div>
+                </div>
+
+                <div className="grid gap-1">
+                  {keys.map((row, rowIndex) => (
+                    <div key={rowIndex} className="flex gap-1 justify-center">
+                      {row.map((key) => (
+                        <Button
+                          key={key}
+                          type="button"
+                          onClick={() => handleKeyPress(key)}
+                          className="flex-1 h-8 text-sm bg-gray-700 hover:bg-gray-600 text-white min-w-0"
+                        >
+                          {key}
+                        </Button>
+                      ))}
+                    </div>
+                  ))}
+
+                  {/* Shift and Caps Lock row (only for alpha keyboard) */}
+                  {!isNumericKeyboard && (
+                    <div className="flex gap-1 justify-center">
+                      <Button
+                        type="button"
+                        onClick={handleShift}
+                        className={`flex-1 h-8 text-white text-xs ${
+                          isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
+                        }`}
+                      >
+                        <ArrowUp className="h-3 w-3 mr-1" />
+                        Shift
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={handleCapsLock}
+                        className={`flex-1 h-8 text-white text-xs ${
+                          isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
+                        }`}
+                      >
+                        <Lock className="h-3 w-3 mr-1" />
+                        Caps
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="grid gap-1">
-                {keys.map((row, rowIndex) => (
-                  <div key={rowIndex} className="flex gap-1 justify-center">
-                    {row.map((key) => (
-                      <Button
-                        key={key}
-                        type="button"
-                        onClick={() => handleKeyPress(key)}
-                        className="flex-1 h-10 text-base bg-gray-700 hover:bg-gray-600 text-white"
-                      >
-                        {key}
-                      </Button>
-                    ))}
-                  </div>
-                ))}
-
-                {/* Shift and Caps Lock row (only for alpha keyboard) */}
-                {!isNumericKeyboard && (
-                  <div className="flex gap-1 justify-center">
-                    <Button
-                      type="button"
-                      onClick={handleShift}
-                      className={`flex-1 h-10 text-white ${
-                        isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
-                      }`}
-                    >
-                      <ArrowUp className="h-4 w-4 mr-1" />
-                      Shift
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleCapsLock}
-                      className={`flex-1 h-10 text-white ${
-                        isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
-                      }`}
-                    >
-                      <Lock className="h-4 w-4 mr-1" />
-                      Caps
-                    </Button>
-                  </div>
-                )}
-
-                <div className="flex gap-1 mt-1">
-                  <Button
-                    type="button"
-                    onClick={handleBackspace}
-                    className="flex-1 h-10 bg-red-700 hover:bg-red-600 text-white"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleClear}
-                    className="flex-1 h-10 bg-yellow-700 hover:bg-yellow-600 text-white"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleKeyboardCancel}
-                    className="flex-1 h-10 bg-gray-700 hover:bg-gray-600 text-white text-sm"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleKeyboardConfirm}
-                    className="flex-1 h-10 bg-green-700 hover:bg-green-600 text-white"
-                  >
-                    <Check className="h-5 w-5" />
-                  </Button>
-                </div>
+              {/* Action Buttons rechts */}
+              <div className="flex flex-col gap-2 w-20">
+                <Button
+                  type="button"
+                  onClick={handleBackspace}
+                  className="h-12 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center p-1"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="text-xs">Back</span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleClear}
+                  className="h-12 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center p-1"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="text-xs">Clear</span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleKeyboardCancel}
+                  className="h-12 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center p-1"
+                >
+                  <span className="text-xs">Cancel</span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleKeyboardConfirm}
+                  className="h-12 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center p-1"
+                >
+                  <Check className="h-4 w-4" />
+                  <span className="text-xs">OK</span>
+                </Button>
               </div>
             </div>
           )}
