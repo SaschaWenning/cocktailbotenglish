@@ -206,7 +206,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
     setShowFileBrowser(false)
   }
 
-  // Define keyboards - kompakter für Display
+  // Define keyboards - ohne Shift/Caps Reihe
   const alphaKeys = [
     ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"],
     ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
@@ -227,56 +227,56 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && !showFileBrowser && onClose()}>
-        <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-4xl max-h-[90vh] overflow-hidden">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="text-base">Create New Recipe</DialogTitle>
+        <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-4xl max-h-[95vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Create New Recipe</DialogTitle>
           </DialogHeader>
 
           {!showKeyboard ? (
-            // FORM VIEW - 20% kleiner
-            <div className="space-y-3 my-2 max-h-[65vh] overflow-y-auto pr-2">
-              <div className="space-y-1">
-                <Label className="text-white text-sm">Name</Label>
+            // FORM VIEW
+            <div className="space-y-4 my-4 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="space-y-2">
+                <Label className="text-white">Name</Label>
                 <Input
                   value={name}
                   onClick={() => openKeyboard("name", name)}
                   readOnly
-                  className={`bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-8 text-sm ${errors.name ? "border-red-500" : ""}`}
+                  className={`bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer ${errors.name ? "border-red-500" : ""}`}
                   placeholder="Cocktail name"
                 />
                 {errors.name && <p className="text-red-400 text-xs">{errors.name}</p>}
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-white text-sm">Description</Label>
+              <div className="space-y-2">
+                <Label className="text-white">Description</Label>
                 <Input
                   value={description}
                   onClick={() => openKeyboard("description", description)}
                   readOnly
-                  className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-8 text-sm"
+                  className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer"
                   placeholder="Describe your cocktail..."
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="flex items-center gap-2 text-white text-sm">
-                  <ImageIcon className="h-3 w-3" />
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-white">
+                  <ImageIcon className="h-4 w-4" />
                   Image path (optional)
                 </Label>
-                <div className="flex gap-1">
+                <div className="flex gap-2">
                   <Input
                     value={imageUrl}
                     onClick={() => openKeyboard("imageUrl", imageUrl)}
                     readOnly
-                    className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1 h-8 text-sm"
+                    className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1"
                     placeholder="/path/to/image.jpg"
                   />
                   <Button
                     type="button"
                     onClick={() => setShowFileBrowser(true)}
-                    className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))] h-8 px-2"
+                    className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))]"
                   >
-                    <FolderOpen className="h-3 w-3" />
+                    <FolderOpen className="h-4 w-4" />
                   </Button>
                   {imageUrl && (
                     <Button
@@ -284,42 +284,42 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                       variant="destructive"
                       size="icon"
                       onClick={() => setImageUrl("")}
-                      className="h-8 w-8"
+                      className="h-10 w-10"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-white text-sm">Alcoholic</Label>
+              <div className="space-y-2">
+                <Label className="text-white">Alcoholic</Label>
                 <Select value={alcoholic ? "true" : "false"} onValueChange={(value) => setAlcoholic(value === "true")}>
-                  <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-8 text-sm">
+                  <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))]">
-                    <SelectItem value="true" className="text-black hover:bg-gray-100 cursor-pointer text-sm">
+                    <SelectItem value="true" className="text-black hover:bg-gray-100 cursor-pointer">
                       Yes
                     </SelectItem>
-                    <SelectItem value="false" className="text-black hover:bg-gray-100 cursor-pointer text-sm">
+                    <SelectItem value="false" className="text-black hover:bg-gray-100 cursor-pointer">
                       No
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="pt-1">
-                <div className="flex justify-between items-center mb-1">
-                  <Label className="text-white text-sm">Ingredients</Label>
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <Label className="text-white">Ingredients</Label>
                   <Button
                     type="button"
                     size="sm"
                     onClick={addIngredient}
-                    className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))] h-7 px-2 text-xs"
+                    className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))]"
                     disabled={recipe.length >= ingredients.length}
                   >
-                    <Plus className="h-3 w-3 mr-1" />
+                    <Plus className="h-4 w-4 mr-1" />
                     Add Ingredient
                   </Button>
                 </div>
@@ -328,11 +328,11 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
               {recipe.map((item, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-1 items-center p-2 bg-[hsl(var(--cocktail-card-bg))] rounded border border-[hsl(var(--cocktail-card-border))]"
+                  className="grid grid-cols-12 gap-2 items-center p-2 bg-[hsl(var(--cocktail-card-bg))] rounded border border-[hsl(var(--cocktail-card-border))]"
                 >
                   <div className="col-span-6">
                     <Select value={item.ingredientId} onValueChange={(value) => handleIngredientChange(index, value)}>
-                      <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-7 text-xs">
+                      <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))] max-h-48 overflow-y-auto">
@@ -340,7 +340,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                           <SelectItem
                             key={ingredient.id}
                             value={ingredient.id}
-                            className="text-black hover:bg-gray-100 cursor-pointer text-xs"
+                            className="text-black hover:bg-gray-100 cursor-pointer"
                           >
                             {ingredient.name}
                           </SelectItem>
@@ -353,10 +353,10 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                       value={item.amount}
                       onClick={() => openKeyboard(`amount-${index}`, item.amount.toString(), true)}
                       readOnly
-                      className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer text-center h-7 text-xs"
+                      className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer text-center"
                     />
                   </div>
-                  <div className="col-span-2 text-xs text-white">ml</div>
+                  <div className="col-span-2 text-sm text-white">ml</div>
                   <div className="col-span-1">
                     <Button
                       type="button"
@@ -364,106 +364,106 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                       variant="destructive"
                       onClick={() => removeIngredient(index)}
                       disabled={recipe.length <= 1}
-                      className="h-6 w-6 p-0"
+                      className="h-8 w-8 p-0"
                     >
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            // KEYBOARD VIEW - 20% kleiner, seitliches Layout
-            <div className="flex gap-2 my-1 max-h-[70vh]">
+            // KEYBOARD VIEW - Shift und Caps an der Seite
+            <div className="flex gap-3 my-4">
               {/* Tastatur links */}
               <div className="flex-1">
-                <div className="text-center mb-1">
-                  <h3 className="text-sm font-semibold text-white mb-1">
+                <div className="text-center mb-3">
+                  <h3 className="text-lg font-semibold text-white mb-2">
                     {keyboardMode === "name" && "Enter name"}
                     {keyboardMode === "description" && "Enter description"}
                     {keyboardMode === "imageUrl" && "Enter image path"}
                     {keyboardMode.startsWith("amount-") && "Enter amount (ml)"}
                   </h3>
-                  <div className="bg-white text-black text-xs p-1 rounded mb-1 min-h-[24px] break-all">
+                  <div className="bg-white text-black text-lg p-3 rounded mb-4 min-h-[50px] break-all">
                     {keyboardValue || <span className="text-gray-400">Input...</span>}
                   </div>
                 </div>
 
-                <div className="grid gap-0.5">
+                <div className="grid gap-2">
                   {keys.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex gap-0.5 justify-center">
+                    <div key={rowIndex} className="flex gap-1 justify-center">
                       {row.map((key) => (
                         <Button
                           key={key}
                           type="button"
                           onClick={() => handleKeyPress(key)}
-                          className="flex-1 h-6 text-xs bg-gray-700 hover:bg-gray-600 text-white min-w-0 px-1"
+                          className="flex-1 h-12 text-lg bg-gray-700 hover:bg-gray-600 text-white"
                         >
                           {key}
                         </Button>
                       ))}
                     </div>
                   ))}
-
-                  {/* Shift and Caps Lock row (only for alpha keyboard) */}
-                  {!isNumericKeyboard && (
-                    <div className="flex gap-0.5 justify-center">
-                      <Button
-                        type="button"
-                        onClick={handleShift}
-                        className={`flex-1 h-6 text-white text-xs px-1 ${
-                          isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
-                        }`}
-                      >
-                        <ArrowUp className="h-2 w-2 mr-0.5" />
-                        Shift
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleCapsLock}
-                        className={`flex-1 h-6 text-white text-xs px-1 ${
-                          isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
-                        }`}
-                      >
-                        <Lock className="h-2 w-2 mr-0.5" />
-                        Caps
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
 
-              {/* Action Buttons rechts */}
-              <div className="flex flex-col gap-1 w-16">
+              {/* Action Buttons rechts - mit Shift und Caps */}
+              <div className="flex flex-col gap-2 w-24">
+                {/* Shift und Caps nur für Alpha-Tastatur */}
+                {!isNumericKeyboard && (
+                  <>
+                    <Button
+                      type="button"
+                      onClick={handleShift}
+                      className={`h-12 text-white flex flex-col items-center justify-center ${
+                        isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
+                      }`}
+                    >
+                      <ArrowUp className="h-4 w-4" />
+                      <span className="text-xs">Shift</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleCapsLock}
+                      className={`h-12 text-white flex flex-col items-center justify-center ${
+                        isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
+                      }`}
+                    >
+                      <Lock className="h-4 w-4" />
+                      <span className="text-xs">Caps</span>
+                    </Button>
+                  </>
+                )}
+
                 <Button
                   type="button"
                   onClick={handleBackspace}
-                  className="h-9 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center p-0.5"
+                  className="h-12 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center"
                 >
-                  <ArrowLeft className="h-3 w-3" />
+                  <ArrowLeft className="h-4 w-4" />
                   <span className="text-xs">Back</span>
                 </Button>
                 <Button
                   type="button"
                   onClick={handleClear}
-                  className="h-9 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center p-0.5"
+                  className="h-12 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                   <span className="text-xs">Clear</span>
                 </Button>
                 <Button
                   type="button"
                   onClick={handleKeyboardCancel}
-                  className="h-9 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center p-0.5"
+                  className="h-12 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
                 >
                   <span className="text-xs">Cancel</span>
                 </Button>
                 <Button
                   type="button"
                   onClick={handleKeyboardConfirm}
-                  className="h-9 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center p-0.5"
+                  className="h-12 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center"
                 >
-                  <Check className="h-3 w-3" />
+                  <Check className="h-4 w-4" />
                   <span className="text-xs">OK</span>
                 </Button>
               </div>
@@ -471,23 +471,19 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
           )}
 
           {!showKeyboard && (
-            <DialogFooter className="flex justify-end gap-2 pt-2">
+            <DialogFooter className="flex justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] h-8 px-3 text-sm"
+                className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
               >
                 Cancel
               </Button>
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-[#00ff00] text-black hover:bg-[#00cc00] h-8 px-3 text-sm"
-              >
+              <Button onClick={handleSave} disabled={saving} className="bg-[#00ff00] text-black hover:bg-[#00cc00]">
                 {saving ? (
                   <>
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
                   </>
                 ) : (
