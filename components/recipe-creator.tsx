@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Cocktail } from "@/types/cocktail"
 import { ingredients } from "@/data/ingredients"
 import { saveRecipe } from "@/lib/cocktail-machine"
-import { Loader2, ImageIcon, Trash2, Plus, Minus, FolderOpen, ArrowLeft, ArrowUp, Lock, X, Check } from "lucide-react"
+import { Loader2, ImageIcon, Trash2, Plus, Minus, FolderOpen, ArrowLeft } from "lucide-react"
+import VirtualKeyboard from "./virtual-keyboard"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface RecipeEditorProps {
@@ -55,12 +56,6 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
   const [activeInput, setActiveInput] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState("")
 
-  // Keyboard state
-  const [keyboardMode, setKeyboardMode] = useState(activeInput || "name")
-  const [keyboardValue, setKeyboardValue] = useState(inputValue || "")
-  const [isShiftActive, setIsShiftActive] = useState(false)
-  const [isCapsLockActive, setIsCapsLockActive] = useState(false)
-
   // Load cocktail data when opening
   useEffect(() => {
     if (cocktail && isOpen) {
@@ -105,42 +100,10 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
     setActiveInput(inputType)
     setInputValue(currentValue)
     setCurrentView("keyboard")
-    setKeyboardMode(inputType)
-    setKeyboardValue(currentValue)
   }
 
   const handleKeyboardInput = (value: string) => {
-    setKeyboardValue(value)
-  }
-
-  const handleKeyPress = (key: string) => {
-    let newKey = key
-    if (!keyboardMode.startsWith("amount-")) {
-      if (isShiftActive || isCapsLockActive) {
-        newKey = key.toUpperCase()
-      }
-      if (isShiftActive) {
-        setIsShiftActive(false)
-      }
-    }
-
-    setKeyboardValue((prev) => prev + newKey)
-  }
-
-  const handleBackspace = () => {
-    setKeyboardValue((prev) => prev.slice(0, -1))
-  }
-
-  const handleClear = () => {
-    setKeyboardValue("")
-  }
-
-  const handleShift = () => {
-    setIsShiftActive((prev) => !prev)
-  }
-
-  const handleCapsLock = () => {
-    setIsCapsLockActive((prev) => !prev)
+    setInputValue(value)
   }
 
   const handleKeyboardConfirm = () => {
@@ -148,18 +111,18 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
     switch (activeInput) {
       case "name":
-        setName(keyboardValue)
+        setName(inputValue)
         break
       case "description":
-        setDescription(keyboardValue)
+        setDescription(inputValue)
         break
       case "imageUrl":
-        setImageUrl(keyboardValue)
+        setImageUrl(inputValue)
         break
       default:
         if (activeInput.startsWith("amount-")) {
           const index = Number.parseInt(activeInput.replace("amount-", ""))
-          const amount = Number.parseFloat(keyboardValue)
+          const amount = Number.parseFloat(inputValue)
           if (!isNaN(amount) && amount >= 0) {
             handleAmountChange(index, amount)
           }
@@ -401,140 +364,30 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
   // Keyboard View - same as RecipeCreator
   const renderKeyboardView = () => {
-    const isNumericKeyboard = keyboardMode.startsWith("amount-")
-
-    const keys = isNumericKeyboard
-      ? [
-          ["1", "2", "3"],
-          ["4", "5", "6"],
-          ["7", "8", "9"],
-          [".", "0"],
-        ]
-      : [
-          ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
-          ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
-          ["z", "x", "c", "v", "b", "n", "m", "-", "_"],
-          ["123", "@", "!", "?", " ", "#", "%", "&", "*", "+"],
-        ]
-
-    const t = (key: string) => {
-      switch (key) {
-        case "enter_name":
-          return "Edit Name"
-        case "enter_description":
-          return "Edit Description"
-        case "enter_image_path":
-          return "Edit Image URL"
-        case "enter_amount_ml":
-          return "Edit Amount (ml)"
-        case "input_placeholder":
-          return "Enter value"
-        case "shift":
-          return "Shift"
-        case "caps":
-          return "Caps"
-        case "cancel":
-          return "Cancel"
-        default:
-          return key
-      }
-    }
+    const isNumeric = activeInput?.startsWith("amount-")
 
     return (
-      // KEYBOARD VIEW
-      <div className="flex gap-4 my-4">
-        {/* Keyboard auf der linken Seite */}
-        <div className="flex-1">
-          <div className="text-center mb-3">
-            <h3 className="text-lg font-semibold text-white mb-2">
-              {keyboardMode === "name" && t("enter_name")}
-              {keyboardMode === "description" && t("enter_description")}
-              {keyboardMode === "imageUrl" && t("enter_image_path")}
-              {keyboardMode.startsWith("amount-") && t("enter_amount_ml")}
-            </h3>
-            <div className="bg-white text-black text-base p-2 rounded mb-3 min-h-[35px] break-all">
-              {keyboardValue || <span className="text-gray-400">{t("input_placeholder")}</span>}
-            </div>
-          </div>
-
-          <div className="grid gap-1">
-            {keys.map((row, rowIndex) => (
-              <div key={rowIndex} className="flex gap-1 justify-center">
-                {row.map((key) => (
-                  <Button
-                    key={key}
-                    type="button"
-                    onClick={() => handleKeyPress(key)}
-                    className="flex-1 h-9 text-sm bg-gray-700 hover:bg-gray-600 text-white"
-                  >
-                    {key}
-                  </Button>
-                ))}
-              </div>
-            ))}
-
-            {/* Shift and Caps Lock row (only for alpha keyboard) */}
-            {!isNumericKeyboard && (
-              <div className="flex gap-1 justify-center">
-                <Button
-                  type="button"
-                  onClick={handleShift}
-                  className={`flex-1 h-9 text-white text-sm ${
-                    isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
-                  }`}
-                >
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  {t("shift")}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleCapsLock}
-                  className={`flex-1 h-9 text-white text-sm ${
-                    isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
-                  }`}
-                >
-                  <Lock className="h-3 w-3 mr-1" />
-                  {t("caps")}
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Action Buttons auf der rechten Seite */}
-        <div className="flex flex-col gap-2 w-24">
-          <Button
-            type="button"
-            onClick={handleBackspace}
-            className="h-12 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center"
-          >
+      <div className="space-y-4 my-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Button type="button" onClick={handleKeyboardCancel} className="bg-gray-700 hover:bg-gray-600 text-white">
             <ArrowLeft className="h-4 w-4" />
-            <span className="text-xs">Back</span>
           </Button>
-          <Button
-            type="button"
-            onClick={handleClear}
-            className="h-12 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center"
-          >
-            <X className="h-4 w-4" />
-            <span className="text-xs">Clear</span>
-          </Button>
-          <Button
-            type="button"
-            onClick={handleKeyboardCancel}
-            className="h-12 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
-          >
-            <span className="text-xs">{t("cancel")}</span>
-          </Button>
-          <Button
-            type="button"
-            onClick={handleKeyboardConfirm}
-            className="h-12 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center"
-          >
-            <Check className="h-4 w-4" />
-            <span className="text-xs">OK</span>
-          </Button>
+          <h3 className="text-lg font-semibold text-white">
+            {activeInput === "name" && "Edit Name"}
+            {activeInput === "description" && "Edit Description"}
+            {activeInput === "imageUrl" && "Edit Image URL"}
+            {activeInput?.startsWith("amount-") && "Edit Amount (ml)"}
+          </h3>
         </div>
+
+        <VirtualKeyboard
+          value={inputValue}
+          onChange={handleKeyboardInput}
+          onConfirm={handleKeyboardConfirm}
+          onCancel={handleKeyboardCancel}
+          allowDecimal={isNumeric}
+          numericOnly={isNumeric}
+        />
       </div>
     )
   }
@@ -590,7 +443,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-4xl">
+      <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit Recipe: {cocktail.name}</DialogTitle>
         </DialogHeader>
