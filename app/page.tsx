@@ -117,10 +117,12 @@ export default function Home() {
       const cocktails = await getAllCocktails()
       console.log("[v0] Loaded cocktails from getAllCocktails:", cocktails.length)
 
-      const hiddenCocktailsJson = localStorage.getItem("hiddenCocktails")
-      console.log("[v0] Hidden cocktails JSON from localStorage:", hiddenCocktailsJson)
-
-      const hiddenCocktails: string[] = hiddenCocktailsJson ? JSON.parse(hiddenCocktailsJson) : []
+      let hiddenCocktails: string[] = []
+      if (typeof window !== "undefined") {
+        const hiddenCocktailsJson = localStorage.getItem("hiddenCocktails")
+        console.log("[v0] Hidden cocktails JSON from localStorage:", hiddenCocktailsJson)
+        hiddenCocktails = hiddenCocktailsJson ? JSON.parse(hiddenCocktailsJson) : []
+      }
       console.log("[v0] Parsed hidden cocktails:", hiddenCocktails)
 
       const visibleCocktails = cocktails.filter((cocktail) => !hiddenCocktails.includes(cocktail.id))
@@ -264,17 +266,20 @@ export default function Home() {
     try {
       console.log("[v0] Deleting/hiding cocktail:", cocktailToDelete.id)
 
-      const hiddenCocktailsJson = localStorage.getItem("hiddenCocktails")
-      const hiddenCocktails: string[] = hiddenCocktailsJson ? JSON.parse(hiddenCocktailsJson) : []
-      console.log("[v0] Current hidden cocktails before adding:", hiddenCocktails)
+      let hiddenCocktails: string[] = []
+      if (typeof window !== "undefined") {
+        const hiddenCocktailsJson = localStorage.getItem("hiddenCocktails")
+        hiddenCocktails = hiddenCocktailsJson ? JSON.parse(hiddenCocktailsJson) : []
+        console.log("[v0] Current hidden cocktails before adding:", hiddenCocktails)
 
-      // Füge die Cocktail-ID zur Liste der ausgeblendeten Cocktails hinzu
-      if (!hiddenCocktails.includes(cocktailToDelete.id)) {
-        hiddenCocktails.push(cocktailToDelete.id)
-        localStorage.setItem("hiddenCocktails", JSON.stringify(hiddenCocktails))
-        console.log("[v0] Updated hidden cocktails in localStorage:", hiddenCocktails)
-      } else {
-        console.log("[v0] Cocktail already in hidden list")
+        // Füge die Cocktail-ID zur Liste der ausgeblendeten Cocktails hinzu
+        if (!hiddenCocktails.includes(cocktailToDelete.id)) {
+          hiddenCocktails.push(cocktailToDelete.id)
+          localStorage.setItem("hiddenCocktails", JSON.stringify(hiddenCocktails))
+          console.log("[v0] Updated hidden cocktails in localStorage:", hiddenCocktails)
+        } else {
+          console.log("[v0] Cocktail already in hidden list")
+        }
       }
 
       setCocktailsData((prev) => prev.filter((c) => c.id !== cocktailToDelete.id))
@@ -300,7 +305,7 @@ export default function Home() {
 
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage("Bereite Cocktail vor...")
+    setStatusMessage("Preparing cocktail...")
     setErrorMessage(null)
     setManualIngredients([]) // Reset manuelle Zutaten
 
@@ -339,11 +344,9 @@ export default function Home() {
 
       if (manualRecipeItems.length > 0) {
         setManualIngredients(manualRecipeItems)
-        setStatusMessage(
-          `${cocktail.name} (${selectedSize}ml) automatisch zubereitet! Bitte manuelle Zutaten hinzufügen.`,
-        )
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) automatically prepared! Please add manual ingredients.`)
       } else {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) fertig!`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) ready!`)
       }
 
       setShowSuccess(true)
@@ -364,8 +367,8 @@ export default function Home() {
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Fehler bei der Zubereitung!")
-      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
+      setStatusMessage("Error during preparation!")
+      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setManualIngredients([]) // Reset bei Fehler
       setTimeout(() => setIsMaking(false), 3000)
     }
@@ -655,11 +658,11 @@ export default function Home() {
                           <span>
                             {item.amount}ml {ingredientName}
                             {(item.manual === true || item.type === "manual") && (
-                              <span className="text-[hsl(var(--cocktail-text-muted))] ml-2">(manuell)</span>
+                              <span className="text-[hsl(var(--cocktail-text-muted))] ml-2">(manual)</span>
                             )}
                             {(item.manual === true || item.type === "manual") && item.instruction && (
                               <span className="block text-sm text-[hsl(var(--cocktail-text-muted))] italic mt-1">
-                                Anleitung: {item.instruction}
+                                Instructions: {item.instruction}
                               </span>
                             )}
                           </span>
