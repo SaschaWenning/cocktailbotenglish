@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import type { PumpConfig } from "@/types/pump"
 import { savePumpConfig, calibratePump, getPumpConfig } from "@/lib/cocktail-machine"
-import { ingredients } from "@/data/ingredients"
+import { getAllIngredients } from "@/lib/ingredients"
 import { Loader2, Beaker, Save, RefreshCw } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import VirtualKeyboard from "./virtual-keyboard"
@@ -28,11 +28,12 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
   const [showSuccess, setShowSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showInputDialog, setShowInputDialog] = useState(false)
+  const [allIngredients, setAllIngredients] = useState(getAllIngredients())
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Load saved configuration on first render
   useEffect(() => {
     loadPumpConfig()
+    setAllIngredients(getAllIngredients())
   }, [])
 
   const loadPumpConfig = async () => {
@@ -58,7 +59,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
 
-      // Notify main component about update
       if (onConfigUpdate) {
         await onConfigUpdate()
       }
@@ -75,11 +75,9 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
     setCalibrating(pumpId)
 
     try {
-      // Run pump for exactly 2 seconds
       await calibratePump(pumpId, 2000)
       setCalibrationStep("input")
       setMeasuredAmount("")
-      // Open dialog for input
       setShowInputDialog(true)
     } catch (error) {
       console.error("Error during calibration:", error)
@@ -90,14 +88,12 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
   }
 
   const handleMeasuredAmountChange = (value: string) => {
-    // Only allow numbers and one decimal point
     if (/^\d*\.?\d*$/.test(value) || value === "") {
       setMeasuredAmount(value)
     }
   }
 
   const handleKeyPress = (key: string) => {
-    // Prevent multiple decimal points
     if (key === "." && measuredAmount.includes(".")) {
       return
     }
@@ -126,30 +122,24 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
       return
     }
 
-    // Calculate flow rate (ml/s) based on measured amount and 2 seconds runtime
     const flowRate = amount / 2
 
-    // Update local configuration
     const updatedConfig = pumpConfig.map((pump) => (pump.id === currentPumpId ? { ...pump, flowRate } : pump))
 
     setPumpConfig(updatedConfig)
 
-    // Save configuration immediately
     setSaving(true)
     try {
       await savePumpConfig(updatedConfig)
 
-      // Log updated flow rate for debugging
       const pump = updatedConfig.find((p) => p.id === currentPumpId)
       if (pump) {
         console.log(`Calibration for pump ${pump.id} (${pump.ingredient}) updated: ${flowRate} ml/s`)
       }
 
-      // Show success message
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
 
-      // Notify main component about update
       if (onConfigUpdate) {
         await onConfigUpdate()
       }
@@ -159,7 +149,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
       setSaving(false)
     }
 
-    // Reset
     setMeasuredAmount("")
     setCalibrationStep("idle")
     setCurrentPumpId(null)
@@ -187,7 +176,7 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
         <CardHeader>
           <CardTitle className="text-white">CocktailBot Pump Calibration</CardTitle>
           <CardDescription className="text-white">
-            Calibrate each pump by running it for 2 seconds, measuring the dispensed amount in ml and entering the
+            Calibrate each pump by running it for 2 seconds, measuring the dispensed amount in ml, and entering the
             value.
           </CardDescription>
         </CardHeader>
@@ -209,8 +198,8 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
             <Alert className="mb-4 bg-[hsl(var(--cocktail-accent))]/10 border-[hsl(var(--cocktail-accent))]/30">
               <Beaker className="h-4 w-4 text-[hsl(var(--cocktail-accent))]" />
               <AlertDescription className="text-[hsl(var(--cocktail-text))]">
-                Pump {currentPumpId} is running for 2 seconds. Please place a measuring cup and measure the dispensed
-                amount in ml.
+                Pump {currentPumpId} is running for 2 seconds. Please place a measuring container and measure the
+                dispensed amount in ml.
               </AlertDescription>
             </Alert>
           )}
@@ -232,7 +221,7 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
                       <SelectValue placeholder="Select ingredient" />
                     </SelectTrigger>
                     <SelectContent className="bg-black text-white border-[hsl(var(--cocktail-card-border))]">
-                      {ingredients.map((ingredient) => (
+                      {allIngredients.map((ingredient) => (
                         <SelectItem key={ingredient.id} value={ingredient.id}>
                           {ingredient.name}
                         </SelectItem>
@@ -296,7 +285,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
         </CardContent>
       </Card>
 
-      {/* Dialog for entering measured amount */}
       <Dialog open={showInputDialog} onOpenChange={(open) => !open && cancelCalibration()}>
         <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] sm:max-w-md text-white">
           <DialogHeader>

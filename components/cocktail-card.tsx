@@ -25,53 +25,53 @@ export default function CocktailCard({ cocktail, onClick }: CocktailCardProps) {
         return
       }
 
-      // Extract filename from path
+      // Extrahiere den Dateinamen aus dem Pfad
       const filename = cocktail.image.split("/").pop() || cocktail.image
-      const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "") // Remove file extension
+      const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "") // Entferne Dateierweiterung
       const originalExt = filename.split(".").pop()?.toLowerCase() || ""
 
-      // All common image formats
+      // Alle gängigen Bildformate
       const imageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"]
 
-      // Use original extension first, then all others
+      // Verwende originale Erweiterung zuerst, dann alle anderen
       const extensionsToTry = originalExt
         ? [originalExt, ...imageExtensions.filter((ext) => ext !== originalExt)]
         : imageExtensions
 
-      // Different base paths for alcoholic and non-alcoholic cocktails
+      // Verschiedene Basispfade für alkoholische und alkoholfreie Cocktails
       const basePaths = [
-        "/images/cocktails/", // Alcoholic cocktails
-        "/", // Non-alcoholic cocktails (directly in public/)
-        "", // Without path
-        "/public/images/cocktails/", // Full path
-        "/public/", // Public directory
+        "/images/cocktails/", // Alkoholische Cocktails
+        "/", // Alkoholfreie Cocktails (direkt im public/)
+        "", // Ohne Pfad
+        "/public/images/cocktails/", // Vollständiger Pfad
+        "/public/", // Public Verzeichnis
       ]
 
       const strategies: string[] = []
 
-      // Generate all combinations of paths and file extensions
+      // Generiere alle Kombinationen von Pfaden und Dateierweiterungen
       for (const basePath of basePaths) {
         for (const ext of extensionsToTry) {
           strategies.push(`${basePath}${filenameWithoutExt}.${ext}`)
         }
-        // Also try the original filename
+        // Auch den originalen Dateinamen probieren
         strategies.push(`${basePath}${filename}`)
       }
 
-      // Additional special strategies
+      // Zusätzliche spezielle Strategien
       strategies.push(
-        // Original path
+        // Originaler Pfad
         cocktail.image,
-        // Without leading slash
+        // Ohne führenden Slash
         cocktail.image.startsWith("/") ? cocktail.image.substring(1) : cocktail.image,
-        // With leading slash
+        // Mit führendem Slash
         cocktail.image.startsWith("/") ? cocktail.image : `/${cocktail.image}`,
-        // API path as fallback
+        // API-Pfad als Fallback
         `/api/image?path=${encodeURIComponent(`/home/pi/cocktailbot/cocktailbot-main/public/images/cocktails/${filename}`)}`,
         `/api/image?path=${encodeURIComponent(`/home/pi/cocktailbot/cocktailbot-main/public/${filename}`)}`,
       )
 
-      // Remove duplicates
+      // Entferne Duplikate
       const uniqueStrategies = [...new Set(strategies)]
 
       console.log(
@@ -84,7 +84,7 @@ export default function CocktailCard({ cocktail, onClick }: CocktailCardProps) {
 
         try {
           const img = new Image()
-          img.crossOrigin = "anonymous" // For CORS
+          img.crossOrigin = "anonymous" // Für CORS
 
           const loadPromise = new Promise<boolean>((resolve) => {
             img.onload = () => resolve(true)
@@ -101,11 +101,11 @@ export default function CocktailCard({ cocktail, onClick }: CocktailCardProps) {
             return
           }
         } catch (error) {
-          // Ignore errors and try next strategy
+          // Fehler ignorieren und nächste Strategie versuchen
         }
       }
 
-      // Fallback to placeholder
+      // Fallback auf Platzhalter
       console.log(`❌ No working image found for ${cocktail.name}, using placeholder`)
       const placeholder = `/placeholder.svg?height=300&width=300&query=${encodeURIComponent(cocktail.name)}`
       setImageSrc(placeholder)
@@ -136,7 +136,7 @@ export default function CocktailCard({ cocktail, onClick }: CocktailCardProps) {
           {cocktail.alcoholic ? "Alcoholic" : "Non-Alcoholic"}
         </Badge>
 
-        {/* Debug Info (only in Development) */}
+        {/* Debug Info (nur in Development) */}
         {process.env.NODE_ENV === "development" && (
           <div className="absolute bottom-2 left-2 text-xs bg-black/70 text-white p-1 rounded">
             {imageStatus === "loading" && "🔄"}

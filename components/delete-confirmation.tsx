@@ -1,105 +1,138 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Loader2, AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Trash2, AlertTriangle, Loader2 } from "lucide-react"
+import AlphaKeyboard from "./alpha-keyboard"
 
 interface DeleteConfirmationProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
-  itemName: string
-  itemType?: string
-  description?: string
+  cocktailName: string
 }
 
-export default function DeleteConfirmation({
-  isOpen,
-  onClose,
-  onConfirm,
-  itemName,
-  itemType = "item",
-  description,
-}: DeleteConfirmationProps) {
+export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktailName }: DeleteConfirmationProps) {
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showKeyboard, setShowKeyboard] = useState(true)
 
-  const handleConfirm = async () => {
-    setIsDeleting(true)
-    try {
-      await onConfirm()
-      onClose()
-    } catch (error) {
-      console.error("Error during deletion:", error)
-    } finally {
-      setIsDeleting(false)
+  // Reset password when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      setPassword("")
+      setError(false)
+      setShowKeyboard(true)
+    }
+  }, [isOpen])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (password === "cocktail") {
+      setError(false)
+      setIsDeleting(true)
+
+      try {
+        await onConfirm()
+        setPassword("")
+        onClose()
+      } catch (error) {
+        console.error("Error deleting:", error)
+      } finally {
+        setIsDeleting(false)
+      }
+    } else {
+      setError(true)
     }
   }
 
-  const handleClose = () => {
-    if (!isDeleting) {
-      onClose()
-    }
+  const handleKeyPress = (key: string) => {
+    setPassword((prev) => prev + key)
+    setError(false)
+  }
+
+  const handleBackspace = () => {
+    setPassword((prev) => prev.slice(0, -1))
+    setError(false)
+  }
+
+  const handleClear = () => {
+    setPassword("")
+    setError(false)
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-md">
-        <DialogHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-            <Trash2 className="h-6 w-6 text-red-500" />
-          </div>
-          <DialogTitle className="text-xl font-bold">Delete {itemType}</DialogTitle>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-[hsl(var(--cocktail-text))] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-[hsl(var(--cocktail-error))]" />
+            Delete Cocktail
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 my-6">
-          <Alert className="bg-red-500/10 border-red-500/30">
-            <AlertTriangle className="h-4 w-4 text-red-500" />
-            <AlertDescription className="text-red-400">
-              <p className="font-medium mb-2">This action cannot be undone!</p>
-              <p>
-                Are you sure you want to delete <span className="font-semibold text-white">"{itemName}"</span>?
-              </p>
-            </AlertDescription>
-          </Alert>
+        <Alert className="bg-[hsl(var(--cocktail-error))]/10 border-[hsl(var(--cocktail-error))]/30">
+          <AlertDescription className="text-[hsl(var(--cocktail-text))]">
+            Do you really want to delete the cocktail <strong>{cocktailName}</strong>? This action cannot be undone.
+          </AlertDescription>
+        </Alert>
 
-          {description && (
-            <div className="text-[hsl(var(--cocktail-text-muted))] text-sm bg-[hsl(var(--cocktail-card-bg))] p-3 rounded border border-[hsl(var(--cocktail-card-border))]">
-              {description}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password">Please enter the password to confirm deletion:</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`bg-[hsl(var(--cocktail-bg))] border-[hsl(var(--cocktail-card-border))] ${error ? "border-[hsl(var(--cocktail-error))]" : ""}`}
+              placeholder="Enter password"
+              autoComplete="off"
+              readOnly
+              onFocus={() => setShowKeyboard(true)}
+            />
+            {error && <p className="text-[hsl(var(--cocktail-error))] text-sm">Wrong password. Please try again.</p>}
+          </div>
+
+          {showKeyboard && (
+            <div className="mt-4">
+              <AlphaKeyboard
+                onKeyPress={handleKeyPress}
+                onBackspace={handleBackspace}
+                onClear={handleClear}
+                onConfirm={handleSubmit}
+              />
             </div>
           )}
-        </div>
 
-        <DialogFooter className="flex gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={isDeleting}
-            className="flex-1 bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleConfirm}
-            disabled={isDeleting}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-          >
-            {isDeleting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
-              </>
-            ) : (
-              <>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="destructive" disabled={isDeleting}>
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Confirm Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

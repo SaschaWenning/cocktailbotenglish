@@ -100,10 +100,10 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
 
   const handleRefill = async (ingredientId: string) => {
     const amountStr = refillAmounts[ingredientId]
-    if (!amountStr) return
+    if (!amountStr && amountStr !== "0") return
 
     const newTotalAmount = Number.parseInt(amountStr, 10)
-    if (isNaN(newTotalAmount) || newTotalAmount <= 0) return
+    if (isNaN(newTotalAmount) || newTotalAmount < 0) return
 
     setSaving(true)
     try {
@@ -170,12 +170,30 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
     }
   }
 
+  const handleEmpty = (ingredientId: string) => {
+    setActiveButton(`${ingredientId}-empty`)
+    setTimeout(() => setActiveButton(null), 300)
+
+    setRefillAmounts((prev) => ({
+      ...prev,
+      [ingredientId]: "0",
+    }))
+
+    handleRefill(ingredientId)
+  }
+
   const getIngredientName = (id: string) => {
+    if (id.startsWith("custom-")) {
+      return id.replace(/^custom-\d+-/, "")
+    }
     const ingredient = ingredients.find((i) => i.id === id)
     return ingredient ? ingredient.name : id
   }
 
   const getIngredientIcon = (id: string) => {
+    if (id.startsWith("custom-")) {
+      return <Droplet className="h-4 w-4" />
+    }
     const ingredient = ingredients.find((i) => i.id === id)
     if (!ingredient) return <Droplet className="h-4 w-4" />
 
@@ -199,9 +217,9 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
 
   const connectedIngredientIds = pumpConfig.map((pump) => pump.ingredient)
 
-  // Create a fixed list based on pumps
+  // Create a fixed list based on the pumps
   const pumpBasedLevels = pumpConfig.map((pump) => {
-    // Find existing fill level for this ingredient
+    // Search for the existing fill level for this ingredient
     const existingLevel = levels.find((level) => level.ingredientId === pump.ingredient)
 
     // If no fill level exists, create a temporary one
@@ -226,7 +244,7 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
   // Sort by pump ID
   const sortedLevels = pumpBasedLevels.sort((a, b) => a.pumpId - b.pumpId)
 
-  // Filter based on active tab
+  // Filter based on the active tab
   const filteredLevels = sortedLevels.filter((level) => {
     if (activeTab === "all") return true
     if (activeTab === "low" && level.currentAmount < 100) return true
@@ -350,7 +368,7 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                         className={`bg-black ${cardBorderColor} transition-all duration-300 hover:shadow-lg`}
                       >
                         <CardContent className="p-6">
-                          {/* Header with Icon and Name */}
+                          {/* Header with icon and name */}
                           <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                               {getIngredientIcon(level.ingredientId)}
@@ -388,7 +406,7 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                             />
                           </div>
 
-                          {/* Warning for low fill level */}
+                          {/* Warning for low fill levels */}
                           {isLow && (
                             <Alert
                               className={`mb-4 ${
@@ -408,7 +426,7 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                             </Alert>
                           )}
 
-                          {/* Input Field */}
+                          {/* Input field */}
                           <div className="mb-4">
                             <Input
                               type="text"
@@ -420,9 +438,22 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                             />
                           </div>
 
-                          {/* Quick Selection Buttons */}
+                          {/* Quick selection buttons */}
                           <div className="grid grid-cols-4 gap-2 mb-3">
-                            {commonSizes.map((size) => (
+                            <Button
+                              key="empty"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEmpty(level.ingredientId)}
+                              className={`bg-gray-900 text-white border-gray-700 hover:bg-[#ff3b30] hover:text-white hover:border-[#ff3b30] transition-all duration-200 ${
+                                activeButton === `${level.ingredientId}-empty`
+                                  ? "bg-[#ff3b30] text-white border-[#ff3b30]"
+                                  : ""
+                              }`}
+                            >
+                              Empty
+                            </Button>
+                            {commonSizes.slice(0, 3).map((size) => (
                               <Button
                                 key={size}
                                 variant="outline"
@@ -439,14 +470,32 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                             ))}
                           </div>
 
-                          {/* Manual Button */}
+                          <div className="grid grid-cols-4 gap-2 mb-3">
+                            {commonSizes.slice(3).map((size) => (
+                              <Button
+                                key={size}
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleQuickFill(level.ingredientId, size)}
+                                className={`bg-gray-900 text-white border-gray-700 hover:bg-[#00ff00] hover:text-black hover:border-[#00ff00] transition-all duration-200 ${
+                                  activeButton === `${level.ingredientId}-${size}`
+                                    ? "bg-[#00ff00] text-black border-[#00ff00]"
+                                    : ""
+                                }`}
+                              >
+                                {size}ml
+                              </Button>
+                            ))}
+                          </div>
+
+                          {/* Manual input button */}
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleInputFocus(level.ingredientId)}
                             className="w-full bg-gray-900 text-white border-gray-700 hover:bg-[#00ff00] hover:text-black hover:border-[#00ff00] transition-all duration-200"
                           >
-                            📝 Enter manually
+                            📝 Manual Input
                           </Button>
                         </CardContent>
                       </Card>
@@ -455,7 +504,7 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                 )}
               </div>
 
-              {/* Refill All Button */}
+              {/* Fill all button */}
               <Card className="bg-black border border-[#00ff00]/30">
                 <CardContent className="p-4">
                   <Button
@@ -471,14 +520,14 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
                     ) : (
                       <>
                         <RefreshCw className="mr-2 h-5 w-5" />
-                        Refill all ingredients completely
+                        Fill all ingredients completely
                       </>
                     )}
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Success Message */}
+              {/* Success message */}
               {showSuccess && (
                 <Alert className="bg-[#00ff00]/10 border-[#00ff00]/30 animate-in slide-in-from-top-2 duration-300">
                   <AlertDescription className="text-[#00ff00] font-medium">
@@ -526,7 +575,8 @@ export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: Ingred
               onBackspace={handleBackspace}
               onClear={handleClear}
               onConfirm={confirmInput}
-              allowDecimal={false}
+              onCancel={cancelInput}
+              layout="numeric"
             />
           </div>
 

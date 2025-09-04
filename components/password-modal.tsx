@@ -63,7 +63,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Password required
+            Password Required
           </DialogTitle>
         </DialogHeader>
 

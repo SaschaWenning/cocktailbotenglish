@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Cocktail } from "@/types/cocktail"
-import { ingredients } from "@/data/ingredients"
+import { getAllIngredients } from "@/lib/ingredients"
 import { saveRecipe } from "@/lib/cocktail-machine"
 import { Loader2, ImageIcon, Plus, Minus, FolderOpen, X, ArrowLeft, Check, ArrowUp, Lock } from "lucide-react"
 import FileBrowser from "./file-browser"
@@ -21,23 +21,31 @@ interface RecipeCreatorProps {
 export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreatorProps) {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
-  const [recipe, setRecipe] = useState<{ ingredientId: string; amount: number }[]>([])
+  const [recipe, setRecipe] = useState<
+    { ingredientId: string; amount: number; type: "automatic" | "manual"; instruction?: string }[]
+  >([])
   const [imageUrl, setImageUrl] = useState("")
   const [alcoholic, setAlcoholic] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [ingredients, setIngredients] = useState(getAllIngredients())
   const [errors, setErrors] = useState<{
     name?: string
     imageUrl?: string
   }>({})
-  const [showFileBrowser, setShowFileBrowser] = useState(false)
 
-  // Keyboard states - INSIDE the dialog
   const [showKeyboard, setShowKeyboard] = useState(false)
-  const [keyboardMode, setKeyboardMode] = useState<"name" | "description" | "imageUrl" | string>("name")
+  const [keyboardMode, setKeyboardMode] = useState("")
   const [keyboardValue, setKeyboardValue] = useState("")
   const [isNumericKeyboard, setIsNumericKeyboard] = useState(false)
   const [isShiftActive, setIsShiftActive] = useState(false)
   const [isCapsLockActive, setIsCapsLockActive] = useState(false)
+  const [showFileBrowser, setShowFileBrowser] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      setIngredients(getAllIngredients())
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (recipe.length === 0) {
@@ -46,7 +54,11 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
   }, [recipe])
 
   // Open keyboard
-  const openKeyboard = (mode: "name" | "description" | "imageUrl" | string, currentValue: string, numeric = false) => {
+  const openKeyboard = (
+    mode: "name" | "description" | "imageUrl" | "instruction" | string,
+    currentValue: string,
+    numeric = false,
+  ) => {
     setKeyboardMode(mode)
     setKeyboardValue(currentValue)
     setIsNumericKeyboard(numeric)
@@ -56,84 +68,14 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
     setIsCapsLockActive(false)
   }
 
-  // Keyboard input
-  const handleKeyPress = (key: string) => {
-    if (isNumericKeyboard) {
-      if (key === "." && keyboardValue.includes(".")) return
-      if (key === "00" && keyboardValue === "") {
-        setKeyboardValue("0")
-        return
-      }
-      setKeyboardValue((prev) => prev + key)
-    } else {
-      // Handle uppercase/lowercase for letters
-      let finalKey = key
-      if (key.match(/[a-z]/)) {
-        if (isShiftActive || isCapsLockActive) {
-          finalKey = key.toUpperCase()
-        }
-      }
-
-      setKeyboardValue((prev) => prev + finalKey)
-
-      // Reset shift after typing (but not caps lock)
-      if (isShiftActive) {
-        setIsShiftActive(false)
-      }
-    }
-  }
-
-  const handleShift = () => {
-    setIsShiftActive(!isShiftActive)
-  }
-
-  const handleCapsLock = () => {
-    setIsCapsLockActive(!isCapsLockActive)
-    // Turn off shift when caps lock is toggled
+  const openInstructionKeyboard = (index: number, currentValue: string) => {
+    setKeyboardMode(`instruction-${index}`)
+    setKeyboardValue(currentValue || "")
+    setIsNumericKeyboard(false)
+    setShowKeyboard(true)
+    // Reset keyboard states when opening
     setIsShiftActive(false)
-  }
-
-  const handleBackspace = () => {
-    setKeyboardValue((prev) => prev.slice(0, -1))
-  }
-
-  const handleClear = () => {
-    setKeyboardValue("")
-  }
-
-  // Confirm keyboard
-  const handleKeyboardConfirm = () => {
-    if (keyboardMode === "name") {
-      setName(keyboardValue)
-    } else if (keyboardMode === "description") {
-      setDescription(keyboardValue)
-    } else if (keyboardMode === "imageUrl") {
-      setImageUrl(keyboardValue)
-    } else if (keyboardMode.startsWith("amount-")) {
-      const index = Number.parseInt(keyboardMode.replace("amount-", ""), 10)
-      const amount = Number.parseFloat(keyboardValue)
-      if (!isNaN(amount) && amount >= 0) {
-        handleAmountChange(index, amount)
-      }
-    }
-    setShowKeyboard(false)
-  }
-
-  // Cancel keyboard
-  const handleKeyboardCancel = () => {
-    setShowKeyboard(false)
-  }
-
-  const handleAmountChange = (index: number, amount: number) => {
-    const updatedRecipe = [...recipe]
-    updatedRecipe[index] = { ...updatedRecipe[index], amount }
-    setRecipe(updatedRecipe)
-  }
-
-  const handleIngredientChange = (index: number, ingredientId: string) => {
-    const updatedRecipe = [...recipe]
-    updatedRecipe[index] = { ...updatedRecipe[index], ingredientId }
-    setRecipe(updatedRecipe)
+    setIsCapsLockActive(false)
   }
 
   const addIngredient = () => {
@@ -142,26 +84,11 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
     )
 
     if (availableIngredients.length > 0) {
-      setRecipe([...recipe, { ingredientId: availableIngredients[0].id, amount: 30 }])
+      setRecipe([
+        ...recipe,
+        { ingredientId: availableIngredients[0].id, amount: 30, type: "automatic", instruction: "" },
+      ])
     }
-  }
-
-  const removeIngredient = (index: number) => {
-    if (recipe.length > 1) {
-      const updatedRecipe = recipe.filter((_, i) => i !== index)
-      setRecipe(updatedRecipe)
-    }
-  }
-
-  const validateForm = () => {
-    const newErrors: { name?: string; imageUrl?: string } = {}
-
-    if (!name.trim()) {
-      newErrors.name = "Name is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
   }
 
   const handleSave = async () => {
@@ -180,7 +107,8 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
         recipe: recipe,
         ingredients: recipe.map((item) => {
           const ingredient = ingredients.find((i) => i.id === item.ingredientId)
-          return `${item.amount}ml ${ingredient?.name || item.ingredientId}`
+          const ingredientName = ingredient?.name || item.ingredientId.replace(/^custom-\d+-/, "")
+          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manual)" : ""}`
         }),
       }
 
@@ -190,7 +118,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
       // Reset
       setName("")
       setDescription("")
-      setRecipe([])
+      setRecipe([]) // Reset to empty, useEffect will add default
       setImageUrl("")
       setAlcoholic(true)
       setErrors({})
@@ -206,20 +134,140 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
     setShowFileBrowser(false)
   }
 
-  // Define keyboards - ohne Shift/Caps Reihe
+  const handleIngredientChange = (index: number, value: string) => {
+    const updatedRecipe = recipe.map((item, i) => {
+      if (i === index) {
+        return { ...item, ingredientId: value }
+      }
+      return item
+    })
+    setRecipe(updatedRecipe)
+  }
+
+  const handleTypeChange = (index: number, value: "automatic" | "manual") => {
+    const updatedRecipe = recipe.map((item, i) => {
+      if (i === index) {
+        return { ...item, type: value }
+      }
+      return item
+    })
+    setRecipe(updatedRecipe)
+  }
+
+  const removeIngredient = (index: number) => {
+    const updatedRecipe = recipe.filter((_, i) => i !== index)
+    setRecipe(updatedRecipe)
+  }
+
+  const handleKeyPress = (key: string) => {
+    let newValue = keyboardValue
+    if (key === "Backspace") {
+      newValue = newValue.slice(0, -1)
+    } else {
+      let processedKey = key
+      if (key.length === 1 && key.match(/[A-Za-z]/)) {
+        // For letters: check Shift and Caps Lock status
+        const shouldBeUppercase = (isShiftActive && !isCapsLockActive) || (!isShiftActive && isCapsLockActive)
+        processedKey = shouldBeUppercase ? key.toUpperCase() : key.toLowerCase()
+      }
+      newValue += processedKey
+    }
+    setKeyboardValue(newValue)
+
+    if (isShiftActive && !isCapsLockActive) {
+      setIsShiftActive(false)
+    }
+  }
+
+  const handleShift = () => {
+    setIsShiftActive(!isShiftActive)
+  }
+
+  const handleCapsLock = () => {
+    setIsCapsLockActive(!isCapsLockActive)
+  }
+
+  const handleBackspace = () => {
+    setKeyboardValue(keyboardValue.slice(0, -1))
+  }
+
+  const handleClear = () => {
+    setKeyboardValue("")
+  }
+
+  const handleKeyboardCancel = () => {
+    setShowKeyboard(false)
+  }
+
+  const handleKeyboardConfirm = () => {
+    switch (keyboardMode) {
+      case "name":
+        setName(keyboardValue)
+        break
+      case "description":
+        setDescription(keyboardValue)
+        break
+      case "imageUrl":
+        setImageUrl(keyboardValue)
+        break
+      default:
+        if (keyboardMode.startsWith("amount-")) {
+          const index = Number.parseInt(keyboardMode.split("-")[1])
+          const updatedRecipe = recipe.map((item, i) => {
+            if (i === index) {
+              return { ...item, amount: Number.parseFloat(keyboardValue) }
+            }
+            return item
+          })
+          setRecipe(updatedRecipe)
+        } else if (keyboardMode.startsWith("instruction-")) {
+          const index = Number.parseInt(keyboardMode.split("-")[1])
+          const updatedRecipe = recipe.map((item, i) => {
+            if (i === index) {
+              return { ...item, instruction: keyboardValue }
+            }
+            return item
+          })
+          setRecipe(updatedRecipe)
+        }
+        break
+    }
+    setShowKeyboard(false)
+  }
+
+  const validateForm = () => {
+    let valid = true
+    const newErrors: typeof errors = {}
+
+    if (!name.trim()) {
+      newErrors.name = "Name is required"
+      valid = false
+    }
+
+    if (imageUrl && !imageUrl.trim().startsWith("/")) {
+      newErrors.imageUrl = "Image path must start with /"
+      valid = false
+    }
+
+    setErrors(newErrors)
+    return valid
+  }
+
+  // Define keyboards
   const alphaKeys = [
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
     ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"],
     ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
     ["y", "x", "c", "v", "b", "n", "m"],
-    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
-    [" ", "-", "_", ".", "/", "@"],
+    ["ä", "ö", "ü", "ß"],
+    [" ", "-", "_", ".", "/"],
   ]
 
   const numericKeys = [
     ["1", "2", "3"],
     ["4", "5", "6"],
     ["7", "8", "9"],
-    ["0", ".", "00"],
+    ["0", "00", "."],
   ]
 
   const keys = isNumericKeyboard ? numericKeys : alphaKeys
@@ -228,10 +276,6 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && !showFileBrowser && onClose()}>
         <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-4xl max-h-[95vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle>Create New Recipe</DialogTitle>
-          </DialogHeader>
-
           {!showKeyboard ? (
             // FORM VIEW
             <div className="space-y-4 my-4 max-h-[60vh] overflow-y-auto pr-2">
@@ -241,10 +285,10 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                   value={name}
                   onClick={() => openKeyboard("name", name)}
                   readOnly
-                  className={`bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer ${errors.name ? "border-red-500" : ""}`}
+                  className={`bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-10 ${errors.name ? "border-red-500" : ""}`}
                   placeholder="Cocktail name"
                 />
-                {errors.name && <p className="text-red-400 text-xs">{errors.name}</p>}
+                {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
               </div>
 
               <div className="space-y-2">
@@ -253,7 +297,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                   value={description}
                   onClick={() => openKeyboard("description", description)}
                   readOnly
-                  className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer"
+                  className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-10"
                   placeholder="Describe your cocktail..."
                 />
               </div>
@@ -268,13 +312,13 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                     value={imageUrl}
                     onClick={() => openKeyboard("imageUrl", imageUrl)}
                     readOnly
-                    className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1"
+                    className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1 h-10"
                     placeholder="/path/to/image.jpg"
                   />
                   <Button
                     type="button"
                     onClick={() => setShowFileBrowser(true)}
-                    className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))]"
+                    className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))] h-10 w-10 p-0"
                   >
                     <FolderOpen className="h-4 w-4" />
                   </Button>
@@ -295,7 +339,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
               <div className="space-y-2">
                 <Label className="text-white">Alcoholic</Label>
                 <Select value={alcoholic ? "true" : "false"} onValueChange={(value) => setAlcoholic(value === "true")}>
-                  <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black">
+                  <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))]">
@@ -319,8 +363,8 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                     className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))]"
                     disabled={recipe.length >= ingredients.length}
                   >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Ingredient
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add ingredient
                   </Button>
                 </div>
               </div>
@@ -328,11 +372,11 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
               {recipe.map((item, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-12 gap-2 items-center p-2 bg-[hsl(var(--cocktail-card-bg))] rounded border border-[hsl(var(--cocktail-card-border))]"
+                  className="grid grid-cols-12 gap-2 items-center p-3 bg-[hsl(var(--cocktail-card-bg))] rounded border border-[hsl(var(--cocktail-card-border))]"
                 >
-                  <div className="col-span-6">
+                  <div className="col-span-4">
                     <Select value={item.ingredientId} onValueChange={(value) => handleIngredientChange(index, value)}>
-                      <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black">
+                      <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-9">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))] max-h-48 overflow-y-auto">
@@ -348,15 +392,33 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-3">
+                  <div className="col-span-2">
                     <Input
                       value={item.amount}
                       onClick={() => openKeyboard(`amount-${index}`, item.amount.toString(), true)}
                       readOnly
-                      className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer text-center"
+                      className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer text-center h-9"
                     />
                   </div>
-                  <div className="col-span-2 text-sm text-white">ml</div>
+                  <div className="col-span-1 text-sm text-white">ml</div>
+                  <div className="col-span-3">
+                    <Select
+                      value={item.type}
+                      onValueChange={(value: "automatic" | "manual") => handleTypeChange(index, value)}
+                    >
+                      <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))]">
+                        <SelectItem value="automatic" className="text-black hover:bg-gray-100 cursor-pointer">
+                          Automatic
+                        </SelectItem>
+                        <SelectItem value="manual" className="text-black hover:bg-gray-100 cursor-pointer">
+                          Manual
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="col-span-1">
                     <Button
                       type="button"
@@ -364,58 +426,79 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                       variant="destructive"
                       onClick={() => removeIngredient(index)}
                       disabled={recipe.length <= 1}
-                      className="h-8 w-8 p-0"
+                      className="h-9 w-9 p-0"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
                   </div>
+                  {item.type === "manual" && (
+                    <div className="col-span-12 mt-2">
+                      <Input
+                        value={item.instruction || ""}
+                        onClick={() => openInstructionKeyboard(index, item.instruction)}
+                        readOnly
+                        className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-9"
+                        placeholder="Instructions (e.g. 'fill with ice cubes')"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
-            // KEYBOARD VIEW - Shift und Caps an der Seite
-            <div className="flex gap-3 my-4">
-              {/* Tastatur links */}
-              <div className="flex-1">
-                <div className="text-center mb-3">
-                  <h3 className="text-lg font-semibold text-white mb-2">
+            // KEYBOARD VIEW - Keyboard left, Action buttons right
+            <div className="flex gap-3 my-2 h-[80vh]">
+              {/* Keyboard left */}
+              <div className="flex-1 flex flex-col">
+                <div className="text-center mb-2">
+                  <h3 className="text-base font-semibold text-white mb-1">
                     {keyboardMode === "name" && "Enter name"}
                     {keyboardMode === "description" && "Enter description"}
                     {keyboardMode === "imageUrl" && "Enter image path"}
                     {keyboardMode.startsWith("amount-") && "Enter amount (ml)"}
+                    {keyboardMode === "instruction" && "Enter instructions"}
                   </h3>
-                  <div className="bg-white text-black text-lg p-3 rounded mb-4 min-h-[50px] break-all">
+                  <div className="bg-white text-black text-base p-2 rounded mb-2 min-h-[40px] break-all">
                     {keyboardValue || <span className="text-gray-400">Input...</span>}
                   </div>
                 </div>
 
-                <div className="grid gap-2">
+                <div className="flex-1 flex flex-col gap-2">
                   {keys.map((row, rowIndex) => (
-                    <div key={rowIndex} className="flex gap-1 justify-center">
-                      {row.map((key) => (
-                        <Button
-                          key={key}
-                          type="button"
-                          onClick={() => handleKeyPress(key)}
-                          className="flex-1 h-12 text-lg bg-gray-700 hover:bg-gray-600 text-white"
-                        >
-                          {key}
-                        </Button>
-                      ))}
+                    <div key={rowIndex} className="flex gap-1 justify-center flex-1">
+                      {row.map((key) => {
+                        let displayKey = key
+                        if (key.length === 1 && key.match(/[a-z]/)) {
+                          const shouldShowUppercase =
+                            (isShiftActive && !isCapsLockActive) || (!isShiftActive && isCapsLockActive)
+                          displayKey = shouldShowUppercase ? key.toUpperCase() : key.toLowerCase()
+                        }
+
+                        return (
+                          <Button
+                            key={key}
+                            type="button"
+                            onClick={() => handleKeyPress(key)}
+                            className="flex-1 text-lg bg-gray-700 hover:bg-gray-600 text-white min-h-0 h-full"
+                          >
+                            {displayKey}
+                          </Button>
+                        )
+                      })}
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Action Buttons rechts - mit Shift und Caps */}
+              {/* Action Buttons right */}
               <div className="flex flex-col gap-2 w-24">
-                {/* Shift und Caps nur für Alpha-Tastatur */}
+                {/* Shift and Caps only for Alpha keyboard */}
                 {!isNumericKeyboard && (
                   <>
                     <Button
                       type="button"
                       onClick={handleShift}
-                      className={`h-12 text-white flex flex-col items-center justify-center ${
+                      className={`h-16 text-white flex flex-col items-center justify-center ${
                         isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
                       }`}
                     >
@@ -425,7 +508,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                     <Button
                       type="button"
                       onClick={handleCapsLock}
-                      className={`h-12 text-white flex flex-col items-center justify-center ${
+                      className={`h-16 text-white flex flex-col items-center justify-center ${
                         isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
                       }`}
                     >
@@ -438,7 +521,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                 <Button
                   type="button"
                   onClick={handleBackspace}
-                  className="h-12 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center"
+                  className="h-16 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span className="text-xs">Back</span>
@@ -446,7 +529,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                 <Button
                   type="button"
                   onClick={handleClear}
-                  className="h-12 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center"
+                  className="h-16 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center"
                 >
                   <X className="h-4 w-4" />
                   <span className="text-xs">Clear</span>
@@ -454,14 +537,14 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                 <Button
                   type="button"
                   onClick={handleKeyboardCancel}
-                  className="h-12 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
+                  className="h-16 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
                 >
                   <span className="text-xs">Cancel</span>
                 </Button>
                 <Button
                   type="button"
                   onClick={handleKeyboardConfirm}
-                  className="h-12 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center"
+                  className="h-16 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center"
                 >
                   <Check className="h-4 w-4" />
                   <span className="text-xs">OK</span>
@@ -471,7 +554,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
           )}
 
           {!showKeyboard && (
-            <DialogFooter className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 mt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -490,12 +573,12 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                   "Save"
                 )}
               </Button>
-            </DialogFooter>
+            </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* File Browser */}
+      {/* File browser */}
       <FileBrowser
         isOpen={showFileBrowser}
         onClose={() => setShowFileBrowser(false)}
