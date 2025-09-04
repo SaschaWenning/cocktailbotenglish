@@ -29,22 +29,26 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
   }, [])
 
   const loadCustomIngredients = () => {
+    if (typeof window === "undefined") return
+
     try {
       const stored = localStorage.getItem("customIngredients")
       if (stored) {
         setCustomIngredients(JSON.parse(stored))
       }
     } catch (error) {
-      console.error("Fehler beim Laden der benutzerdefinierten Zutaten:", error)
+      console.error("Error loading custom ingredients:", error)
     }
   }
 
   const saveCustomIngredients = (ingredients: Ingredient[]) => {
+    if (typeof window === "undefined") return
+
     try {
       localStorage.setItem("customIngredients", JSON.stringify(ingredients))
       setCustomIngredients(ingredients)
     } catch (error) {
-      console.error("Fehler beim Speichern der benutzerdefinierten Zutaten:", error)
+      console.error("Error saving custom ingredients:", error)
     }
   }
 

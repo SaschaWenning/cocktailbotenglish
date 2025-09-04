@@ -21,6 +21,14 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
   const [manualCleaningPumps, setManualCleaningPumps] = useState<Set<number>>(new Set())
   const cleaningProcessRef = useRef<{ cancel: boolean }>({ cancel: false })
 
+  const getIngredientName = (ingredientId: string): string => {
+    if (ingredientId.startsWith("custom-")) {
+      // Remove "custom-" prefix and timestamp, keep only the readable name
+      return ingredientId.replace(/^custom-\d+-/, "").replace(/-/g, " ")
+    }
+    return ingredientId
+  }
+
   const startCleaning = async () => {
     setCleaningStatus("preparing")
     setProgress(0)
@@ -255,7 +263,9 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                 </Button>
                 <span className="text-xs text-[hsl(var(--cocktail-text-muted))] text-center">
                   Pump {pump.id}
-                  {pump.ingredient && <div className="text-[10px] opacity-70">{pump.ingredient}</div>}
+                  {pump.ingredient && (
+                    <div className="text-[10px] opacity-70">{getIngredientName(pump.ingredient)}</div>
+                  )}
                 </span>
               </div>
             ))}
