@@ -31,7 +31,7 @@ export default function ServiceMenu({
 }: ServiceMenuProps) {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
-  const [activeServiceTab, setActiveServiceTab] = useState("fuellstaende")
+  const [activeServiceTab, setActiveServiceTab] = useState("fill-levels")
 
   const handlePasswordSuccess = () => {
     setShowPasswordModal(false)
@@ -49,10 +49,10 @@ export default function ServiceMenu({
           <div className="bg-[hsl(var(--cocktail-card-bg))] rounded-2xl p-8 max-w-md mx-auto shadow-2xl border border-[hsl(var(--cocktail-card-border))]">
             <Lock className="h-16 w-16 mx-auto mb-6 text-[hsl(var(--cocktail-warning))]" />
             <h2 className="text-2xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">
-              Service menu is password protected
+              Service Menu is Password Protected
             </h2>
             <p className="text-[hsl(var(--cocktail-text-muted))] mb-6 leading-relaxed">
-              Please enter the password to open the service menu.
+              Please enter the password to access the service menu.
             </p>
             <Button
               onClick={handleUnlockClick}
@@ -74,7 +74,7 @@ export default function ServiceMenu({
 
   const renderServiceContent = () => {
     switch (activeServiceTab) {
-      case "entlueften":
+      case "bleed":
         return (
           <QuickShotSelector
             pumpConfig={pumpConfig}
@@ -82,14 +82,14 @@ export default function ServiceMenu({
             onShotComplete={onShotComplete}
           />
         )
-      case "fuellstaende":
+      case "fill-levels":
         return <IngredientLevels pumpConfig={pumpConfig} onLevelsUpdated={onLevelsUpdated} />
-      case "reinigung":
+      case "cleaning":
         return <PumpCleaning pumpConfig={pumpConfig} />
-      case "kalibrierung":
+      case "calibration":
         return <PumpCalibration pumpConfig={pumpConfig} onConfigUpdate={onConfigUpdate} />
-      case "zutaten":
-        return <IngredientManager onClose={() => setActiveServiceTab("fuellstaende")} />
+      case "ingredients":
+        return <IngredientManager onClose={() => setActiveServiceTab("fill-levels")} />
       default:
         return null
     }
@@ -113,19 +113,19 @@ export default function ServiceMenu({
         <nav className="service-tabs-list">
           <div className="flex overflow-x-auto space-x-3 pb-2">
             <Button
-              onClick={() => setActiveServiceTab("entlueften")}
+              onClick={() => setActiveServiceTab("bleed")}
               className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
-                activeServiceTab === "entlueften"
+                activeServiceTab === "bleed"
                   ? "bg-[#00ff00] text-black scale-105"
                   : "bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))] hover:scale-102"
               }`}
             >
-              Purge
+              Bleed
             </Button>
             <Button
-              onClick={() => setActiveServiceTab("fuellstaende")}
+              onClick={() => setActiveServiceTab("fill-levels")}
               className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
-                activeServiceTab === "fuellstaende"
+                activeServiceTab === "fill-levels"
                   ? "bg-[#00ff00] text-black scale-105"
                   : "bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))] hover:scale-102"
               }`}
@@ -133,9 +133,9 @@ export default function ServiceMenu({
               Fill Levels
             </Button>
             <Button
-              onClick={() => setActiveServiceTab("reinigung")}
+              onClick={() => setActiveServiceTab("cleaning")}
               className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
-                activeServiceTab === "reinigung"
+                activeServiceTab === "cleaning"
                   ? "bg-[#00ff00] text-black scale-105"
                   : "bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))] hover:scale-102"
               }`}
@@ -143,9 +143,9 @@ export default function ServiceMenu({
               Cleaning
             </Button>
             <Button
-              onClick={() => setActiveServiceTab("kalibrierung")}
+              onClick={() => setActiveServiceTab("calibration")}
               className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
-                activeServiceTab === "kalibrierung"
+                activeServiceTab === "calibration"
                   ? "bg-[#00ff00] text-black scale-105"
                   : "bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))] hover:scale-102"
               }`}
@@ -153,9 +153,9 @@ export default function ServiceMenu({
               Calibration
             </Button>
             <Button
-              onClick={() => setActiveServiceTab("zutaten")}
+              onClick={() => setActiveServiceTab("ingredients")}
               className={`flex-1 py-3 px-6 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl ${
-                activeServiceTab === "zutaten"
+                activeServiceTab === "ingredients"
                   ? "bg-[#00ff00] text-black scale-105"
                   : "bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))] hover:scale-102"
               }`}

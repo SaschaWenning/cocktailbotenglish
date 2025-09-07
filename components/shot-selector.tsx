@@ -72,7 +72,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
 
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage("Preparing shot...")
+    setStatusMessage("Bereite Shot vor...")
     setErrorMessage(null)
 
     let intervalId: NodeJS.Timeout
@@ -95,7 +95,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
 
       const ingredient = allIngredients.find((i) => i.id === selectedIngredient)
       const ingredientName = ingredient?.name || selectedIngredient.replace(/^custom-\d+-/, "")
-      setStatusMessage(`${ingredientName} Shot (${shotSize}ml) ready!`)
+      setStatusMessage(`${ingredientName} Shot (${shotSize}ml) fertig!`)
       setShowSuccess(true)
 
       await onShotComplete()
@@ -108,8 +108,8 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
     } catch (error) {
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Error during preparation!")
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
+      setStatusMessage("Fehler bei der Zubereitung!")
+      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
       setTimeout(() => setIsMaking(false), 3000)
     }
   }
@@ -156,7 +156,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
               <h2 className="text-xl font-semibold text-[hsl(var(--cocktail-text))]">{cleanName} Shot</h2>
 
               <div className="w-full max-w-xs">
-                <h4 className="text-base mb-2 text-center text-[hsl(var(--cocktail-text))]">Choose shot size:</h4>
+                <h4 className="text-base mb-2 text-center text-[hsl(var(--cocktail-text))]">Shot-Größe wählen:</h4>
                 <div className="flex gap-4 justify-center">
                   {[20, 40].map((size) => (
                     <button
@@ -179,7 +179,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
                 <Alert className="bg-[hsl(var(--cocktail-error))]/10 border-[hsl(var(--cocktail-error))]/30">
                   <AlertCircle className="h-4 w-4 text-[hsl(var(--cocktail-error))]" />
                   <AlertDescription className="text-[hsl(var(--cocktail-error))]">
-                    Not enough {cleanName} available! Please refill.
+                    Nicht genügend {cleanName} vorhanden! Bitte nachfüllen.
                   </AlertDescription>
                 </Alert>
               )}
@@ -191,14 +191,14 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
                   onClick={handleCancelSelection}
                   className="flex-1 bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))]"
                 >
-                  Cancel
+                  Abbrechen
                 </Button>
                 <Button
                   className="flex-1 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black"
                   onClick={handleMakeShot}
                   disabled={!isAvailable}
                 >
-                  Prepare Shot
+                  Shot zubereiten
                 </Button>
               </div>
             </div>
@@ -211,7 +211,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Alcoholic Shots</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Alkoholische Shots</h2>
         <div className="grid grid-cols-4 gap-3">
           {alcoholicIngredients.map((ingredient) => {
             const isAvailable = checkIngredientAvailable(ingredient.id)
@@ -230,7 +230,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
               >
                 <div className="flex flex-col items-center">
                   <span className="font-medium text-sm">{ingredient.name}</span>
-                  {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Empty</span>}
+                  {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Leer</span>}
                 </div>
               </Button>
             )
@@ -240,7 +240,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
 
       {nonAlcoholicIngredients.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Non-Alcoholic Shots</h2>
+          <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Alkoholfreie Shots</h2>
           <div className="grid grid-cols-4 gap-3">
             {nonAlcoholicIngredients.map((ingredient) => {
               const isAvailable = checkIngredientAvailable(ingredient.id)
@@ -259,7 +259,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
                 >
                   <div className="flex flex-col items-center">
                     <span className="font-medium text-sm">{ingredient.name}</span>
-                    {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Empty</span>}
+                    {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Leer</span>}
                   </div>
                 </Button>
               )

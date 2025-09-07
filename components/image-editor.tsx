@@ -94,20 +94,22 @@ export default function ImageEditor({ isOpen, onClose, cocktail, onSave }: Image
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Change Image - {cocktail.name}</DialogTitle>
+            <DialogTitle>Bild ändern - {cocktail.name}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 my-4">
+            {/* Vorschau */}
             <div className="flex justify-center">
               <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-[hsl(var(--cocktail-card-border))]">
-                <img src={previewSrc || "/placeholder.svg"} alt="Preview" className="w-full h-full object-cover" />
+                <img src={previewSrc || "/placeholder.svg"} alt="Vorschau" className="w-full h-full object-cover" />
               </div>
             </div>
 
+            {/* Eingabefeld */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-white">
                 <ImageIcon className="h-4 w-4" />
-                Image Path
+                Bild-Pfad
               </Label>
               <div className="flex gap-2">
                 <Input
@@ -117,7 +119,7 @@ export default function ImageEditor({ isOpen, onClose, cocktail, onSave }: Image
                     updatePreview(e.target.value)
                   }}
                   className="bg-white border-[hsl(var(--cocktail-card-border))] text-black flex-1"
-                  placeholder="/images/cocktails/my-image.jpg"
+                  placeholder="/images/cocktails/mein-bild.jpg"
                 />
                 <Button
                   type="button"
@@ -136,10 +138,11 @@ export default function ImageEditor({ isOpen, onClose, cocktail, onSave }: Image
               </div>
             </div>
 
+            {/* Test-Ergebnisse */}
             {testResults && (
               <div className="text-xs bg-gray-800 p-3 rounded font-mono max-h-40 overflow-y-auto">
                 <div className="text-green-400 mb-2">
-                  Working: {testResults.workingPaths.length} of {testResults.testResults.length}
+                  Funktioniert: {testResults.workingPaths.length} von {testResults.testResults.length}
                 </div>
                 {testResults.testResults.map((result: any, index: number) => (
                   <div key={index} className={result.exists ? "text-green-400" : "text-red-400"}>
@@ -157,16 +160,16 @@ export default function ImageEditor({ isOpen, onClose, cocktail, onSave }: Image
               onClick={onClose}
               className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
             >
-              Cancel
+              Abbrechen
             </Button>
             <Button onClick={handleSave} disabled={saving} className="bg-[#00ff00] text-black hover:bg-[#00cc00]">
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Speichern...
                 </>
               ) : (
-                "Save"
+                "Speichern"
               )}
             </Button>
           </DialogFooter>

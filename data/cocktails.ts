@@ -47,7 +47,7 @@ export const cocktails: Cocktail[] = [
     description: "Creamy cocktail with Malibu and pineapple",
     image: "/images/cocktails/malibu_colada.jpg",
     alcoholic: true,
-    ingredients: ["80ml Malibu", "150ml Pineapple Juice", "50ml Creme of Coconut (add manually)"],
+    ingredients: ["80ml Malibu", "150ml Pineapple Juice", "50ml Cream of Coconut (add manually)"],
     recipe: [
       { ingredientId: "malibu", amount: 80 },
       { ingredientId: "pineapple-juice", amount: 150 },
@@ -133,11 +133,11 @@ export const cocktails: Cocktail[] = [
     description: "Classic cocktail with rum, lime and mint",
     image: "/images/cocktails/mojito.jpg",
     alcoholic: true,
-    ingredients: ["60ml Rum", "60ml Lime Juice", "100ml Sparkling Water (manual)", "Fresh mint leaves"],
+    ingredients: ["60ml Rum", "60ml Lime Juice", "100ml Soda Water (manual)", "Fresh mint leaves"],
     recipe: [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "lime-juice", amount: 60 },
-      { ingredientId: "soda-water", amount: 100, manual: true, instructions: "Add 100ml sparkling water" },
+      { ingredientId: "soda-water", amount: 100, manual: true, instructions: "Add 100ml soda water" },
       // Add mint manually
     ],
   },
@@ -238,14 +238,14 @@ export const cocktails: Cocktail[] = [
       "30ml Blue Curacao",
       "180ml Pineapple Juice",
       "20ml Cream (manual)",
-      "20ml Creme of Coconut (manual)",
+      "20ml Cream of Coconut (manual)",
     ],
     recipe: [
       { ingredientId: "vodka", amount: 60 },
       { ingredientId: "blue-curacao", amount: 30 },
       { ingredientId: "pineapple-juice", amount: 180 },
       { ingredientId: "cream", amount: 20, manual: true, instructions: "Add 20ml cream" },
-      { ingredientId: "creme-of-coconut", amount: 20, manual: true, instructions: "Add 20ml creme of coconut" },
+      { ingredientId: "cream-of-coconut", amount: 20, manual: true, instructions: "Add 20ml cream of coconut" },
     ],
   },
   {
@@ -264,7 +264,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "touch-down",
     name: "Touch Down",
-    description: "Fruity cocktail with dark rum, Triple Sec and passion fruit juice",
+    description: "Fruity cocktail with dark rum, triple sec and passion fruit juice",
     image: "/images/cocktails/touch_down.jpg",
     alcoholic: true,
     ingredients: ["60ml Dark Rum", "40ml Triple Sec", "140ml Passion Fruit Juice", "10ml Lime Juice", "20ml Grenadine"],
@@ -343,15 +343,10 @@ export const cocktails: Cocktail[] = [
     description: "Sparkling non-alcoholic cocktail with passion fruit and soda water",
     image: "/vibrant-passion-fizz.png",
     alcoholic: false,
-    ingredients: [
-      "150ml Passion Fruit Juice",
-      "100ml Sparkling Water (manual)",
-      "20ml Vanilla Syrup",
-      "10ml Lime Juice",
-    ],
+    ingredients: ["150ml Passion Fruit Juice", "100ml Soda Water (manual)", "20ml Vanilla Syrup", "10ml Lime Juice"],
     recipe: [
       { ingredientId: "passion-fruit-juice", amount: 150 },
-      { ingredientId: "soda-water", amount: 100, manual: true, instructions: "Add 100ml sparkling water" },
+      { ingredientId: "soda-water", amount: 100, manual: true, instructions: "Add 100ml soda water" },
       { ingredientId: "vanilla-syrup", amount: 20 },
       { ingredientId: "lime-juice", amount: 10 },
     ],
@@ -362,11 +357,11 @@ export const cocktails: Cocktail[] = [
     description: "Creamy non-alcoholic cocktail with orange and vanilla",
     image: "/palm-glow.png",
     alcoholic: false,
-    ingredients: ["200ml Orange Juice", "30ml Vanilla Syrup", "70ml Sparkling Water (manual)"],
+    ingredients: ["200ml Orange Juice", "30ml Vanilla Syrup", "70ml Soda Water (manual)"],
     recipe: [
       { ingredientId: "orange-juice", amount: 200 },
       { ingredientId: "vanilla-syrup", amount: 30 },
-      { ingredientId: "soda-water", amount: 70, manual: true, instructions: "Add 70ml sparkling water" },
+      { ingredientId: "soda-water", amount: 70, manual: true, instructions: "Add 70ml soda water" },
     ],
   },
   {
@@ -380,14 +375,14 @@ export const cocktails: Cocktail[] = [
       "100ml Orange Juice",
       "100ml Pineapple Juice",
       "20ml Lime Juice",
-      "50ml Sparkling Water (manual)",
+      "50ml Soda Water (manual)",
     ],
     recipe: [
       { ingredientId: "grenadine", amount: 30 },
       { ingredientId: "orange-juice", amount: 100 },
       { ingredientId: "pineapple-juice", amount: 100 },
       { ingredientId: "lime-juice", amount: 20 },
-      { ingredientId: "soda-water", amount: 50, manual: true, instructions: "Add 50ml sparkling water" },
+      { ingredientId: "soda-water", amount: 50, manual: true, instructions: "Add 50ml soda water" },
     ],
   },
   {
@@ -410,11 +405,11 @@ export const cocktails: Cocktail[] = [
     description: "Refreshing non-alcoholic cocktail with lime and soda water",
     image: "/citrus-swirl-sunset.png",
     alcoholic: false,
-    ingredients: ["40ml Lime Juice", "20ml Vanilla Syrup", "200ml Sparkling Water (manual)", "10ml Grenadine"],
+    ingredients: ["40ml Lime Juice", "20ml Vanilla Syrup", "200ml Soda Water (manual)", "10ml Grenadine"],
     recipe: [
       { ingredientId: "lime-juice", amount: 40 },
       { ingredientId: "vanilla-syrup", amount: 20 },
-      { ingredientId: "soda-water", amount: 200, manual: true, instructions: "Add 200ml sparkling water" },
+      { ingredientId: "soda-water", amount: 200, manual: true, instructions: "Add 200ml soda water" },
       { ingredientId: "grenadine", amount: 10 },
     ],
   },
@@ -434,7 +429,7 @@ export const cocktails: Cocktail[] = [
       {
         name: "Ice cubes",
         amount: "200g",
-        instruction: "Fill glass halfway with ice",
+        instruction: "Fill glass half with ice",
       },
       {
         name: "Orange slice",
@@ -457,9 +452,9 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Sparkling water",
+        name: "Soda water",
         amount: "50ml",
-        instruction: "To top up and for fizz effect",
+        instruction: "For topping and fizz effect",
       },
       {
         name: "Lime slice",
@@ -561,9 +556,9 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Sparkling water",
+        name: "Soda water",
         amount: "80ml",
-        instruction: "To top up for cooler effect",
+        instruction: "For topping for cooler effect",
       },
       {
         name: "Almond flakes",

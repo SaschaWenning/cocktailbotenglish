@@ -21,38 +21,37 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
   const [manualCleaningPumps, setManualCleaningPumps] = useState<Set<number>>(new Set())
   const cleaningProcessRef = useRef<{ cancel: boolean }>({ cancel: false })
 
-  const getIngredientName = (ingredientId: string): string => {
-    if (ingredientId.startsWith("custom-")) {
-      // Remove "custom-" prefix and timestamp, keep only the readable name
-      return ingredientId.replace(/^custom-\d+-/, "").replace(/-/g, " ")
-    }
-    return ingredientId
-  }
-
   const startCleaning = async () => {
+    // Start cleaning process
     setCleaningStatus("preparing")
     setProgress(0)
     setPumpsDone([])
     cleaningProcessRef.current = { cancel: false }
 
+    // Short delay for preparation
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     if (cleaningProcessRef.current.cancel) return
     setCleaningStatus("cleaning")
 
+    // Clean each pump sequentially
     for (let i = 0; i < pumpConfig.length; i++) {
       const pump = pumpConfig[i]
       setCurrentPump(pump.id)
 
+      // Check if process was paused or cancelled
       if (cleaningProcessRef.current.cancel) return
 
       try {
+        // Run pump for 10 seconds
         await cleanPumpWithPauseSupport(pump.id, 10000)
 
+        // If process was cancelled during cleaning, stop
         if (cleaningProcessRef.current.cancel) return
 
         setPumpsDone((prev) => [...prev, pump.id])
 
+        // Update progress
         setProgress(Math.round(((i + 1) / pumpConfig.length) * 100))
       } catch (error) {
         console.error(`Error cleaning pump ${pump.id}:`, error)
@@ -64,6 +63,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setCleaningStatus("complete")
   }
 
+  // Function to clean a pump with pause support
   const cleanPumpWithPauseSupport = async (pumpId: number, duration: number) => {
     try {
       await cleanPump(pumpId, duration)
@@ -80,6 +80,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setPumpsDone([])
   }
 
+  // Manual single pump cleaning
   const cleanSinglePump = async (pumpId: number) => {
     setManualCleaningPumps((prev) => new Set(prev).add(pumpId))
 
@@ -99,6 +100,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
 
   return (
     <div className="space-y-4">
+      {/* Automatic cleaning */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -106,7 +108,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             Automatic Pump Cleaning
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Clean all pumps sequentially with warm water and detergent
+            Clean all pumps sequentially with warm water and dish soap
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -114,8 +116,8 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <ol className="list-decimal pl-4 space-y-1 text-sm">
-                <li>Prepare a container with warm water and some detergent.</li>
-                <li>Place the intake tubes of all pumps in this container.</li>
+                <li>Prepare a container with warm water and some dish soap.</li>
+                <li>Place the suction tubes of all pumps in this container.</li>
                 <li>Place an empty collection container under the outlets.</li>
               </ol>
             </AlertDescription>
@@ -139,7 +141,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
               </div>
               <p className="text-center text-[hsl(var(--cocktail-text))]">Preparing cleaning...</p>
               <p className="text-center text-sm text-[hsl(var(--cocktail-text-muted))]">
-                Make sure all tubes are correctly positioned.
+                Make sure all tubes are positioned correctly.
               </p>
             </div>
           )}
@@ -210,7 +212,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                 <AlertTriangle className="h-4 w-4 text-[hsl(var(--cocktail-warning))]" />
                 <AlertDescription className="text-[hsl(var(--cocktail-text))]">
                   <p className="font-medium mb-1">Important:</p>
-                  <p>Now rinse the pumps with clean water to remove detergent residue.</p>
+                  <p>Now rinse the pumps with clean water to remove soap residue.</p>
                 </AlertDescription>
               </Alert>
 
@@ -225,6 +227,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
         </CardContent>
       </Card>
 
+      {/* Manual single pump cleaning */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -238,7 +241,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
         <CardContent className="space-y-3">
           <Alert className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
-              Click on a pump to clean it individually for 10 seconds. Make sure the intake tube of the respective pump
+              Click on a pump to clean it individually for 10 seconds. Make sure the suction tube of the respective pump
               is in the cleaning water.
             </AlertDescription>
           </Alert>
@@ -263,9 +266,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                 </Button>
                 <span className="text-xs text-[hsl(var(--cocktail-text-muted))] text-center">
                   Pump {pump.id}
-                  {pump.ingredient && (
-                    <div className="text-[10px] opacity-70">{getIngredientName(pump.ingredient)}</div>
-                  )}
+                  {pump.ingredient && <div className="text-[10px] opacity-70">{pump.ingredient}</div>}
                 </span>
               </div>
             ))}

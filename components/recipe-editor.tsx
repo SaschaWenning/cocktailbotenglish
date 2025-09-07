@@ -21,7 +21,7 @@ interface RecipeEditorProps {
   onRequestDelete: (cocktailId: string) => void
 }
 
-// Verfügbare Bilder im Projekt
+// Available images in the project
 const AVAILABLE_IMAGES = [
   { path: "/images/cocktails/bahama_mama.jpg", name: "Bahama Mama" },
   { path: "/images/cocktails/big_john.jpg", name: "Big John" },
@@ -54,7 +54,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
   const [saving, setSaving] = useState(false)
   const [ingredients, setIngredients] = useState(getAllIngredients())
 
-  // View states - genau wie beim RecipeCreator
+  // View states - exactly like RecipeCreator
   const [currentView, setCurrentView] = useState<"form" | "keyboard" | "imageBrowser">("form")
   const [activeInput, setActiveInput] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState("")
@@ -65,7 +65,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
     }
   }, [isOpen])
 
-  // Lade die Cocktail-Daten beim Öffnen
+  // Load cocktail data when opening
   useEffect(() => {
     if (cocktail && isOpen) {
       setName(cocktail.name)
@@ -85,11 +85,11 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       if (imagePath.startsWith("/placeholder")) {
         setImageUrl("")
       } else {
-        // Stelle sicher, dass der Pfad mit / beginnt
+        // Ensure path starts with /
         if (imagePath && !imagePath.startsWith("/") && !imagePath.startsWith("http")) {
           imagePath = `/${imagePath}`
         }
-        // Entferne URL-Parameter
+        // Remove URL parameters
         imagePath = imagePath.split("?")[0]
         setImageUrl(imagePath)
       }
@@ -111,7 +111,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
   if (!cocktail) return null
 
-  // Keyboard handlers - genau wie beim RecipeCreator
+  // Keyboard handlers - exactly like RecipeCreator
   const handleInputFocus = (inputType: string, currentValue = "") => {
     setActiveInput(inputType)
     setInputValue(currentValue)
@@ -227,7 +227,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
         ingredients: recipe.map((item) => {
           const ingredient = ingredients.find((i) => i.id === item.ingredientId)
           const ingredientName = ingredient?.name || item.ingredientId.replace(/^custom-\d+-/, "")
-          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manuell)" : ""}`
+          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manual)" : ""}`
         }),
       }
 
@@ -235,7 +235,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       onSave(updatedCocktail)
       onClose()
     } catch (error) {
-      console.error("Fehler beim Speichern des Rezepts:", error)
+      console.error("Error saving recipe:", error)
     } finally {
       setSaving(false)
     }
@@ -251,13 +251,13 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
     return ingredient ? ingredient.name : id.replace(/^custom-\d+-/, "")
   }
 
-  // Form View - genau wie beim RecipeCreator
+  // Form View - exactly like RecipeCreator
   const renderFormView = () => (
     <div className="space-y-6 my-4 max-h-[70vh] overflow-y-auto pr-2">
       {/* Name */}
       <div className="space-y-2">
         <Label htmlFor="name" className="text-white">
-          Name des Cocktails
+          Cocktail Name
         </Label>
         <Input
           id="name"
@@ -265,14 +265,14 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           onClick={() => handleInputFocus("name", name)}
           readOnly
           className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer"
-          placeholder="z.B. Mein Cocktail"
+          placeholder="e.g. My Cocktail"
         />
       </div>
 
-      {/* Beschreibung */}
+      {/* Description */}
       <div className="space-y-2">
         <Label htmlFor="description" className="text-white">
-          Beschreibung
+          Description
         </Label>
         <Input
           id="description"
@@ -280,13 +280,13 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           onClick={() => handleInputFocus("description", description)}
           readOnly
           className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer"
-          placeholder="Beschreibe deinen Cocktail..."
+          placeholder="Describe your cocktail..."
         />
       </div>
 
-      {/* Alkoholisch */}
+      {/* Alcoholic */}
       <div className="space-y-2">
-        <Label className="text-white">Typ</Label>
+        <Label className="text-white">Type</Label>
         <Select
           value={alcoholic ? "alcoholic" : "virgin"}
           onValueChange={(value) => setAlcoholic(value === "alcoholic")}
@@ -296,20 +296,20 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           </SelectTrigger>
           <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))]">
             <SelectItem value="alcoholic" className="text-black hover:bg-gray-100 cursor-pointer">
-              Mit Alkohol
+              With Alcohol
             </SelectItem>
             <SelectItem value="virgin" className="text-black hover:bg-gray-100 cursor-pointer">
-              Alkoholfrei
+              Non-Alcoholic
             </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Bild */}
+      {/* Image */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-white">
           <ImageIcon className="h-4 w-4" />
-          Bild (optional)
+          Image (optional)
         </Label>
         <div className="flex gap-2">
           <Input
@@ -317,7 +317,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             onClick={() => handleInputFocus("imageUrl", imageUrl)}
             readOnly
             className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1"
-            placeholder="Bild-URL oder aus Galerie wählen"
+            placeholder="Image URL or choose from gallery"
           />
           <Button
             type="button"
@@ -329,10 +329,10 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
         </div>
       </div>
 
-      {/* Zutaten */}
+      {/* Ingredients */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <Label className="text-white">Zutaten</Label>
+          <Label className="text-white">Ingredients</Label>
           <Button
             type="button"
             size="sm"
@@ -341,7 +341,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             disabled={recipe.length >= ingredients.length}
           >
             <Plus className="h-4 w-4 mr-1" />
-            Zutat hinzufügen
+            Add Ingredient
           </Button>
         </div>
 
@@ -388,10 +388,10 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))]">
                   <SelectItem value="automatic" className="text-black hover:bg-gray-100 cursor-pointer">
-                    Automatisch
+                    Automatic
                   </SelectItem>
                   <SelectItem value="manual" className="text-black hover:bg-gray-100 cursor-pointer">
-                    Manuell
+                    Manual
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -415,7 +415,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
                   onClick={() => handleInputFocus(`instruction-${index}`, item.instruction || "")}
                   readOnly
                   className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer"
-                  placeholder="Anleitung (z.B. 'mit Eiswürfeln auffüllen')"
+                  placeholder="Instructions (e.g. 'fill with ice cubes')"
                 />
               </div>
             )}
@@ -425,7 +425,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
     </div>
   )
 
-  // Keyboard View - genau wie beim RecipeCreator
+  // Keyboard View - exactly like RecipeCreator
   const renderKeyboardView = () => (
     <div className="space-y-4 my-4">
       <div className="flex items-center gap-3 mb-4">
@@ -438,11 +438,11 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <h3 className="text-lg font-semibold text-white">
-          {activeInput === "name" && "Name eingeben"}
-          {activeInput === "description" && "Beschreibung eingeben"}
-          {activeInput === "imageUrl" && "Bild-URL eingeben"}
-          {activeInput?.startsWith("amount-") && "Menge eingeben (ml)"}
-          {activeInput?.startsWith("instruction-") && "Anleitung eingeben"}
+          {activeInput === "name" && "Enter Name"}
+          {activeInput === "description" && "Enter Description"}
+          {activeInput === "imageUrl" && "Enter Image URL"}
+          {activeInput?.startsWith("amount-") && "Enter Amount (ml)"}
+          {activeInput?.startsWith("instruction-") && "Enter Instructions"}
         </h3>
       </div>
 
@@ -453,14 +453,14 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           className="bg-white border-[hsl(var(--cocktail-card-border))] text-black text-center text-lg"
           placeholder={
             activeInput === "name"
-              ? "Cocktail-Name..."
+              ? "Cocktail name..."
               : activeInput === "description"
-                ? "Beschreibung..."
+                ? "Description..."
                 : activeInput === "imageUrl"
                   ? "https://..."
                   : activeInput?.startsWith("amount-")
-                    ? "Menge in ml"
-                    : "Anleitung..."
+                    ? "Amount in ml"
+                    : "Instructions..."
           }
         />
       </div>
@@ -475,7 +475,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
     </div>
   )
 
-  // Image Browser View - genau wie beim RecipeCreator
+  // Image Browser View - exactly like RecipeCreator
   const renderImageBrowserView = () => (
     <div className="space-y-4 my-4">
       <div className="flex items-center gap-3 mb-4">
@@ -487,7 +487,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h3 className="text-lg font-semibold text-white">Bild auswählen</h3>
+        <h3 className="text-lg font-semibold text-white">Select Image</h3>
       </div>
 
       <ScrollArea className="h-[60vh] pr-4">
@@ -524,7 +524,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-md max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Rezept bearbeiten: {cocktail.name}</DialogTitle>
+          <DialogTitle>Edit Recipe: {cocktail.name}</DialogTitle>
         </DialogHeader>
 
         {currentView === "form" && renderFormView()}
@@ -535,7 +535,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           <DialogFooter className="flex justify-between items-center">
             <Button variant="destructive" onClick={handleDeleteRequest} className="mr-auto" type="button">
               <Trash2 className="mr-2 h-4 w-4" />
-              Löschen
+              Delete
             </Button>
             <div className="flex gap-2">
               <Button
@@ -544,7 +544,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
                 onClick={onClose}
                 className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
               >
-                Abbrechen
+                Cancel
               </Button>
               <Button
                 onClick={handleSave}
@@ -554,10 +554,10 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Speichern...
+                    Saving...
                   </>
                 ) : (
-                  "Speichern"
+                  "Save"
                 )}
               </Button>
             </div>

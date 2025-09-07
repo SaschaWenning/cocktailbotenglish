@@ -45,7 +45,7 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
         setPassword("")
         onClose()
       } catch (error) {
-        console.error("Error deleting:", error)
+        console.error("Error deleting cocktail:", error)
       } finally {
         setIsDeleting(false)
       }
@@ -128,7 +128,7 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
                   Deleting...
                 </>
               ) : (
-                "Confirm Delete"
+                "Confirm Deletion"
               )}
             </Button>
           </DialogFooter>

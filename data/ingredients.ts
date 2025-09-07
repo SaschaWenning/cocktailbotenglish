@@ -46,7 +46,7 @@ export const ingredients: Ingredient[] = [
   { id: "campari", name: "Campari", alcoholic: true },
   { id: "aperol", name: "Aperol", alcoholic: true },
 
-  // Non-Alcoholic Beverages - Fruit Juices
+  // Non-alcoholic Beverages - Fruit Juices
   { id: "orange-juice", name: "Orange Juice", alcoholic: false },
   { id: "apple-juice", name: "Apple Juice", alcoholic: false },
   { id: "pineapple-juice", name: "Pineapple Juice", alcoholic: false },
@@ -61,19 +61,19 @@ export const ingredients: Ingredient[] = [
   { id: "pomegranate-juice", name: "Pomegranate Juice", alcoholic: false },
   { id: "banana-juice", name: "Banana Juice", alcoholic: false },
 
-  // Non-Alcoholic Beverages - Citrus Fruits
+  // Non-alcoholic Beverages - Citrus Fruits
   { id: "lime-juice", name: "Lime Juice", alcoholic: false },
   { id: "lemon-juice", name: "Lemon Juice", alcoholic: false },
 
-  // Non-Alcoholic Beverages - Carbonated Drinks
+  // Non-alcoholic Beverages - Carbonated Drinks
   { id: "cola", name: "Cola", alcoholic: false },
   { id: "fanta", name: "Fanta", alcoholic: false },
-  { id: "soda-water", name: "Sparkling Water", alcoholic: false },
+  { id: "soda-water", name: "Soda Water", alcoholic: false },
   { id: "ginger-ale", name: "Ginger Ale", alcoholic: false },
   { id: "tonic-water", name: "Tonic Water", alcoholic: false },
   { id: "water", name: "Water", alcoholic: false },
 
-  // Non-Alcoholic Beverages - Dairy Products
+  // Non-alcoholic Beverages - Dairy Products
   { id: "cream", name: "Cream", alcoholic: false },
   { id: "coconut-cream", name: "Coconut Cream", alcoholic: false },
   { id: "coconut-milk", name: "Coconut Milk", alcoholic: false },

@@ -34,7 +34,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     loadIngredients()
   }, [])
 
-  const shotSize = 20 // Feste Größe: 20ml
+  const shotSize = 20 // Fixed size: 20ml
 
   const getAllAvailableIngredients = () => {
     return pumpConfig.map((pump) => {
@@ -68,7 +68,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     setCurrentIngredient(ingredientName)
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage(`Purging ${ingredientName}...`)
+    setStatusMessage(`Bleeding ${ingredientName}...`)
     setErrorMessage(null)
 
     let intervalId: NodeJS.Timeout
@@ -88,7 +88,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
 
       clearInterval(intervalId)
       setProgress(100)
-      setStatusMessage(`${ingredientName} ready!`)
+      setStatusMessage(`${ingredientName} complete!`)
       setShowSuccess(true)
 
       await onShotComplete()
@@ -144,7 +144,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Purge Alcoholic Ingredients</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Bleed Alcoholic Ingredients</h2>
         <div className="grid grid-cols-4 gap-3">
           {alcoholicIngredients.map((ingredient) => {
             const isAvailable = checkIngredientAvailable(ingredient.id)
@@ -174,7 +174,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
       {nonAlcoholicIngredients.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">
-            Purge Non-Alcoholic Ingredients
+            Bleed Non-Alcoholic Ingredients
           </h2>
           <div className="grid grid-cols-4 gap-3">
             {nonAlcoholicIngredients.map((ingredient) => {

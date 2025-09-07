@@ -305,7 +305,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
               <div className="space-y-2">
                 <Label className="flex items-center gap-2 text-white">
                   <ImageIcon className="h-4 w-4" />
-                  Image path (optional)
+                  Image Path (optional)
                 </Label>
                 <div className="flex gap-2">
                   <Input
@@ -364,7 +364,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
                     disabled={recipe.length >= ingredients.length}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add ingredient
+                    Add Ingredient
                   </Button>
                 </div>
               </div>
@@ -452,11 +452,11 @@ export default function RecipeCreator({ isOpen, onClose, onSave }: RecipeCreator
               <div className="flex-1 flex flex-col">
                 <div className="text-center mb-2">
                   <h3 className="text-base font-semibold text-white mb-1">
-                    {keyboardMode === "name" && "Enter name"}
-                    {keyboardMode === "description" && "Enter description"}
-                    {keyboardMode === "imageUrl" && "Enter image path"}
-                    {keyboardMode.startsWith("amount-") && "Enter amount (ml)"}
-                    {keyboardMode === "instruction" && "Enter instructions"}
+                    {keyboardMode === "name" && "Enter Name"}
+                    {keyboardMode === "description" && "Enter Description"}
+                    {keyboardMode === "imageUrl" && "Enter Image Path"}
+                    {keyboardMode.startsWith("amount-") && "Enter Amount (ml)"}
+                    {keyboardMode === "instruction" && "Enter Instructions"}
                   </h3>
                   <div className="bg-white text-black text-base p-2 rounded mb-2 min-h-[40px] break-all">
                     {keyboardValue || <span className="text-gray-400">Input...</span>}
