@@ -27,7 +27,7 @@ import { toast } from "@/components/ui/use-toast"
 import ServiceMenu from "@/components/service-menu"
 import { getAllIngredients } from "@/lib/ingredients"
 
-// Anzahl der Cocktails pro Seite
+// Number of cocktails per page
 const COCKTAILS_PER_PAGE = 9
 
 export default function Home() {
@@ -52,39 +52,40 @@ export default function Home() {
   const [pumpConfig, setPumpConfig] = useState<PumpConfig[]>(initialPumpConfig)
   const [loading, setLoading] = useState(true)
   const [showImageEditor, setShowImageEditor] = useState(false)
-  const [allIngredientsData, setAllIngredientsData] = useState<any[]>([]) // State für alle Zutaten (Standard + benutzerdefiniert) hinzugefügt
+  const [allIngredientsData, setAllIngredientsData] = useState<any[]>([]) // State for all ingredients (standard + user-defined) added
   const [manualIngredients, setManualIngredients] = useState<
     Array<{ ingredientId: string; amount: number; instructions?: string }>
-  >([]) // State für manuelle Zutaten hinzugefügt
+  >([]) // State for manual ingredients added
+  const [showImageEditorPasswordModal, setShowImageEditorPasswordModal] = useState(false) // New state for Image Editor Password Modal
 
-  // Kiosk-Modus Exit Zähler
+  // Kiosk Mode Exit Counter
   const [kioskExitClicks, setKioskExitClicks] = useState(0)
   const [lastClickTime, setLastClickTime] = useState(0)
 
-  // Paginierung
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1)
   const [virginCurrentPage, setVirginCurrentPage] = useState(1)
 
-  // Filtere Cocktails nach alkoholisch und nicht-alkoholisch
+  // Filter cocktails by alcoholic and non-alcoholic
   const alcoholicCocktails = cocktailsData.filter((cocktail) => cocktail.alcoholic)
   const virginCocktails = cocktailsData.filter((cocktail) => !cocktail.alcoholic)
 
-  // Berechne die Gesamtanzahl der Seiten
+  // Calculate total number of pages
   const totalPages = Math.ceil(alcoholicCocktails.length / COCKTAILS_PER_PAGE)
   const virginTotalPages = Math.ceil(virginCocktails.length / COCKTAILS_PER_PAGE)
 
-  // Hole die Cocktails für die aktuelle Seite
+  // Get cocktails for the current page
   const getCurrentPageCocktails = (cocktails: Cocktail[], page: number) => {
     const startIndex = (page - 1) * COCKTAILS_PER_PAGE
     const endIndex = startIndex + COCKTAILS_PER_PAGE
     return cocktails.slice(startIndex, endIndex)
   }
 
-  // Aktuelle Seite von Cocktails
+  // Current page of cocktails
   const currentPageCocktails = getCurrentPageCocktails(alcoholicCocktails, currentPage)
   const currentPageVirginCocktails = getCurrentPageCocktails(virginCocktails, virginCurrentPage)
 
-  // Berechne alle verfügbaren Zutaten aus den Cocktail-Rezepten
+  // Calculate all available ingredients from cocktail recipes
   const getAvailableIngredientsFromCocktails = () => {
     const allIngredients = new Set<string>()
     cocktailsData.forEach((cocktail) => {
@@ -95,14 +96,14 @@ export default function Home() {
     return Array.from(allIngredients)
   }
 
-  // Lade Füllstände, Pumpenkonfiguration und Cocktails beim ersten Rendern
+  // Load fill levels, pump configuration, and cocktails on first render
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
       try {
         await Promise.all([loadIngredientLevels(), loadPumpConfig(), loadCocktails(), loadAllIngredients()])
       } catch (error) {
-        console.error("Fehler beim Laden der Daten:", error)
+        console.error("Error loading data:", error)
       } finally {
         setLoading(false)
       }
@@ -112,37 +113,27 @@ export default function Home() {
   }, [])
 
   const loadCocktails = async () => {
-    try {
-      console.log("[v0] Loading cocktails...")
-      const cocktails = await getAllCocktails()
-      console.log("[v0] Loaded cocktails from getAllCocktails:", cocktails.length)
+    console.log("[v0] Loading cocktails...")
+    const cocktails = await getAllCocktails()
+    console.log("[v0] Loaded cocktails from getAllCocktails:", cocktails.length)
 
-      let hiddenCocktails: string[] = []
-      if (typeof window !== "undefined") {
-        const hiddenCocktailsJson = localStorage.getItem("hiddenCocktails")
-        console.log("[v0] Hidden cocktails JSON from localStorage:", hiddenCocktailsJson)
-        hiddenCocktails = hiddenCocktailsJson ? JSON.parse(hiddenCocktailsJson) : []
-      }
-      console.log("[v0] Parsed hidden cocktails:", hiddenCocktails)
+    // Load hidden cocktails from API instead of localStorage
+    try {
+      const response = await fetch("/api/hidden-cocktails")
+      const data = await response.json()
+      const hiddenCocktails: string[] = data.hiddenCocktails || []
+      console.log("[v0] Hidden cocktails from API:", hiddenCocktails)
 
       const visibleCocktails = cocktails.filter((cocktail) => !hiddenCocktails.includes(cocktail.id))
       console.log("[v0] Visible cocktails after filtering:", visibleCocktails.length)
       console.log("[v0] Filtered out cocktails:", cocktails.length - visibleCocktails.length)
 
-      // Ensure loaded cocktails also conform to the new type
-      const transformedCocktails = visibleCocktails.map((cocktail) => ({
-        ...cocktail,
-        recipe: cocktail.recipe.map((item) => ({
-          ...item,
-          type: (item as any).type || "automatic",
-          instruction: (item as any).instruction || "",
-        })),
-      }))
-
-      console.log("[v0] Setting cocktails data with", transformedCocktails.length, "cocktails")
-      setCocktailsData(transformedCocktails)
+      setCocktailsData(visibleCocktails)
+      console.log("[v0] Setting cocktails data with", visibleCocktails.length, "cocktails")
     } catch (error) {
-      console.error("Fehler beim Laden der Cocktails:", error)
+      console.error("[v0] Error loading hidden cocktails:", error)
+      // Fallback to showing all cocktails if API fails
+      setCocktailsData(cocktails)
     }
   }
 
@@ -151,7 +142,7 @@ export default function Home() {
       const config = await getPumpConfig()
       setPumpConfig(config)
     } catch (error) {
-      console.error("Fehler beim Laden der Pumpenkonfiguration:", error)
+      console.error("Error loading pump configuration:", error)
     }
   }
 
@@ -160,11 +151,11 @@ export default function Home() {
       const levels = await getIngredientLevels()
       setIngredientLevels(levels)
 
-      // Prüfe auf niedrige Füllstände
+      // Check for low fill levels
       const lowLevels = levels.filter((level) => level.currentAmount < 100)
       setLowIngredients(lowLevels.map((level) => level.ingredientId))
     } catch (error) {
-      console.error("Fehler beim Laden der Füllstände:", error)
+      console.error("Error loading fill levels:", error)
     }
   }
 
@@ -173,13 +164,13 @@ export default function Home() {
       const ingredients = await getAllIngredients()
       setAllIngredientsData(ingredients)
     } catch (error) {
-      console.error("Fehler beim Laden der Zutaten:", error)
+      console.error("Error loading ingredients:", error)
     }
   }
 
   const handleImageEditClick = (cocktailId: string) => {
     setCocktailToEdit(cocktailId)
-    setShowImageEditor(true)
+    setShowImageEditorPasswordModal(true)
   }
 
   const handleDeleteClick = (cocktailId: string) => {
@@ -209,17 +200,22 @@ export default function Home() {
     setShowRecipeCreator(true)
   }
 
+  const handleImageEditorPasswordSuccess = () => {
+    setShowImageEditorPasswordModal(false)
+    setShowImageEditor(true)
+  }
+
   const handleImageSave = async (updatedCocktail: Cocktail) => {
     try {
       await saveRecipe(updatedCocktail)
 
-      // Aktualisiere die lokale Liste
+      // Update local list
       setCocktailsData((prev) => prev.map((c) => (c.id === updatedCocktail.id ? updatedCocktail : c)))
 
-      // Aktualisiere auch die Füllstände für neue Zutaten
+      // Also update fill levels for new ingredients
       await loadIngredientLevels()
     } catch (error) {
-      console.error("Fehler beim Speichern des Bildes:", error)
+      console.error("Error saving image:", error)
     }
   }
 
@@ -227,13 +223,13 @@ export default function Home() {
     try {
       await saveRecipe(updatedCocktail)
 
-      // Aktualisiere die lokale Liste
+      // Update local list
       setCocktailsData((prev) => prev.map((c) => (c.id === updatedCocktail.id ? updatedCocktail : c)))
 
-      // Aktualisiere auch die Füllstände für neue Zutaten
+      // Also update fill levels for new ingredients
       await loadIngredientLevels()
     } catch (error) {
-      console.error("Fehler beim Speichern des Rezepts:", error)
+      console.error("Error saving recipe:", error)
     }
   }
 
@@ -241,13 +237,13 @@ export default function Home() {
     try {
       await saveRecipe(newCocktail)
 
-      // Füge den neuen Cocktail zur lokalen Liste hinzu
+      // Add new cocktail to local list
       setCocktailsData((prev) => [...prev, newCocktail])
 
-      // Aktualisiere auch die Füllstände für neue Zutaten
+      // Also update fill levels for new ingredients
       await loadIngredientLevels()
     } catch (error) {
-      console.error("Fehler beim Speichern des neuen Rezepts:", error)
+      console.error("Error saving new recipe:", error)
     }
   }
 
@@ -266,33 +262,40 @@ export default function Home() {
     try {
       console.log("[v0] Deleting/hiding cocktail:", cocktailToDelete.id)
 
-      let hiddenCocktails: string[] = []
-      if (typeof window !== "undefined") {
-        const hiddenCocktailsJson = localStorage.getItem("hiddenCocktails")
-        hiddenCocktails = hiddenCocktailsJson ? JSON.parse(hiddenCocktailsJson) : []
-        console.log("[v0] Current hidden cocktails before adding:", hiddenCocktails)
+      // Get current hidden cocktails from API
+      const response = await fetch("/api/hidden-cocktails")
+      const data = await response.json()
+      const hiddenCocktails: string[] = data.hiddenCocktails || []
+      console.log("[v0] Current hidden cocktails before adding:", hiddenCocktails)
 
-        // Füge die Cocktail-ID zur Liste der ausgeblendeten Cocktails hinzu
-        if (!hiddenCocktails.includes(cocktailToDelete.id)) {
-          hiddenCocktails.push(cocktailToDelete.id)
-          localStorage.setItem("hiddenCocktails", JSON.stringify(hiddenCocktails))
-          console.log("[v0] Updated hidden cocktails in localStorage:", hiddenCocktails)
-        } else {
-          console.log("[v0] Cocktail already in hidden list")
-        }
+      // Add cocktail ID to hidden list if not already there
+      if (!hiddenCocktails.includes(cocktailToDelete.id)) {
+        hiddenCocktails.push(cocktailToDelete.id)
+
+        // Save updated list to API
+        await fetch("/api/hidden-cocktails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ hiddenCocktails }),
+        })
+        console.log("[v0] Updated hidden cocktails via API:", hiddenCocktails)
+      } else {
+        console.log("[v0] Cocktail already in hidden list")
       }
 
       setCocktailsData((prev) => prev.filter((c) => c.id !== cocktailToDelete.id))
       console.log("[v0] Removed cocktail from local state")
 
-      // Wenn der ausgeblendete Cocktail ausgewählt war, setze die Auswahl zurück
+      // If the hidden cocktail was selected, reset selection
       if (selectedCocktail === cocktailToDelete.id) {
         setSelectedCocktail(null)
       }
 
       setCocktailToDelete(null)
     } catch (error) {
-      console.error("Fehler beim Ausblenden des Cocktails:", error)
+      console.error("Error hiding cocktail:", error)
       throw error
     }
   }
@@ -307,10 +310,10 @@ export default function Home() {
     setProgress(0)
     setStatusMessage("Preparing cocktail...")
     setErrorMessage(null)
-    setManualIngredients([]) // Reset manuelle Zutaten
+    setManualIngredients([]) // Reset manual ingredients
 
     try {
-      // Lade die aktuellste Pumpenkonfiguration
+      // Load the latest pump configuration
       const currentPumpConfig = await getPumpConfig()
 
       const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
@@ -324,7 +327,7 @@ export default function Home() {
           instructions: item.instructions || item.instruction,
         }))
 
-      // Simuliere den Fortschritt
+      // Simulate progress
       let intervalId: NodeJS.Timeout
       intervalId = setInterval(() => {
         setProgress((prev) => {
@@ -336,7 +339,7 @@ export default function Home() {
         })
       }, 300)
 
-      // Starte den Cocktail-Herstellungsprozess mit der gewählten Größe und der aktuellen Pumpenkonfiguration
+      // Start cocktail preparation process with selected size and current pump configuration
       await makeCocktail(cocktail, currentPumpConfig, selectedSize)
 
       clearInterval(intervalId)
@@ -351,7 +354,7 @@ export default function Home() {
 
       setShowSuccess(true)
 
-      // Aktualisiere die Füllstände nach erfolgreicher Zubereitung
+      // Update fill levels after successful preparation
       await loadIngredientLevels()
 
       setTimeout(
@@ -359,30 +362,30 @@ export default function Home() {
           setIsMaking(false)
           setShowSuccess(false)
           setSelectedCocktail(null)
-          setManualIngredients([]) // Reset manuelle Zutaten nach Timeout
+          setManualIngredients([]) // Reset manual ingredients after timeout
         },
         manualRecipeItems.length > 0 ? 8000 : 3000,
-      ) // Längere Anzeige bei manuellen Zutaten
+      ) // Longer display time for manual ingredients
     } catch (error) {
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Error during preparation!")
+      setStatusMessage("Error preparing cocktail!")
       setErrorMessage(error instanceof Error ? error.message : "Unknown error")
-      setManualIngredients([]) // Reset bei Fehler
+      setManualIngredients([]) // Reset on error
       setTimeout(() => setIsMaking(false), 3000)
     }
   }
 
-  // Berechne das aktuelle Gesamtvolumen des ausgewählten Cocktails
+  // Calculate current total volume of selected cocktail
   const getCurrentVolume = () => {
     const cocktail = cocktailsData.find((c) => c.id === selectedCocktail)
     if (!cocktail) return 0
-    // Summiere alle Mengen, unabhängig vom Typ (automatisch/manuell)
+    // Sum all amounts, regardless of type (automatic/manual)
     return cocktail.recipe.reduce((total, item) => total + item.amount, 0)
   }
 
-  // Prüfe, ob für den ausgewählten Cocktail genügend Zutaten vorhanden sind
+  // Check if enough ingredients are available for selected cocktail
   const checkIngredientsAvailable = () => {
     if (!selectedCocktail) return true
 
@@ -390,46 +393,46 @@ export default function Home() {
     if (!cocktail) return true
 
     if (!pumpConfig || pumpConfig.length === 0) {
-      console.warn("Pumpenkonfiguration ist nicht geladen oder leer.")
-      return false // Oder true, je nach gewünschtem Verhalten, wenn keine Pumpen konfiguriert sind
+      console.warn("Pump configuration is not loaded or empty.")
+      return false // Or true, depending on desired behavior if no pumps are configured
     }
 
     const automaticRecipe = cocktail.recipe.filter((item) => {
-      // Eine Zutat ist automatisch, wenn:
-      // 1. manual explizit false ist ODER
-      // 2. manual undefined/nicht gesetzt ist UND type nicht "manual" ist
+      // An ingredient is automatic if:
+      // 1. manual is explicitly false OR
+      // 2. manual is undefined/not set AND type is not "manual"
       return item.manual === false || (item.manual !== true && item.type !== "manual")
     })
 
-    // Wenn keine automatischen Zutaten vorhanden sind, ist der Cocktail verfügbar (nur manuelle Zutaten)
+    // If no automatic ingredients are available, the cocktail is available (only manual ingredients)
     if (automaticRecipe.length === 0) return true
 
-    // Berechne das Gesamtvolumen des gesamten Rezepts (automatisch + manuell) für die Skalierung
+    // Calculate total volume of entire recipe (automatic + manual) for scaling
     const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
 
-    // Wenn das Gesamtvolumen 0 ist, aber es Zutaten gibt, ist etwas nicht in Ordnung
+    // If total volume is 0 but there are ingredients, something is wrong
     if (totalRecipeVolume === 0 && cocktail.recipe.length > 0) return false
 
     const scaleFactor = selectedSize / totalRecipeVolume
 
-    // Prüfe nur automatische Zutaten auf Verfügbarkeit
+    // Check only automatic ingredients for availability
     for (const item of automaticRecipe) {
       const level = ingredientLevels.find((level) => level.ingredientId === item.ingredientId)
-      // KORREKTUR: Suche nach 'ingredient' statt 'ingredientId' in der Pumpenkonfiguration
+      // CORRECTION: Search for 'ingredient' instead of 'ingredientId' in pump configuration
       const pump = pumpConfig.find((pc) => pc.ingredient === item.ingredientId)
 
-      // Wenn keine Füllstandsdaten ODER keine Pumpenkonfiguration für eine automatische Zutat gefunden wird, ist sie nicht verfügbar
+      // If no fill level data OR no pump configuration for an automatic ingredient is found, it is not available
       if (!level || !pump) {
         console.warn(
-          `Automatische Zutat ${item.ingredientId} ist nicht verfügbar (keine Füllstandsdaten oder Pumpenkonfiguration).`,
+          `Automatic ingredient ${item.ingredientId} is not available (no fill level data or pump configuration).`,
         )
         return false
       }
 
-      const scaledAmount = Math.round(item.amount * scaleFactor) // Skaliere die Menge für diese Zutat
+      const scaledAmount = Math.round(item.amount * scaleFactor) // Scale amount for this ingredient
       if (level.currentAmount < scaledAmount) {
         console.warn(
-          `Nicht genügend ${item.ingredientId} vorhanden. Benötigt: ${scaledAmount}ml, Verfügbar: ${level.currentAmount}ml`,
+          `Not enough ${item.ingredientId} available. Needed: ${scaledAmount}ml, Available: ${level.currentAmount}ml`,
         )
         return false
       }
@@ -443,13 +446,13 @@ export default function Home() {
     return ingredient ? ingredient.name : id
   }
 
-  // Tab-Wechsel Handler - schließt automatisch die Cocktail-Detailansicht
+  // Tab change handler - automatically closes cocktail detail view
   const handleTabChange = (newTab: string) => {
-    setSelectedCocktail(null) // Schließe die Cocktail-Detailansicht
+    setSelectedCocktail(null) // Close cocktail detail view
     setActiveTab(newTab)
   }
 
-  // Funktion zum Beenden des Kiosk-Modus
+  // Function to exit kiosk mode
   const handleExitKiosk = async () => {
     try {
       const response = await fetch("/api/exit-kiosk", {
@@ -460,31 +463,31 @@ export default function Home() {
 
       if (data.success) {
         toast({
-          title: "Kiosk mode is being terminated",
+          title: "Exiting Kiosk Mode",
           description: "The application will close in a few seconds.",
         })
       } else {
         toast({
           title: "Error",
-          description: "Kiosk mode could not be terminated.",
+          description: "Kiosk mode could not be exited.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Fehler beim Beenden des Kiosk-Modus:", error)
+      console.error("Error exiting kiosk mode:", error)
       toast({
         title: "Error",
-        description: "Connection problem when terminating kiosk mode.",
+        description: "Connection problem exiting kiosk mode.",
         variant: "destructive",
       })
     }
   }
 
-  // Handler für Klicks auf den Titel
+  // Handler for clicks on the title
   const handleTitleClick = () => {
     const currentTime = Date.now()
 
-    // Wenn mehr als 3 Sekunden seit dem letzten Klick vergangen sind, setze den Zähler zurück
+    // If more than 3 seconds have passed since the last click, reset the counter
     if (currentTime - lastClickTime > 3000 && kioskExitClicks > 0) {
       setKioskExitClicks(1)
     } else {
@@ -493,66 +496,66 @@ export default function Home() {
 
     setLastClickTime(currentTime)
 
-    // Nach 5 Klicks den Kiosk-Modus beenden
+    // Exit kiosk mode after 5 clicks
     if (kioskExitClicks + 1 >= 5) {
       handleExitKiosk()
       setKioskExitClicks(0)
     }
   }
 
-  // Erweiterte Bildlogik für Cocktail-Detail
+  // Enhanced image logic for cocktail detail
   const findDetailImagePath = async (cocktail: Cocktail): Promise<string> => {
     if (!cocktail.image) {
       return `/placeholder.svg?height=400&width=400&query=${encodeURIComponent(cocktail.name)}`
     }
 
-    // Extrahiere den Dateinamen aus dem Pfad
+    // Extract filename from path
     const filename = cocktail.image.split("/").pop() || cocktail.image
-    const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "") // Entferne Dateierweiterung
+    const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "") // Remove file extension
     const originalExt = filename.split(".").pop()?.toLowerCase() || ""
 
-    // Alle gängigen Bildformate
+    // All common image formats
     const imageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"]
 
-    // Verwende originale Erweiterung zuerst, dann alle anderen
+    // Use original extension first, then all others
     const extensionsToTry = originalExt
       ? [originalExt, ...imageExtensions.filter((ext) => ext !== originalExt)]
       : imageExtensions
 
-    // Verschiedene Basispfade für alkoholische und alkoholfreie Cocktails
+    // Different base paths for alcoholic and non-alcoholic cocktails
     const basePaths = [
-      "/images/cocktails/", // Alkoholische Cocktails
-      "/", // Alkoholfreie Cocktails (direkt im public/)
-      "", // Ohne Pfad
-      "/public/images/cocktails/", // Vollständiger Pfad
-      "/public/", // Public Verzeichnis
+      "/images/cocktails/", // Alcoholic cocktails
+      "/", // Non-alcoholic cocktails (directly in public/)
+      "", // Without path
+      "/public/images/cocktails/", // Full path
+      "/public/", // Public directory
     ]
 
     const strategies: string[] = []
 
-    // Generiere alle Kombinationen von Pfaden und Dateierweiterungen
+    // Generate all combinations of paths and file extensions
     for (const basePath of basePaths) {
       for (const ext of extensionsToTry) {
         strategies.push(`${basePath}${filenameWithoutExt}.${ext}`)
       }
-      // Auch den originalen Dateinamen probieren
+      // Also try the original filename
       strategies.push(`${basePath}${filename}`)
     }
 
-    // Zusätzliche spezielle Strategien
+    // Additional special strategies
     strategies.push(
-      // Originaler Pfad
+      // Original path
       cocktail.image,
-      // Ohne führenden Slash
+      // Without leading slash
       cocktail.image.startsWith("/") ? cocktail.image.substring(1) : cocktail.image,
-      // Mit führendem Slash
+      // With leading slash
       cocktail.image.startsWith("/") ? cocktail.image : `/${cocktail.image}`,
-      // API-Pfad als Fallback
+      // API path as fallback
       `/api/image?path=${encodeURIComponent(`/home/pi/cocktailbot/cocktailbot-main/public/images/cocktails/${filename}`)}`,
       `/api/image?path=${encodeURIComponent(`/home/pi/cocktailbot/cocktailbot-main/public/${filename}`)}`,
     )
 
-    // Entferne Duplikate
+    // Remove duplicates
     const uniqueStrategies = [...new Set(strategies)]
 
     console.log(
@@ -565,7 +568,7 @@ export default function Home() {
 
       try {
         const img = new Image()
-        img.crossOrigin = "anonymous" // Für CORS
+        img.crossOrigin = "anonymous" // For CORS
 
         const loadPromise = new Promise<boolean>((resolve) => {
           img.onload = () => resolve(true)
@@ -580,16 +583,16 @@ export default function Home() {
           return testPath
         }
       } catch (error) {
-        // Fehler ignorieren und nächste Strategie versuchen
+        // Ignore error and try next strategy
       }
     }
 
-    // Fallback auf Platzhalter
+    // Fallback on placeholder
     console.log(`❌ No working detail image found for ${cocktail.name}, using placeholder`)
     return `/placeholder.svg?height=400&width=400&query=${encodeURIComponent(cocktail.name)}`
   }
 
-  // Neue Komponente für die Cocktail-Detailansicht
+  // New component for cocktail detail view
   function CocktailDetail({ cocktail }: { cocktail: Cocktail }) {
     const [detailImageSrc, setDetailImageSrc] = useState<string>("")
 
@@ -753,7 +756,7 @@ export default function Home() {
     )
   }
 
-  // Paginierungskomponente
+  // Pagination component
   function PaginationComponent({
     currentPage,
     totalPages,
@@ -790,9 +793,9 @@ export default function Home() {
     )
   }
 
-  // Hauptinhalt basierend auf dem ausgewählten Tab
+  // Main content based on selected tab
   const renderContent = () => {
-    // Wenn ein Cocktail ausgewählt ist, zeige die Detailansicht
+    // If a cocktail is selected, show the detail view
     if (selectedCocktail) {
       const cocktail = cocktailsData.find((c) => c.id === selectedCocktail)
       if (!cocktail) return null
@@ -860,7 +863,7 @@ export default function Home() {
       return <CocktailDetail cocktail={cocktail} />
     }
 
-    // Sonst zeige den Inhalt basierend auf dem aktiven Tab
+    // Otherwise, show content based on active tab
     switch (activeTab) {
       case "cocktails":
         return (
@@ -1022,6 +1025,12 @@ export default function Home() {
         isOpen={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
         onSuccess={handlePasswordSuccess}
+      />
+
+      <PasswordModal
+        isOpen={showImageEditorPasswordModal}
+        onClose={() => setShowImageEditorPasswordModal(false)}
+        onSuccess={handleImageEditorPasswordSuccess}
       />
 
       <PasswordModal
