@@ -1,24 +1,31 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { X, Check, ArrowLeft } from "lucide-react"
+import { X, ArrowLeft, XCircle } from "lucide-react"
 
 interface VirtualKeyboardProps {
-  onKeyPress: (key: string) => void
-  onBackspace: () => void
-  onClear: () => void
-  onConfirm: () => void
-  onCancel: () => void
-  layout: "alphanumeric" | "numeric"
+  layout?: "alphanumeric" | "numeric"
+  value?: string
+  onChange?: (value: string) => void
+  onConfirm?: () => void
+  onCancel?: () => void
+  title?: string
+  // Legacy props for backward compatibility
+  onKeyPress?: (key: string) => void
+  onBackspace?: () => void
+  onClear?: () => void
 }
 
-export default function VirtualKeyboard({
+export function VirtualKeyboard({
+  layout = "alphanumeric",
+  value = "",
+  onChange,
+  onConfirm,
+  onCancel,
+  title,
   onKeyPress,
   onBackspace,
   onClear,
-  onConfirm,
-  onCancel,
-  layout,
 }: VirtualKeyboardProps) {
   const alphanumericKeys = [
     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
@@ -37,18 +44,50 @@ export default function VirtualKeyboard({
 
   const currentKeys = layout === "numeric" ? numericKeys : alphanumericKeys
 
+  const handleKeyPress = (key: string) => {
+    if (onChange) {
+      onChange(value + key)
+    }
+    if (onKeyPress) {
+      onKeyPress(key)
+    }
+  }
+
+  const handleBackspace = () => {
+    if (onChange) {
+      onChange(value.slice(0, -1))
+    }
+    if (onBackspace) {
+      onBackspace()
+    }
+  }
+
+  const handleClear = () => {
+    if (onChange) {
+      onChange("")
+    }
+    if (onClear) {
+      onClear()
+    }
+  }
+
   return (
-    <div className="bg-black border border-[hsl(var(--cocktail-card-border))] rounded-lg p-2 shadow-lg w-full">
-      <div className="space-y-1">
-        {" "}
-        {/* Reduced gap */}
+    <div className="bg-black border border-[hsl(var(--cocktail-card-border))] rounded-lg p-4 shadow-lg max-w-sm mx-auto">
+      {title && (
+        <div className="text-center mb-4">
+          <h3 className="text-white text-lg font-medium mb-2">{title}</h3>
+          <div className="text-green-400 text-2xl font-bold">{value || "0"} ml</div>
+        </div>
+      )}
+
+      <div className="keyboard-main space-y-1">
         {currentKeys.map((row, rowIndex) => (
           <div key={rowIndex} className="flex justify-center gap-1">
             {row.map((key) => (
               <Button
                 key={key}
-                onClick={() => onKeyPress(key)}
-                className="flex-1 h-10 text-base bg-[hsl(var(--cocktail-card-bg))] text-white hover:bg-[hsl(var(--cocktail-card-border))]" // Smaller height and font
+                onClick={() => handleKeyPress(key)}
+                className="flex-1 h-8 text-sm bg-[hsl(var(--cocktail-card-bg))] text-white hover:bg-[hsl(var(--cocktail-card-border))]"
               >
                 {key}
               </Button>
@@ -56,22 +95,26 @@ export default function VirtualKeyboard({
           </div>
         ))}
       </div>
-      <div className="flex justify-center gap-1 mt-2">
-        {" "}
-        {/* Reduced margin-top */}
-        <Button onClick={onBackspace} className="flex-1 h-10 text-base bg-red-600 text-white hover:bg-red-700">
-          <ArrowLeft className="h-5 w-5" /> {/* Smaller icon */}
+      <div className="keyboard-controls flex justify-center gap-1 mt-2">
+        <Button onClick={handleBackspace} className="flex-1 h-8 text-sm bg-red-600 text-white hover:bg-red-700">
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button onClick={onClear} className="flex-1 h-10 text-base bg-yellow-600 text-white hover:bg-yellow-700">
-          <X className="h-5 w-5" />
+        <Button onClick={handleClear} className="flex-1 h-8 text-sm bg-yellow-600 text-white hover:bg-yellow-700">
+          <X className="h-4 w-4" />
         </Button>
-        <Button onClick={onCancel} className="flex-1 h-10 text-base bg-gray-600 text-white hover:bg-gray-700">
-          Abbrechen
-        </Button>
-        <Button onClick={onConfirm} className="flex-1 h-10 text-base bg-green-600 text-white hover:bg-green-700">
-          <Check className="h-5 w-5" />
-        </Button>
+        {onCancel && (
+          <Button onClick={onCancel} className="flex-1 h-8 text-sm bg-gray-600 text-white hover:bg-gray-700">
+            <XCircle className="h-4 w-4" />
+          </Button>
+        )}
+        {onConfirm && (
+          <Button onClick={onConfirm} className="flex-1 h-8 text-sm bg-green-600 text-white hover:bg-green-700">
+            ✓
+          </Button>
+        )}
       </div>
     </div>
   )
 }
+
+export default VirtualKeyboard

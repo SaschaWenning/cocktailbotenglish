@@ -3,9 +3,8 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Loader2, AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -24,7 +23,6 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
   const [isDeleting, setIsDeleting] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(true)
 
-  // Reset password when dialog opens
   useEffect(() => {
     if (isOpen) {
       setPassword("")
@@ -45,7 +43,7 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
         setPassword("")
         onClose()
       } catch (error) {
-        console.error("Error deleting cocktail:", error)
+        console.error("Error deleting:", error)
       } finally {
         setIsDeleting(false)
       }
@@ -85,7 +83,7 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
           </AlertDescription>
         </Alert>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="password">Please enter the password to confirm deletion:</Label>
             <Input
@@ -99,7 +97,9 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
               readOnly
               onFocus={() => setShowKeyboard(true)}
             />
-            {error && <p className="text-[hsl(var(--cocktail-error))] text-sm">Wrong password. Please try again.</p>}
+            {error && (
+              <p className="text-[hsl(var(--cocktail-error))] text-sm">Incorrect password. Please try again.</p>
+            )}
           </div>
 
           {showKeyboard && (
@@ -109,30 +109,18 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
                 onBackspace={handleBackspace}
                 onClear={handleClear}
                 onConfirm={handleSubmit}
+                onCancel={onClose}
               />
             </div>
           )}
 
-          <DialogFooter>
-            <Button
-              type="button"
-              className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" variant="destructive" disabled={isDeleting}>
-              {isDeleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Confirm Deletion"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+          {isDeleting && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span>Deleting...</span>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )

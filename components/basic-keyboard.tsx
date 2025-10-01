@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { X, ArrowLeft, Check } from "lucide-react"
+import { X, ArrowLeft, Check, XCircle } from "lucide-react"
 
 interface BasicKeyboardProps {
   initialValue: string
@@ -95,7 +95,7 @@ export default function BasicKeyboard({ initialValue, onSubmit, onCancel, isNume
               <X className="h-6 w-6" />
             </Button>
             <Button type="button" onClick={onCancel} className="flex-1 h-12 bg-gray-700 hover:bg-gray-600 text-white">
-              Abbrechen
+              <XCircle className="h-6 w-6" />
             </Button>
             <Button
               type="button"

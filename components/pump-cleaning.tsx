@@ -21,40 +21,42 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
   const [manualCleaningPumps, setManualCleaningPumps] = useState<Set<number>>(new Set())
   const cleaningProcessRef = useRef<{ cancel: boolean }>({ cancel: false })
 
+  const enabledPumps = pumpConfig.filter((pump) => pump.enabled)
+
   const startCleaning = async () => {
-    // Start cleaning process
+    // Reinigungsprozess starten
     setCleaningStatus("preparing")
     setProgress(0)
     setPumpsDone([])
     cleaningProcessRef.current = { cancel: false }
 
-    // Short delay for preparation
+    // Kurze Verzögerung für die Vorbereitung
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     if (cleaningProcessRef.current.cancel) return
     setCleaningStatus("cleaning")
 
-    // Clean each pump sequentially
-    for (let i = 0; i < pumpConfig.length; i++) {
-      const pump = pumpConfig[i]
+    // Jede Pumpe nacheinander reinigen
+    for (let i = 0; i < enabledPumps.length; i++) {
+      const pump = enabledPumps[i]
       setCurrentPump(pump.id)
 
-      // Check if process was paused or cancelled
+      // Prüfen, ob der Prozess pausiert oder abgebrochen wurde
       if (cleaningProcessRef.current.cancel) return
 
       try {
-        // Run pump for 10 seconds
+        // Pumpe für 10 Sekunden laufen lassen
         await cleanPumpWithPauseSupport(pump.id, 10000)
 
-        // If process was cancelled during cleaning, stop
+        // Wenn der Prozess während der Reinigung abgebrochen wurde, beenden
         if (cleaningProcessRef.current.cancel) return
 
         setPumpsDone((prev) => [...prev, pump.id])
 
-        // Update progress
-        setProgress(Math.round(((i + 1) / pumpConfig.length) * 100))
+        // Fortschritt aktualisieren
+        setProgress(Math.round(((i + 1) / enabledPumps.length) * 100))
       } catch (error) {
-        console.error(`Error cleaning pump ${pump.id}:`, error)
+        console.error(`Fehler beim Reinigen der Pumpe ${pump.id}:`, error)
         if (cleaningProcessRef.current.cancel) return
       }
     }
@@ -63,7 +65,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setCleaningStatus("complete")
   }
 
-  // Function to clean a pump with pause support
+  // Funktion zum Reinigen einer Pumpe mit Unterstützung für Pausen
   const cleanPumpWithPauseSupport = async (pumpId: number, duration: number) => {
     try {
       await cleanPump(pumpId, duration)
@@ -80,15 +82,15 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setPumpsDone([])
   }
 
-  // Manual single pump cleaning
+  // Manuelle Einzelpumpen-Reinigung
   const cleanSinglePump = async (pumpId: number) => {
     setManualCleaningPumps((prev) => new Set(prev).add(pumpId))
 
     try {
-      await cleanPump(pumpId, 10000) // 10 seconds
-      console.log(`Pump ${pumpId} manually cleaned`)
+      await cleanPump(pumpId, 10000) // 10 Sekunden
+      console.log(`Pumpe ${pumpId} manuell gereinigt`)
     } catch (error) {
-      console.error(`Error manually cleaning pump ${pumpId}:`, error)
+      console.error(`Fehler beim manuellen Reinigen der Pumpe ${pumpId}:`, error)
     } finally {
       setManualCleaningPumps((prev) => {
         const newSet = new Set(prev)
@@ -100,7 +102,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
 
   return (
     <div className="space-y-4">
-      {/* Automatic cleaning */}
+      {/* Automatische Reinigung */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -108,7 +110,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             Automatic Pump Cleaning
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Clean all pumps sequentially with warm water and dish soap
+            Clean all pumps sequentially with warm water and detergent
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -116,8 +118,8 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <ol className="list-decimal pl-4 space-y-1 text-sm">
-                <li>Prepare a container with warm water and some dish soap.</li>
-                <li>Place the suction tubes of all pumps in this container.</li>
+                <li>Prepare a container with warm water and some detergent.</li>
+                <li>Place the intake hoses of all pumps in this container.</li>
                 <li>Place an empty collection container under the outlets.</li>
               </ol>
             </AlertDescription>
@@ -141,7 +143,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
               </div>
               <p className="text-center text-[hsl(var(--cocktail-text))]">Preparing cleaning...</p>
               <p className="text-center text-sm text-[hsl(var(--cocktail-text-muted))]">
-                Make sure all tubes are positioned correctly.
+                Make sure all hoses are correctly positioned.
               </p>
             </div>
           )}
@@ -152,7 +154,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
 
               <div className="flex justify-between items-center">
                 <span className="text-sm text-[hsl(var(--cocktail-text-muted))]">
-                  {pumpsDone.length} of {pumpConfig.length} pumps cleaned
+                  {pumpsDone.length} of {enabledPumps.length} pumps cleaned
                 </span>
                 <span className="text-sm font-medium">{progress}%</span>
               </div>
@@ -169,7 +171,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
               )}
 
               <div className="grid grid-cols-5 gap-2">
-                {pumpConfig.map((pump) => (
+                {enabledPumps.map((pump) => (
                   <div
                     key={pump.id}
                     className={`p-2 rounded-md text-center ${
@@ -212,7 +214,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                 <AlertTriangle className="h-4 w-4 text-[hsl(var(--cocktail-warning))]" />
                 <AlertDescription className="text-[hsl(var(--cocktail-text))]">
                   <p className="font-medium mb-1">Important:</p>
-                  <p>Now rinse the pumps with clean water to remove soap residue.</p>
+                  <p>Now rinse the pumps with clean water to remove detergent residue.</p>
                 </AlertDescription>
               </Alert>
 
@@ -227,7 +229,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
         </CardContent>
       </Card>
 
-      {/* Manual single pump cleaning */}
+      {/* Manuelle Einzelpumpen-Reinigung */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -241,13 +243,13 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
         <CardContent className="space-y-3">
           <Alert className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
-              Click on a pump to clean it individually for 10 seconds. Make sure the suction tube of the respective pump
+              Click on a pump to clean it individually for 10 seconds. Make sure the intake hose of the respective pump
               is in the cleaning water.
             </AlertDescription>
           </Alert>
 
           <div className="grid grid-cols-5 gap-3">
-            {pumpConfig.map((pump) => (
+            {enabledPumps.map((pump) => (
               <div key={pump.id} className="flex flex-col items-center space-y-2">
                 <Button
                   onClick={() => cleanSinglePump(pump.id)}

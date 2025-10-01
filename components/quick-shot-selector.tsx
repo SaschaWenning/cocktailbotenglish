@@ -34,21 +34,23 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     loadIngredients()
   }, [])
 
-  const shotSize = 20 // Fixed size: 20ml
+  const shotSize = 20 // Feste Größe: 20ml
 
   const getAllAvailableIngredients = () => {
-    return pumpConfig.map((pump) => {
-      const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
-      const ingredientName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")
+    return pumpConfig
+      .filter((pump) => pump.enabled) // Nur aktivierte Pumpen anzeigen
+      .map((pump) => {
+        const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
+        const ingredientName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")
 
-      return {
-        id: pump.ingredient,
-        name: ingredientName,
-        alcoholic: ingredient?.alcoholic || false,
-        pumpId: pump.id,
-        hasPump: true,
-      }
-    })
+        return {
+          id: pump.ingredient,
+          name: ingredientName,
+          alcoholic: ingredient?.alcoholic || false,
+          pumpId: pump.id,
+          hasPump: true,
+        }
+      })
   }
 
   const allAvailableIngredients = getAllAvailableIngredients()
@@ -57,8 +59,11 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
   const nonAlcoholicIngredients = allAvailableIngredients.filter((i) => !i.alcoholic)
 
   const checkIngredientAvailable = (ingredientId: string) => {
-    const level = ingredientLevels.find((level) => level.ingredientId === ingredientId)
-    return level && level.currentAmount >= shotSize
+    const pump = pumpConfig.find((p) => p.ingredient === ingredientId)
+    if (!pump) return false
+
+    const level = ingredientLevels.find((level) => level.pumpId === pump.id)
+    return level && level.currentLevel >= shotSize
   }
 
   const handleQuickShot = async (ingredientId: string) => {
@@ -68,7 +73,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     setCurrentIngredient(ingredientName)
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage(`Bleeding ${ingredientName}...`)
+    setStatusMessage(`Entlüfte ${ingredientName}...`)
     setErrorMessage(null)
 
     let intervalId: NodeJS.Timeout
@@ -88,7 +93,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
 
       clearInterval(intervalId)
       setProgress(100)
-      setStatusMessage(`${ingredientName} complete!`)
+      setStatusMessage(`${ingredientName} fertig!`)
       setShowSuccess(true)
 
       await onShotComplete()
@@ -101,8 +106,8 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     } catch (error) {
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Error during preparation!")
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
+      setStatusMessage("Fehler bei der Zubereitung!")
+      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
       setTimeout(() => {
         setIsMaking(false)
         setCurrentIngredient("")
@@ -144,7 +149,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Bleed Alcoholic Ingredients</h2>
+        <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">Alkoholische Zutaten entlüften</h2>
         <div className="grid grid-cols-4 gap-3">
           {alcoholicIngredients.map((ingredient) => {
             const isAvailable = checkIngredientAvailable(ingredient.id)
@@ -163,7 +168,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
               >
                 <div className="flex flex-col items-center">
                   <span className="font-medium text-sm">{ingredient.name}</span>
-                  {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Empty</span>}
+                  {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Leer</span>}
                 </div>
               </Button>
             )
@@ -174,7 +179,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
       {nonAlcoholicIngredients.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold mb-4 text-[hsl(var(--cocktail-text))]">
-            Bleed Non-Alcoholic Ingredients
+            Alkoholfreie Zutaten entlüften
           </h2>
           <div className="grid grid-cols-4 gap-3">
             {nonAlcoholicIngredients.map((ingredient) => {
@@ -194,7 +199,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
                 >
                   <div className="flex flex-col items-center">
                     <span className="font-medium text-sm">{ingredient.name}</span>
-                    {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Empty</span>}
+                    {!isAvailable && <span className="text-xs text-[hsl(var(--cocktail-warning))] mt-1">Leer</span>}
                   </div>
                 </Button>
               )

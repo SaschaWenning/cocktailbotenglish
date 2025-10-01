@@ -31,7 +31,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
   const [allIngredients, setAllIngredients] = useState(getAllIngredients())
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Load saved configuration on first render
   useEffect(() => {
     loadPumpConfig()
     setAllIngredients(getAllIngredients())
@@ -53,6 +52,26 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
     setPumpConfig((prev) => prev.map((pump) => (pump.id === pumpId ? { ...pump, ingredient } : pump)))
   }
 
+  const handleToggleEnabled = async (pumpId: number) => {
+    const updatedConfig = pumpConfig.map((pump) => (pump.id === pumpId ? { ...pump, enabled: !pump.enabled } : pump))
+    setPumpConfig(updatedConfig)
+
+    setSaving(true)
+    try {
+      await savePumpConfig(updatedConfig)
+      console.log(`Pump ${pumpId} ${updatedConfig.find((p) => p.id === pumpId)?.enabled ? "enabled" : "disabled"}`)
+
+      if (onConfigUpdate) {
+        await onConfigUpdate()
+      }
+    } catch (error) {
+      console.error("Error saving pump activation:", error)
+      setPumpConfig(pumpConfig)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     try {
@@ -60,7 +79,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
 
-      // Notify main component about the update
       if (onConfigUpdate) {
         await onConfigUpdate()
       }
@@ -77,11 +95,9 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
     setCalibrating(pumpId)
 
     try {
-      // Run pump for exactly 2 seconds
       await calibratePump(pumpId, 2000)
       setCalibrationStep("input")
       setMeasuredAmount("")
-      // Open dialog for input
       setShowInputDialog(true)
     } catch (error) {
       console.error("Error during calibration:", error)
@@ -92,14 +108,12 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
   }
 
   const handleMeasuredAmountChange = (value: string) => {
-    // Only allow numbers and one decimal point
     if (/^\d*\.?\d*$/.test(value) || value === "") {
       setMeasuredAmount(value)
     }
   }
 
   const handleKeyPress = (key: string) => {
-    // Prevent multiple decimal points
     if (key === "." && measuredAmount.includes(".")) {
       return
     }
@@ -128,30 +142,24 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
       return
     }
 
-    // Calculate flow rate (ml/s) based on measured amount and 2 seconds runtime
     const flowRate = amount / 2
 
-    // Update local configuration
     const updatedConfig = pumpConfig.map((pump) => (pump.id === currentPumpId ? { ...pump, flowRate } : pump))
 
     setPumpConfig(updatedConfig)
 
-    // Save configuration immediately
     setSaving(true)
     try {
       await savePumpConfig(updatedConfig)
 
-      // Log updated flow rate for debugging purposes
       const pump = updatedConfig.find((p) => p.id === currentPumpId)
       if (pump) {
         console.log(`Calibration for pump ${pump.id} (${pump.ingredient}) updated: ${flowRate} ml/s`)
       }
 
-      // Show success message
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
 
-      // Notify main component about the update
       if (onConfigUpdate) {
         await onConfigUpdate()
       }
@@ -161,7 +169,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
       setSaving(false)
     }
 
-    // Reset
     setMeasuredAmount("")
     setCalibrationStep("idle")
     setCurrentPumpId(null)
@@ -211,8 +218,8 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
             <Alert className="mb-4 bg-[hsl(var(--cocktail-accent))]/10 border-[hsl(var(--cocktail-accent))]/30">
               <Beaker className="h-4 w-4 text-[hsl(var(--cocktail-accent))]" />
               <AlertDescription className="text-[hsl(var(--cocktail-text))]">
-                Pump {currentPumpId} is running for 2 seconds. Please place a measuring cup and measure the dispensed
-                amount in ml.
+                Pump {currentPumpId} is running for 2 seconds. Please place a measuring container and measure the
+                dispensed amount in ml.
               </AlertDescription>
             </Alert>
           )}
@@ -224,14 +231,16 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
                   <span className="font-medium text-white">{pump.id}</span>
                 </div>
 
-                <div className="col-span-5">
+                <div className="col-span-4">
                   <Select
                     value={pump.ingredient}
                     onValueChange={(value) => handleIngredientChange(pump.id, value)}
-                    disabled={calibrationStep !== "idle"}
+                    disabled={calibrationStep !== "idle" || !pump.enabled}
                   >
-                    <SelectTrigger className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))]">
-                      <SelectValue placeholder="Choose ingredient" />
+                    <SelectTrigger
+                      className={`${pump.enabled ? "bg-[hsl(var(--cocktail-card-bg))]" : "bg-gray-800 opacity-50"} text-white border-[hsl(var(--cocktail-card-border))]`}
+                    >
+                      <SelectValue placeholder="Select ingredient" />
                     </SelectTrigger>
                     <SelectContent className="bg-black text-white border-[hsl(var(--cocktail-card-border))]">
                       {allIngredients.map((ingredient) => (
@@ -243,27 +252,43 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
                   </Select>
                 </div>
 
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <div className="flex items-center space-x-2">
                     <Input
                       type="text"
                       value={pump.flowRate.toFixed(1)}
                       readOnly
-                      className="w-full bg-[hsl(var(--cocktail-bg))] text-white border-[hsl(var(--cocktail-card-border))]"
+                      className={`w-full ${pump.enabled ? "bg-[hsl(var(--cocktail-bg))]" : "bg-gray-800 opacity-50"} text-white border-[hsl(var(--cocktail-card-border))]`}
                     />
                     <span className="text-xs whitespace-nowrap text-white">ml/s</span>
                   </div>
                 </div>
 
-                <div className="col-span-3">
+                <div className="col-span-2">
                   <Button
                     variant="outline"
                     size="sm"
                     className="w-full bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] hover:text-[hsl(var(--cocktail-primary))]"
                     onClick={() => startCalibration(pump.id)}
-                    disabled={calibrationStep !== "idle" || calibrating !== null}
+                    disabled={calibrationStep !== "idle" || calibrating !== null || !pump.enabled}
                   >
                     {calibrating === pump.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Calibrate"}
+                  </Button>
+                </div>
+
+                <div className="col-span-3">
+                  <Button
+                    variant={pump.enabled ? "destructive" : "default"}
+                    size="sm"
+                    className={`w-full ${
+                      pump.enabled
+                        ? "bg-red-600 hover:bg-red-700 text-white"
+                        : "bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black"
+                    }`}
+                    onClick={() => handleToggleEnabled(pump.id)}
+                    disabled={calibrationStep !== "idle"}
+                  >
+                    {pump.enabled ? "Disable" : "Enable"}
                   </Button>
                 </div>
               </div>
@@ -298,7 +323,6 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
         </CardContent>
       </Card>
 
-      {/* Dialog for entering measured amount */}
       <Dialog open={showInputDialog} onOpenChange={(open) => !open && cancelCalibration()}>
         <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] sm:max-w-md text-white">
           <DialogHeader>

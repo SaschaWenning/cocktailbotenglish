@@ -95,7 +95,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
     } else {
       let processedKey = key
       if (key.length === 1 && key.match(/[A-Za-z]/)) {
-        // For letters: check Shift and Caps Lock status
+        // Für Buchstaben: prüfe Shift und Caps Lock Status
         const shouldBeUppercase = (isShiftActive && !isCapsLockActive) || (!isShiftActive && isCapsLockActive)
         processedKey = shouldBeUppercase ? key.toUpperCase() : key.toLowerCase()
       }
@@ -159,7 +159,6 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 <CardTitle className="text-white">Manage Ingredients</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 overflow-auto flex-1">
-                {/* Add new ingredient */}
                 <div className="space-y-4 p-4 border border-[hsl(var(--cocktail-card-border))] rounded-lg bg-[hsl(var(--cocktail-card-bg))]">
                   <h3 className="font-semibold text-white">Add New Ingredient</h3>
                   <div className="space-y-3">
@@ -194,7 +193,6 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                   </div>
                 </div>
 
-                {/* Display custom ingredients */}
                 {customIngredients.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-white">Your Custom Ingredients</h3>
@@ -232,7 +230,6 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
             </>
           ) : (
             <div className="flex gap-3 my-2 h-[85vh] p-2">
-              {/* Keyboard left */}
               <div className="flex-1 flex flex-col">
                 <div className="text-center mb-2">
                   <h3 className="text-base font-semibold text-white mb-1">Enter Ingredient Name</h3>
@@ -268,7 +265,6 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 </div>
               </div>
 
-              {/* Action Buttons right */}
               <div className="flex flex-col gap-2 w-24">
                 <Button
                   type="button"
@@ -329,3 +325,5 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
     </>
   )
 }
+
+export default IngredientManager

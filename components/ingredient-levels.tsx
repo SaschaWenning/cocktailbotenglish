@@ -1,734 +1,451 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { useState, useEffect, useRef } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Loader2, RefreshCw, AlertTriangle, Droplet, Wine, Coffee } from "lucide-react"
-import type { IngredientLevel } from "@/types/ingredient-level"
-import { ingredients } from "@/data/ingredients"
-import { getIngredientLevels, refillAllIngredients } from "@/lib/ingredient-level-service"
-import type { PumpConfig } from "@/types/pump-config"
-import VirtualKeyboard from "./virtual-keyboard"
-import { updateIngredientLevel } from "@/lib/ingredient-level-service"
+import { Bug } from "lucide-react"
+import { ArrowLeft, X } from "lucide-react"
+import { pumpConfig } from "@/data/pump-config"
+import {
+  getIngredientLevels,
+  updateIngredientLevel,
+  updateContainerSize,
+  updateIngredientName,
+  resetAllLevels,
+  onIngredientLevelsUpdated,
+  setIngredientLevels,
+  type IngredientLevel,
+} from "@/lib/ingredient-level-service"
+import { getIngredientById } from "@/lib/ingredients"
 
-interface IngredientLevelsProps {
-  pumpConfig: PumpConfig[]
-  onLevelsUpdated?: () => void
-}
-
-export default function IngredientLevels({ pumpConfig, onLevelsUpdated }: IngredientLevelsProps) {
+export function IngredientLevels() {
   const [levels, setLevels] = useState<IngredientLevel[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
-  const [refillAmounts, setRefillAmounts] = useState<Record<string, string>>({})
-  const [capacityAmounts, setCapacityAmounts] = useState<Record<string, string>>({})
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [activeInput, setActiveInput] = useState<string | null>(null)
-  const [inputType, setInputType] = useState<"capacity" | "fill">("fill")
-  const [showInputDialog, setShowInputDialog] = useState(false)
-  const [currentIngredientName, setCurrentIngredientName] = useState("")
-  const [activeButton, setActiveButton] = useState<string | null>(null)
+  const [editingLevel, setEditingLevel] = useState<number | null>(null)
+  const [editingSize, setEditingSize] = useState<number | null>(null)
+  const [editingName, setEditingName] = useState<number | null>(null)
+  const [tempValue, setTempValue] = useState("")
+  const [showKeyboard, setShowKeyboard] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [showDebug, setShowDebug] = useState(false)
+  const [debugLogs, setDebugLogs] = useState<string[]>([])
+  const [isFilling, setIsFilling] = useState(false)
 
-  // Common fill amounts
-  const commonSizes = [500, 700, 750, 1000, 1500, 1750, 2000]
+  // Auto-Refresh während der Bearbeitung pausieren, danach fortsetzen
+  const isEditing = editingLevel !== null || editingSize !== null || editingName !== null
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const unsubscribeRef = useRef<(() => void) | null>(null)
+  const fillingRef = useRef(false)
+  const editingRef = useRef(false)
+  const skipReloadUntil = useRef(0) // ts (ms). Solange now < ts: Reloads skippen
 
   useEffect(() => {
-    loadLevels()
-  }, [])
+    fillingRef.current = isFilling
+  }, [isFilling])
+  useEffect(() => {
+    editingRef.current = isEditing
+  }, [isEditing])
 
-  const loadLevels = async () => {
-    setLoading(true)
-    try {
-      const data = await getIngredientLevels()
-      setLevels(data)
-    } catch (error) {
-      console.error("Error loading fill levels:", error)
-    } finally {
-      setLoading(false)
-    }
+  const addDebugLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString()
+    setDebugLogs((prev) => [`[${timestamp}] ${message}`, ...prev.slice(0, 19)])
   }
 
-  const handleCapacityAmountChange = (ingredientId: string, value: string) => {
-    if (/^\d*$/.test(value) || value === "") {
-      setCapacityAmounts((prev) => ({
-        ...prev,
-        [ingredientId]: value,
-      }))
-    }
-  }
-
-  const handleRefillAmountChange = (ingredientId: string, value: string) => {
-    if (/^\d*$/.test(value) || value === "") {
-      setRefillAmounts((prev) => ({
-        ...prev,
-        [ingredientId]: value,
-      }))
-    }
-  }
-
-  const handleKeyPress = (key: string) => {
-    if (!activeInput) return
-
-    if (/^\d$/.test(key)) {
-      if (inputType === "capacity") {
-        setCapacityAmounts((prev) => ({
-          ...prev,
-          [activeInput]: (prev[activeInput] || "") + key,
-        }))
-      } else {
-        setRefillAmounts((prev) => ({
-          ...prev,
-          [activeInput]: (prev[activeInput] || "") + key,
-        }))
-      }
-    }
-  }
-
-  const handleBackspace = () => {
-    if (!activeInput) return
-
-    if (inputType === "capacity") {
-      setCapacityAmounts((prev) => ({
-        ...prev,
-        [activeInput]: (prev[activeInput] || "").slice(0, -1),
-      }))
-    } else {
-      setRefillAmounts((prev) => ({
-        ...prev,
-        [activeInput]: (prev[activeInput] || "").slice(0, -1),
-      }))
-    }
-  }
-
-  const handleClear = () => {
-    if (!activeInput) return
-
-    if (inputType === "capacity") {
-      setCapacityAmounts((prev) => ({
-        ...prev,
-        [activeInput]: "",
-      }))
-    } else {
-      setRefillAmounts((prev) => ({
-        ...prev,
-        [activeInput]: "",
-      }))
-    }
-  }
-
-  const handleCapacityInputFocus = (ingredientId: string) => {
-    const ingredient = ingredients.find((i) => i.id === ingredientId)
-    setCurrentIngredientName(ingredient ? ingredient.name : ingredientId)
-    setActiveInput(ingredientId)
-    setInputType("capacity")
-    setShowInputDialog(true)
-  }
-
-  const handleFillInputFocus = (ingredientId: string) => {
-    const ingredient = ingredients.find((i) => i.id === ingredientId)
-    setCurrentIngredientName(ingredient ? ingredient.name : ingredientId)
-    setActiveInput(ingredientId)
-    setInputType("fill")
-    setShowInputDialog(true)
-  }
-
-  const handleRefill = async (ingredientId: string) => {
-    if (inputType === "capacity") {
-      const capacityStr = capacityAmounts[ingredientId]
-      if (!capacityStr) return
-
-      const newCapacity = Number.parseInt(capacityStr, 10)
-      if (isNaN(newCapacity) || newCapacity <= 0) return
-
-      setSaving(true)
+  useEffect(() => {
+    if (unsubscribeRef.current) {
       try {
-        const currentLevel = levels.find((l) => l.ingredientId === ingredientId)
-        const currentFill = currentLevel?.currentAmount || 0
-
-        const updatedLevel = await updateIngredientLevel(ingredientId, Math.min(currentFill, newCapacity))
-        updatedLevel.capacity = newCapacity
-
-        setLevels((prev) => {
-          const existingIndex = prev.findIndex((level) => level.ingredientId === ingredientId)
-          if (existingIndex >= 0) {
-            return prev.map((level) => (level.ingredientId === ingredientId ? updatedLevel : level))
-          } else {
-            return [...prev, updatedLevel]
-          }
-        })
-
-        setCapacityAmounts((prev) => ({
-          ...prev,
-          [ingredientId]: "",
-        }))
-
-        setShowSuccess(true)
-        setTimeout(() => setShowSuccess(false), 3000)
-
-        if (onLevelsUpdated) {
-          onLevelsUpdated()
-        }
-      } catch (error) {
-        console.error("Error updating capacity:", error)
-      } finally {
-        setSaving(false)
-        setShowInputDialog(false)
-        setActiveInput(null)
-      }
-    } else {
-      const amountStr = refillAmounts[ingredientId]
-      if (!amountStr && amountStr !== "0") return
-
-      const newFillAmount = Number.parseInt(amountStr, 10)
-      if (isNaN(newFillAmount) || newFillAmount < 0) return
-
-      const currentLevel = levels.find((l) => l.ingredientId === ingredientId)
-      const capacity = currentLevel?.capacity || 1000
-
-      if (newFillAmount > capacity) {
-        alert(`Fill amount (${newFillAmount}ml) cannot be greater than capacity (${capacity}ml)!`)
-        return
-      }
-
-      setSaving(true)
-      try {
-        const updatedLevel = await updateIngredientLevel(ingredientId, newFillAmount)
-        updatedLevel.capacity = capacity
-
-        setLevels((prev) => {
-          const existingIndex = prev.findIndex((level) => level.ingredientId === ingredientId)
-          if (existingIndex >= 0) {
-            return prev.map((level) => (level.ingredientId === ingredientId ? updatedLevel : level))
-          } else {
-            return [...prev, updatedLevel]
-          }
-        })
-
-        setRefillAmounts((prev) => ({
-          ...prev,
-          [ingredientId]: "",
-        }))
-
-        setShowSuccess(true)
-        setTimeout(() => setShowSuccess(false), 3000)
-
-        if (onLevelsUpdated) {
-          onLevelsUpdated()
-        }
-      } catch (error) {
-        console.error("Error refilling:", error)
-      } finally {
-        setSaving(false)
-        setShowInputDialog(false)
-        setActiveInput(null)
-      }
+        unsubscribeRef.current()
+      } catch {}
+      unsubscribeRef.current = null
     }
-  }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
 
-  const handleQuickFill = (ingredientId: string, amount: number) => {
-    const currentLevel = levels.find((l) => l.ingredientId === ingredientId)
-    const capacity = currentLevel?.capacity || 1000
-
-    if (amount > capacity) {
-      alert(`Fill amount (${amount}ml) cannot be greater than capacity (${capacity}ml)!`)
+    if (isEditing || isFilling) {
       return
     }
 
-    setActiveButton(`${ingredientId}-${amount}`)
-    setTimeout(() => setActiveButton(null), 300)
+    loadLevels()
+    unsubscribeRef.current = onIngredientLevelsUpdated(loadLevels)
+    intervalRef.current = setInterval(loadLevels, 10000)
 
-    setRefillAmounts((prev) => ({
-      ...prev,
-      [ingredientId]: amount.toString(),
-    }))
+    return () => {
+      if (unsubscribeRef.current) {
+        try {
+          unsubscribeRef.current()
+        } catch {}
+        unsubscribeRef.current = null
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [editingLevel, editingSize, editingName, isFilling])
 
-    setSaving(true)
-    updateIngredientLevel(ingredientId, amount)
-      .then((updatedLevel) => {
-        updatedLevel.capacity = capacity
-        setLevels((prev) => {
-          const existingIndex = prev.findIndex((level) => level.ingredientId === ingredientId)
-          if (existingIndex >= 0) {
-            return prev.map((level) => (level.ingredientId === ingredientId ? updatedLevel : level))
-          } else {
-            return [...prev, updatedLevel]
-          }
-        })
-        setSaving(false)
-        if (onLevelsUpdated) {
-          onLevelsUpdated()
-        }
-      })
-      .catch((error) => {
-        console.error("Error refilling:", error)
-        setSaving(false)
-      })
-  }
-
-  const handleRefillAll = async () => {
-    setSaving(true)
+  const loadLevels = async () => {
+    const nowTs = Date.now()
+    if (fillingRef.current || editingRef.current || nowTs < skipReloadUntil.current) {
+      return
+    }
     try {
-      const updatedLevels = await refillAllIngredients()
-      setLevels(updatedLevels)
-      setShowSuccess(true)
-      setTimeout(() => setShowSuccess(false), 3000)
+      const response = await fetch("/api/ingredient-levels")
 
-      if (onLevelsUpdated) {
-        onLevelsUpdated()
+      if (response.ok) {
+        const data = await response.json()
+
+        if (data.success && data.levels && data.levels.length > 0) {
+          setLevels(data.levels)
+          await setIngredientLevels(data.levels)
+          return
+        }
       }
+    } catch (error) {}
+
+    const currentLevels = getIngredientLevels()
+    setLevels(currentLevels)
+  }
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true)
+    await loadLevels()
+    setTimeout(() => setIsRefreshing(false), 500)
+  }
+
+  const getIngredientDisplayName = (ingredientId: string) => {
+    const ingredient = getIngredientById(ingredientId)
+    if (ingredient) {
+      return ingredient.name
+    }
+
+    return ingredientId
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  }
+
+  const handleLevelEdit = (pumpId: number) => {
+    const level = levels.find((l) => l.pumpId === pumpId)
+    if (level) {
+      setTempValue(level.currentLevel.toString())
+      setEditingLevel(pumpId)
+      setShowKeyboard(true)
+    }
+  }
+
+  const handleSizeEdit = (pumpId: number) => {
+    const level = levels.find((l) => l.pumpId === pumpId)
+    if (level) {
+      setTempValue(level.containerSize.toString())
+      setEditingSize(pumpId)
+      setShowKeyboard(true)
+    }
+  }
+
+  const handleNameEdit = (pumpId: number) => {
+    const level = levels.find((l) => l.pumpId === pumpId)
+    if (level) {
+      setTempValue(level.ingredient)
+      setEditingName(pumpId)
+      setShowKeyboard(true)
+    }
+  }
+
+  const handleSave = async () => {
+    try {
+      if (editingLevel) {
+        const newLevel = Number.parseInt(tempValue) || 0
+        await updateIngredientLevel(editingLevel, newLevel)
+      } else if (editingSize) {
+        const newSize = Number.parseInt(tempValue) || 100
+        await updateContainerSize(editingSize, newSize)
+      } else if (editingName) {
+        await updateIngredientName(editingName, tempValue)
+      }
+
+      await loadLevels()
+
+      console.log("[v0] Ingredient-Levels: Triggering cocktail data refresh")
+      window.dispatchEvent(new CustomEvent("cocktail-data-refresh"))
+
+      handleCancel()
+    } catch (error) {}
+  }
+
+  const handleCancel = () => {
+    setEditingLevel(null)
+    setEditingSize(null)
+    setEditingName(null)
+    setTempValue("")
+    setShowKeyboard(false)
+  }
+
+  const handleResetAll = async () => {
+    try {
+      await resetAllLevels()
+      await loadLevels()
+    } catch (error) {}
+  }
+
+  const handleFillAll = async () => {
+    try {
+      setIsFilling(true)
+      const now = new Date()
+      const next = levels.map((l) => ({ ...l, currentLevel: Math.max(0, l.containerSize), lastUpdated: now }))
+      setLevels(next)
+      await setIngredientLevels(next)
+      skipReloadUntil.current = Date.now() + 800
+
+      console.log("[v0] Ingredient-Levels: Triggering cocktail data refresh after fill all")
+      window.dispatchEvent(new CustomEvent("cocktail-data-refresh"))
     } catch (error) {
-      console.error("Error refilling all ingredients:", error)
     } finally {
-      setSaving(false)
+      setIsFilling(false)
     }
   }
 
-  const handleEmpty = (ingredientId: string) => {
-    setActiveButton(`${ingredientId}-empty`)
-    setTimeout(() => setActiveButton(null), 300)
-
-    setRefillAmounts((prev) => ({
-      ...prev,
-      [ingredientId]: "0",
-    }))
-
-    handleRefill(ingredientId)
-  }
-
-  const getIngredientName = (id: string) => {
-    if (id.startsWith("custom-")) {
-      const cleanName = id.replace(/^custom-\d+-/, "").trim()
-      try {
-        return decodeURIComponent(cleanName)
-      } catch {
-        return cleanName
+  const handleFillSingle = async (pumpId: number) => {
+    try {
+      setIsFilling(true)
+      const target = levels.find((l) => l.pumpId === pumpId)
+      if (!target) {
+        setIsFilling(false)
+        return
       }
-    }
-    const ingredient = ingredients.find((i) => i.id === id)
-    return ingredient ? ingredient.name : id
-  }
+      const now = new Date()
+      const next = levels.map((l) =>
+        l.pumpId === pumpId ? { ...l, currentLevel: Math.max(0, target.containerSize), lastUpdated: now } : l,
+      )
+      setLevels(next)
+      await setIngredientLevels(next)
+      skipReloadUntil.current = Date.now() + 800
 
-  const getIngredientIcon = (id: string) => {
-    if (id.startsWith("custom-")) {
-      return <Droplet className="h-4 w-4" />
-    }
-    const ingredient = ingredients.find((i) => i.id === id)
-    if (!ingredient) return <Droplet className="h-4 w-4" />
-
-    if (ingredient.alcoholic) {
-      return <Wine className="h-4 w-4 text-[#ff9500]" />
-    } else {
-      return <Coffee className="h-4 w-4 text-[#00ff00]" />
+      console.log("[v0] Ingredient-Levels: Triggering cocktail data refresh after single fill")
+      window.dispatchEvent(new CustomEvent("cocktail-data-refresh"))
+    } catch (error) {
+    } finally {
+      setIsFilling(false)
     }
   }
 
-  const cancelInput = () => {
-    setShowInputDialog(false)
-    setActiveInput(null)
+  const getProgressColor = (percentage: number) => {
+    if (percentage > 50) return "bg-[hsl(var(--cocktail-primary))]"
+    if (percentage > 20) return "bg-[hsl(var(--cocktail-warning))]"
+    return "bg-[hsl(var(--cocktail-error))]"
   }
 
-  const confirmInput = () => {
-    if (activeInput) {
-      handleRefill(activeInput)
-    }
-  }
-
-  const connectedIngredientIds = pumpConfig.map((pump) => pump.ingredient)
-
-  const pumpBasedLevels = pumpConfig.map((pump) => {
-    const existingLevel = levels.find((level) => level.ingredientId === pump.ingredient)
-
-    if (!existingLevel) {
-      return {
-        ingredientId: pump.ingredient,
-        currentAmount: 0,
-        capacity: 1000,
-        lastRefill: new Date(),
-        pumpId: pump.id,
-        isNew: true,
-      }
-    }
-
-    return {
-      ...existingLevel,
-      pumpId: pump.id,
-      isNew: false,
-    }
+  const enabledLevels = levels.filter((level) => {
+    const pump = pumpConfig.find((p) => p.id === level.pumpId)
+    return pump?.enabled !== false
   })
-
-  const sortedLevels = pumpBasedLevels.sort((a, b) => a.pumpId - b.pumpId)
-
-  const filteredLevels = sortedLevels.filter((level) => {
-    if (activeTab === "all") return true
-    if (activeTab === "low" && level.currentAmount < 100) return true
-    if (activeTab === "alcoholic") {
-      const ingredient = ingredients.find((i) => i.id === level.ingredientId)
-      return ingredient?.alcoholic
-    }
-    if (activeTab === "non-alcoholic") {
-      const ingredient = ingredients.find((i) => i.id === level.ingredientId)
-      return !ingredient?.alcoholic
-    }
-    return false
-  })
-
-  const lowLevelsCount = levels.filter(
-    (level) => level.currentAmount < 100 && connectedIngredientIds.includes(level.ingredientId),
-  ).length
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-black border border-gray-800">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#00ff00]/20 rounded-lg">
-                <Droplet className="h-6 w-6 text-[#00ff00]" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl font-bold text-white">Fill Levels</CardTitle>
-                <CardDescription className="text-gray-400">Manage your ingredients and container sizes</CardDescription>
-              </div>
-            </div>
-            <Badge variant="outline" className="bg-[#00ff00]/10 text-[#00ff00] border-[#00ff00]/30">
-              {filteredLevels.length} Ingredients
-            </Badge>
+    <div className="min-h-screen bg-[hsl(var(--cocktail-bg))] p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-[hsl(var(--cocktail-text))]">Fill Levels</h1>
+          <div className="flex gap-3">
+            <Button
+              onClick={handleFillAll}
+              className="bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black px-6 py-3 rounded-xl font-semibold"
+            >
+              Fill All
+            </Button>
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="space-y-6">
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="text-center space-y-3">
-                <Loader2 className="h-8 w-8 animate-spin text-[#00ff00] mx-auto" />
-                <p className="text-gray-400">Loading fill levels...</p>
+        {showDebug && (
+          <Card className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
+            <CardHeader>
+              <CardTitle className="text-[hsl(var(--cocktail-text))] flex items-center gap-2">
+                <Bug className="h-5 w-5" />
+                Debug Logs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-black rounded-lg p-4 max-h-60 overflow-y-auto">
+                <div className="font-mono text-sm space-y-1">
+                  {debugLogs.length === 0 ? (
+                    <div className="text-gray-500">No debug logs available</div>
+                  ) : (
+                    debugLogs.map((log, index) => (
+                      <div key={index} className="text-green-400">
+                        {log}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
-          ) : (
-            <>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-4 bg-black border border-gray-800 h-12 p-1">
-                  <TabsTrigger
-                    value="all"
-                    className="data-[state=active]:bg-[#00ff00] data-[state=active]:text-black text-white font-medium"
-                  >
-                    All
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="low"
-                    className="data-[state=active]:bg-[#ff3b30] data-[state=active]:text-white text-white font-medium relative"
-                  >
-                    Low
-                    {lowLevelsCount > 0 && (
-                      <Badge className="absolute -top-2 -right-2 bg-[#ff3b30] text-white text-xs h-5 w-5 p-0 flex items-center justify-center">
-                        {lowLevelsCount}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="alcoholic"
-                    className="data-[state=active]:bg-[#ff9500] data-[state=active]:text-black text-white font-medium"
-                  >
-                    Alcoholic
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="non-alcoholic"
-                    className="data-[state=active]:bg-[#00ff00] data-[state=active]:text-black text-white font-medium"
-                  >
-                    Non-Alcoholic
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+              <div className="mt-4 text-sm text-[hsl(var(--cocktail-text-muted))]">
+                Current Levels: {levels.length} | Last Update: {new Date().toLocaleTimeString()}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-              <div className="space-y-4">
-                {filteredLevels.length === 0 ? (
-                  <Card className="bg-black border border-gray-800">
-                    <CardContent className="py-12 text-center">
-                      <Droplet className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-400 text-lg">No ingredients in this category</p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  filteredLevels.map((level) => {
-                    const percentage = Math.round((level.currentAmount / level.capacity) * 100)
-                    const isLow = level.currentAmount < 100
-                    const isCritical = level.currentAmount < 50
-                    const isNew = level.isNew || false
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {enabledLevels.map((level) => {
+            const percentage = (level.currentLevel / level.containerSize) * 100
+            const displayName = getIngredientDisplayName(level.ingredient)
 
-                    const ingredient = ingredients.find((i) => i.id === level.ingredientId)
-                    const isAlcoholic = ingredient?.alcoholic
+            return (
+              <Card
+                key={level.pumpId}
+                className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] transition-all duration-300"
+              >
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl text-[hsl(var(--cocktail-text))] font-bold flex justify-between items-center">
+                    <span className="truncate">{displayName}</span>
+                    <Button
+                      size="sm"
+                      onClick={() => handleFillSingle(level.pumpId)}
+                      className="h-8 px-3 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black text-xs font-semibold"
+                    >
+                      Fill
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm text-[hsl(var(--cocktail-text-muted))]">
+                      <span>Fill Level:</span>
+                      <div className="flex items-center gap-2 ml-auto">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleLevelEdit(level.pumpId)}
+                          className="h-6 px-2 text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))]"
+                        >
+                          {level.currentLevel}ml
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="bg-[hsl(var(--cocktail-card-border))] rounded-full h-3 overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-500 ${getProgressColor(percentage)}`}
+                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                      />
+                    </div>
+                    <div className="text-center text-sm text-[hsl(var(--cocktail-text-muted))]">
+                      {percentage.toFixed(0)}%
+                    </div>
+                  </div>
 
-                    const cardBorderColor = isCritical
-                      ? "border-[#ff3b30]"
-                      : isLow
-                        ? "border-[#ff9500]"
-                        : "border-gray-800"
-
-                    const progressColor = isCritical
-                      ? "bg-[#ff3b30]"
-                      : isLow
-                        ? "bg-[#ff9500]"
-                        : isAlcoholic
-                          ? "bg-[#ff9500]"
-                          : "bg-[#00ff00]"
-
-                    return (
-                      <Card
-                        key={level.ingredientId}
-                        className={`bg-black ${cardBorderColor} transition-all duration-300 hover:shadow-lg`}
+                  <div className="flex justify-between text-sm text-[hsl(var(--cocktail-text-muted))]">
+                    <span>Container Size:</span>
+                    <div className="ml-auto">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleSizeEdit(level.pumpId)}
+                        className="h-6 px-2 text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))]"
                       >
-                        <CardContent className="p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              {getIngredientIcon(level.ingredientId)}
-                              <div>
-                                <h3 className="font-semibold text-white text-lg">
-                                  Pump {level.pumpId}: {getIngredientName(level.ingredientId)}
-                                </h3>
-                                <p className="text-sm text-gray-400">
-                                  {level.currentAmount} / {level.capacity} ml
-                                </p>
-                              </div>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={`${
-                                isCritical
-                                  ? "bg-[#ff3b30]/20 text-[#ff3b30] border-[#ff3b30]/50"
-                                  : isLow
-                                    ? "bg-[#ff9500]/20 text-[#ff9500] border-[#ff9500]/50"
-                                    : isAlcoholic
-                                      ? "bg-[#ff9500]/20 text-[#ff9500] border-[#ff9500]/50"
-                                      : "bg-[#00ff00]/20 text-[#00ff00] border-[#00ff00]/50"
-                              }`}
-                            >
-                              {percentage}%
-                            </Badge>
-                          </div>
+                        {level.containerSize}ml
+                      </Button>
+                    </div>
+                  </div>
 
-                          <div className="mb-4">
-                            <Progress
-                              value={percentage}
-                              className="h-3 bg-gray-800"
-                              indicatorClassName={`transition-all duration-500 ${progressColor}`}
-                            />
-                          </div>
-
-                          {isLow && (
-                            <Alert
-                              className={`mb-4 ${
-                                isCritical
-                                  ? "bg-[#ff3b30]/10 border-[#ff3b30]/30"
-                                  : "bg-[#ff9500]/10 border-[#ff9500]/30"
-                              }`}
-                            >
-                              <AlertTriangle
-                                className={`h-4 w-4 ${isCritical ? "text-[#ff3b30]" : "text-[#ff9500]"}`}
-                              />
-                              <AlertDescription
-                                className={`${isCritical ? "text-[#ff3b30]" : "text-[#ff9500]"} text-sm`}
-                              >
-                                {isCritical ? "Critically low!" : "Fill level low!"} Please refill.
-                              </AlertDescription>
-                            </Alert>
-                          )}
-
-                          <div className="space-y-3 mb-4">
-                            <div>
-                              <label className="text-sm text-gray-400 mb-1 block">Container capacity (ml)</label>
-                              <Input
-                                type="text"
-                                placeholder="e.g. 1000, 2000, 5000"
-                                value={capacityAmounts[level.ingredientId] || level.capacity.toString()}
-                                className="bg-gray-900 border-gray-700 text-white text-center text-lg placeholder:text-gray-500 focus:border-[#ff9500] focus:ring-[#ff9500]/20"
-                                readOnly
-                                onClick={() => handleCapacityInputFocus(level.ingredientId)}
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm text-gray-400 mb-1 block">Current fill level (ml)</label>
-                              <Input
-                                type="text"
-                                placeholder="Enter fill level"
-                                value={refillAmounts[level.ingredientId] || ""}
-                                className="bg-gray-900 border-gray-700 text-white text-center text-lg placeholder:text-gray-500 focus:border-[#00ff00] focus:ring-[#00ff00]/20"
-                                readOnly
-                                onClick={() => handleFillInputFocus(level.ingredientId)}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-4 gap-2 mb-3">
-                            <Button
-                              key="empty"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEmpty(level.ingredientId)}
-                              className={`bg-gray-900 text-white border-gray-700 hover:bg-[#ff3b30] hover:text-white hover:border-[#ff3b30] transition-all duration-200 ${
-                                activeButton === `${level.ingredientId}-empty`
-                                  ? "bg-[#ff3b30] text-white border-[#ff3b30]"
-                                  : ""
-                              }`}
-                            >
-                              Empty
-                            </Button>
-                            {commonSizes.slice(0, 3).map((size) => (
-                              <Button
-                                key={size}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleQuickFill(level.ingredientId, size)}
-                                className={`bg-gray-900 text-white border-gray-700 hover:bg-[#00ff00] hover:text-black hover:border-[#00ff00] transition-all duration-200 ${
-                                  activeButton === `${level.ingredientId}-${size}`
-                                    ? "bg-[#00ff00] text-black border-[#00ff00]"
-                                    : ""
-                                }`}
-                              >
-                                {size}ml
-                              </Button>
-                            ))}
-                          </div>
-
-                          <div className="grid grid-cols-4 gap-2 mb-3">
-                            {commonSizes.slice(3).map((size) => (
-                              <Button
-                                key={size}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleQuickFill(level.ingredientId, size)}
-                                className={`bg-gray-900 text-white border-gray-700 hover:bg-[#00ff00] hover:text-black hover:border-[#00ff00] transition-all duration-200 ${
-                                  activeButton === `${level.ingredientId}-${size}`
-                                    ? "bg-[#00ff00] text-black border-[#00ff00]"
-                                    : ""
-                                }`}
-                              >
-                                {size}ml
-                              </Button>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  })
-                )}
-              </div>
-
-              <Card className="bg-black border border-[#00ff00]/30">
-                <CardContent className="p-4">
-                  <Button
-                    onClick={handleRefillAll}
-                    className="w-full bg-[#00ff00] hover:bg-[#00cc00] text-black font-semibold py-3 transition-all duration-200 shadow-lg"
-                    disabled={saving}
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Refilling...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="mr-2 h-5 w-5" />
-                        Fill all ingredients completely
-                      </>
-                    )}
-                  </Button>
+                  <div className="text-xs text-[hsl(var(--cocktail-text-muted))] text-center">
+                    Updated: {new Date(level.lastUpdated).toLocaleString()}
+                  </div>
                 </CardContent>
               </Card>
+            )
+          })}
+        </div>
 
-              {showSuccess && (
-                <Alert className="bg-[#00ff00]/10 border-[#00ff00]/30 animate-in slide-in-from-top-2 duration-300">
-                  <AlertDescription className="text-[#00ff00] font-medium">
-                    ✅ Fill levels successfully updated!
-                  </AlertDescription>
-                </Alert>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={showInputDialog} onOpenChange={(open) => !open && cancelInput()}>
-        <DialogContent className="bg-black border-gray-800 sm:max-w-md text-white">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Update Fill Level</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            <div className="text-center">
-              <div className="p-3 bg-[#00ff00]/20 rounded-full w-fit mx-auto mb-3">
-                <Droplet className="h-8 w-8 text-[#00ff00]" />
+        {showKeyboard && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-1">
+            <div className="bg-[hsl(var(--cocktail-card-bg))] border border-[hsl(var(--cocktail-card-border))] rounded-xl shadow-2xl max-w-sm w-full mx-1 max-h-[95vh] overflow-hidden flex flex-col">
+              <div className="bg-[hsl(var(--cocktail-primary))] p-3 flex-shrink-0">
+                <h3 className="text-base font-bold text-black">
+                  {editingLevel && "Edit Fill Level"}
+                  {editingSize && "Edit Container Size"}
+                  {editingName && "Edit Ingredient"}
+                </h3>
               </div>
-              <p className="text-gray-300">
-                {inputType === "capacity" ? "Container capacity" : "Fill level"} for{" "}
-                <span className="font-semibold text-white">{currentIngredientName}</span>:
-              </p>
-            </div>
 
-            <div className="flex items-center gap-3">
-              <Input
-                type="text"
-                value={
-                  activeInput
-                    ? inputType === "capacity"
-                      ? capacityAmounts[activeInput] || ""
-                      : refillAmounts[activeInput] || ""
-                    : ""
-                }
-                onChange={(e) => {
-                  if (activeInput) {
-                    if (inputType === "capacity") {
-                      handleCapacityAmountChange(activeInput, e.target.value)
-                    } else {
-                      handleRefillAmountChange(activeInput, e.target.value)
-                    }
-                  }
-                }}
-                placeholder={inputType === "capacity" ? "Enter capacity" : "Enter fill level"}
-                className="text-2xl h-14 text-center text-black bg-white font-bold"
-                autoFocus
-                readOnly
-              />
-              <span className="text-lg text-gray-300 font-medium">ml</span>
-            </div>
+              <div className="p-4 space-y-4 overflow-y-auto flex-1">
+                <Input
+                  value={tempValue}
+                  readOnly
+                  className="text-lg text-center font-bold border-2 focus:border-[hsl(var(--cocktail-primary))] bg-[hsl(var(--cocktail-bg))] text-[hsl(var(--cocktail-text))] h-12 text-2xl"
+                />
 
-            <VirtualKeyboard
-              onKeyPress={handleKeyPress}
-              onBackspace={handleBackspace}
-              onClear={handleClear}
-              onConfirm={confirmInput}
-              onCancel={cancelInput}
-              layout="numeric"
-            />
+                <div className="space-y-2">
+                  <div className="bg-black border border-[hsl(var(--cocktail-card-border))] rounded-lg p-2 shadow-lg w-full">
+                    <div className="space-y-1">
+                      {(editingName
+                        ? [
+                            ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+                            ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P"],
+                            ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+                            ["Y", "X", "C", "V", "B", "N", "M"],
+                            [" ", "-", "_", ".", "@", "#", "&"],
+                          ]
+                        : [
+                            ["1", "2", "3"],
+                            ["4", "5", "6"],
+                            ["7", "8", "9"],
+                            [".", "0", "00"],
+                          ]
+                      ).map((row, rowIndex) => (
+                        <div key={rowIndex} className="flex justify-center gap-1">
+                          {row.map((key) => (
+                            <Button
+                              key={key}
+                              onClick={() => setTempValue(tempValue + key)}
+                              className="flex-1 h-6 text-sm bg-[hsl(var(--cocktail-card-bg))] text-white hover:bg-[hsl(var(--cocktail-card-border))] min-w-0"
+                            >
+                              {key}
+                            </Button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center gap-1">
+                    <Button
+                      onClick={() => setTempValue("")}
+                      className="flex-1 h-8 text-sm bg-red-600 text-white hover:bg-red-700"
+                      title="Clear"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => setTempValue(tempValue.slice(0, -1))}
+                      className="flex-1 h-8 text-sm bg-gray-600 text-white hover:bg-gray-700"
+                      title="Back"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={handleCancel}
+                      className="flex-1 h-8 text-sm bg-orange-600 text-white hover:bg-orange-700"
+                      title="Cancel"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      className="flex-1 h-8 text-sm bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-bold"
+                      title="Save"
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={cancelInput}
-              className="bg-gray-900 text-gray-300 border-gray-700 hover:bg-gray-800"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={confirmInput}
-              disabled={
-                !activeInput ||
-                !(inputType === "capacity" ? capacityAmounts[activeInput || ""] : refillAmounts[activeInput || ""])
-              }
-              className="bg-[#00ff00] text-black font-semibold hover:bg-[#00cc00]"
-            >
-              Save
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        )}
+      </div>
     </div>
   )
 }
+
+export default IngredientLevels
