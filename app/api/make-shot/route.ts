@@ -15,8 +15,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[v0] Making shot: ${ingredient}, ${size}ml`)
 
-    // Find the pump for this ingredient
-    const pump = pumpConfig.pumps.find((p) => p.ingredientId === ingredient)
+    const pump = pumpConfig.find((p) => p.ingredient === ingredient)
 
     if (!pump) {
       return NextResponse.json(
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await makeShotAction(ingredient, pumpConfig.pumps, size)
+    const result = await makeShotAction(ingredient, pumpConfig, size)
 
     return NextResponse.json(result)
   } catch (error) {
