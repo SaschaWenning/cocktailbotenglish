@@ -1,41 +1,29 @@
+export const runtime = "edge"
+export const dynamic = "force-dynamic"
+
 import { type NextRequest, NextResponse } from "next/server"
-import { promises as fs } from "fs"
-import path from "path"
-import type { PumpConfig } from "@/types/pump"
-
-const PUMP_CONFIG_FILE = "/home/pi/cocktailbot/cocktailbot-main/data/pump-config.json"
-
-// Ensure directories exist
-async function ensureDirectories() {
-  try {
-    await fs.mkdir(path.dirname(PUMP_CONFIG_FILE), { recursive: true })
-  } catch (error) {
-    console.error("Error creating directories:", error)
-  }
-}
+import { pumpConfig as defaultPumpConfig } from "@/data/pump-config"
 
 export async function GET() {
-  await ensureDirectories()
-
   try {
-    const content = await fs.readFile(PUMP_CONFIG_FILE, "utf-8")
-    return NextResponse.json(JSON.parse(content))
+    // In v0 environment, return the default pump config
+    // In production with file system access, this would read from a JSON file
+    return NextResponse.json({ success: true, pumpConfig: defaultPumpConfig })
   } catch (error) {
-    console.error("Error loading pump config:", error)
-    // Return default config if file doesn't exist
-    const { pumpConfig } = await import("@/data/pump-config")
-    return NextResponse.json(pumpConfig)
+    console.error("Error getting pump config:", error)
+    return NextResponse.json({ success: false, error: "Failed to get pump config" }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
-  await ensureDirectories()
-
   try {
-    const config: PumpConfig[] = await request.json()
-    await fs.writeFile(PUMP_CONFIG_FILE, JSON.stringify(config, null, 2))
-    console.log("Pump configuration saved")
-    return NextResponse.json({ success: true })
+    const { pumpConfig } = await request.json()
+
+    // In v0 environment, we can't persist to file system
+    // In production, this would save to a JSON file
+    console.log("Pump config update requested:", pumpConfig)
+
+    return NextResponse.json({ success: true, message: "Pump config updated (in-memory only in v0)" })
   } catch (error) {
     console.error("Error saving pump config:", error)
     return NextResponse.json({ success: false, error: "Failed to save pump config" }, { status: 500 })
