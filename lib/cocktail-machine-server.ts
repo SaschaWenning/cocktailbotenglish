@@ -259,19 +259,39 @@ async function activatePump(pin: number, durationMs: number) {
 
     console.log(`[PUMP DEBUG] Python-Skript gefunden: ${PUMP_CONTROL_SCRIPT}`)
 
-    const command = `python3 ${PUMP_CONTROL_SCRIPT} activate ${pin} ${roundedDuration}`
-    console.log(`[PUMP DEBUG] Führe Befehl aus: ${command}`)
+    const pythonCommands = ["python3", "python", "/usr/bin/python3", "/usr/bin/python"]
+    let commandSuccess = false
+    let lastError: any = null
 
-    const { stdout, stderr } = await execPromise(command)
+    for (const pythonCmd of pythonCommands) {
+      try {
+        const command = `${pythonCmd} ${PUMP_CONTROL_SCRIPT} activate ${pin} ${roundedDuration}`
+        console.log(`[PUMP DEBUG] Versuche Befehl: ${command}`)
 
-    console.log(`[PUMP DEBUG] ✅ Befehl erfolgreich ausgeführt`)
-    if (stdout) {
-      console.log(`[PUMP DEBUG] Python stdout: ${stdout}`)
+        const { stdout, stderr } = await execPromise(command)
+
+        console.log(`[PUMP DEBUG] ✅ Befehl erfolgreich ausgeführt mit ${pythonCmd}`)
+        if (stdout) {
+          console.log(`[PUMP DEBUG] Python stdout: ${stdout}`)
+        }
+        if (stderr) {
+          console.log(`[PUMP DEBUG] Python stderr: ${stderr}`)
+        }
+        console.log(`[PUMP DEBUG] ==========================================`)
+
+        commandSuccess = true
+        return true
+      } catch (error) {
+        console.log(`[PUMP DEBUG] ${pythonCmd} fehlgeschlagen, versuche nächsten...`)
+        lastError = error
+        continue
+      }
     }
-    if (stderr) {
-      console.log(`[PUMP DEBUG] Python stderr: ${stderr}`)
+
+    if (!commandSuccess) {
+      console.error(`[PUMP DEBUG] ❌ Alle Python-Befehle fehlgeschlagen`)
+      throw lastError
     }
-    console.log(`[PUMP DEBUG] ==========================================`)
 
     return true
   } catch (error) {
