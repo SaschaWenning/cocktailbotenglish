@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-// import { makeShotAction, getPumpConfig } from "@/lib/cocktail-machine-server"
+import { makeShotAction } from "@/lib/cocktail-machine-server"
 import { pumpConfig as defaultPumpConfig } from "@/data/pump-config"
 
 export async function POST(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing ingredient/ingredientId" }, { status: 400 })
     }
 
-    console.log(`[v0] Making shot: ${ingredient}, ${size}ml (simulated in v0 preview)`)
+    console.log(`[v0] Making shot: ${ingredient}, ${size}ml`)
 
     // Find the pump for this ingredient
     const pump = pumpConfig.pumps.find((p) => p.ingredientId === ingredient)
@@ -28,13 +28,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Simulate dispensing
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    const result = await makeShotAction(ingredient, pumpConfig.pumps, size)
 
-    return NextResponse.json({
-      success: true,
-      message: `Shot of ${ingredient} (${size}ml) prepared successfully (simulated)`,
-    })
+    return NextResponse.json(result)
   } catch (error) {
     console.error("Error making shot:", error)
     return NextResponse.json({ success: false, error: "Failed to make shot" }, { status: 500 })
