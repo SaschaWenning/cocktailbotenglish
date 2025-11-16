@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import type { Cocktail } from "@/types/cocktail"
 
 interface HiddenCocktailsManagerProps {
@@ -24,10 +24,12 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
     try {
       setLoading(true)
 
+      // Load hidden cocktails
       const hiddenResponse = await fetch("/api/hidden-cocktails")
       const hiddenData = await hiddenResponse.json()
       setHiddenCocktails(hiddenData.hiddenCocktails || [])
 
+      // Load all cocktails
       const cocktailsResponse = await fetch("/api/cocktails")
       const cocktailsData = await cocktailsResponse.json()
       setAllCocktails(cocktailsData || [])
@@ -42,8 +44,10 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
     try {
       setUpdating(cocktailId)
 
+      // Remove from hidden list
       const updatedHiddenCocktails = hiddenCocktails.filter((id) => id !== cocktailId)
 
+      // Update API
       await fetch("/api/hidden-cocktails", {
         method: "POST",
         headers: {
@@ -90,7 +94,9 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
           <CardContent className="py-12 text-center">
             <EyeOff className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--cocktail-text-muted))]" />
             <p className="text-[hsl(var(--cocktail-text-muted))] text-lg">No hidden cocktails available</p>
-            <p className="text-[hsl(var(--cocktail-text-muted))] text-sm mt-2">Cocktails can be hidden via edit mode</p>
+            <p className="text-[hsl(var(--cocktail-text-muted))] text-sm mt-2">
+              Cocktails can be hidden via edit mode
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -128,7 +134,7 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
                   {updating === cocktail.id ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Showing...
+                      Unhiding...
                     </>
                   ) : (
                     <>

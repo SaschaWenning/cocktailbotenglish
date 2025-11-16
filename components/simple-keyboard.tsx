@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { X, Check, ArrowLeft, XCircle } from "lucide-react"
+import { X, Check, ArrowLeft } from "lucide-react"
 
 interface SimpleKeyboardProps {
   isOpen: boolean
@@ -105,7 +105,7 @@ export default function SimpleKeyboard({
               <X className="h-5 w-5" />
             </Button>
             <Button onClick={onCancel} className="flex-1 h-10 text-base bg-gray-600 text-white hover:bg-gray-700">
-              <XCircle className="h-5 w-5" />
+              Abbrechen
             </Button>
             <Button onClick={onConfirm} className="flex-1 h-10 text-base bg-green-600 text-white hover:bg-green-700">
               <Check className="h-5 w-5" />

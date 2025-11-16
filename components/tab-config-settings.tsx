@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ArrowRight, Settings, RotateCcw, Sparkles, Shield } from "lucide-react"
+import { ArrowLeft, ArrowRight, Settings, RotateCcw, Sparkles, Shield } from 'lucide-react'
 import { defaultTabConfig } from "@/lib/tab-config"
 import type { AppConfig, TabConfig } from "@/lib/tab-config"
 import { toast } from "@/components/ui/use-toast"
@@ -310,7 +310,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold" style={{ color: "hsl(var(--cocktail-text))" }}>
-              Loading Configuration
+              Loading configuration
             </h3>
             <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>One moment please...</p>
           </div>
@@ -331,7 +331,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold" style={{ color: "hsl(var(--cocktail-text))" }}>
-              Loading Error
+              Error loading
             </h3>
             <p style={{ color: "hsl(var(--cocktail-error))" }}>Configuration could not be loaded.</p>
           </div>
@@ -340,7 +340,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
             className="mt-6 text-white"
             style={{ backgroundColor: "hsl(var(--cocktail-primary))" }}
           >
-            Try Again
+            Try again
           </Button>
         </div>
       </div>
@@ -369,7 +369,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
               Settings
             </h1>
             <p className="text-lg" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-              Configure Your Tab Arrangement
+              Configure your tab arrangement
             </p>
           </div>
           <div className="flex gap-3">
@@ -451,9 +451,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
                 How does it work?
               </h3>
               <p className="leading-relaxed" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                Here you can configure which tabs are displayed in the main navigation and which in the service menu.
-                Use the arrow buttons to move tabs between areas. The service menu always remains available in the main
-                navigation.
+                Here you can configure which tabs are displayed in the main navigation and which in the service menu. Use the arrow buttons to move tabs between areas. The service menu always remains available in the main navigation.
               </p>
             </div>
           </div>
@@ -623,7 +621,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
                 <ArrowLeft className="h-4 w-4" style={{ color: "hsl(var(--cocktail-primary))" }} />
               </div>
               <span className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                To Main Navigation
+                To main navigation
               </span>
             </div>
             <div
@@ -637,7 +635,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
                 <ArrowRight className="h-4 w-4" style={{ color: "hsl(var(--cocktail-text-muted))" }} />
               </div>
               <span className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                To Service Menu
+                To service menu
               </span>
             </div>
           </div>

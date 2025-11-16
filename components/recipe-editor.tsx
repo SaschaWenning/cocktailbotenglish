@@ -10,20 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type { Cocktail } from "@/types/cocktail"
 import { getAllIngredients } from "@/lib/ingredients"
 import { saveRecipe } from "@/lib/cocktail-machine"
-import {
-  Loader2,
-  ImageIcon,
-  Trash2,
-  Plus,
-  Minus,
-  FolderOpen,
-  ArrowLeft,
-  X,
-  Check,
-  ArrowUp,
-  Lock,
-  EyeOff,
-} from "lucide-react"
+import { Loader2, ImageIcon, Trash2, Plus, Minus, FolderOpen, ArrowLeft, X, Check, ArrowUp, Lock, EyeOff } from 'lucide-react'
 import FileBrowser from "./file-browser"
 import type { RecipeEditorProps } from "@/types/recipe-editor"
 
@@ -291,7 +278,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
       window.scrollTo({ top: 0, behavior: "smooth" })
     } catch (error) {
-      console.error("Fehler beim Speichern des Rezepts:", error)
+      console.error("Error saving the recipe:", error)
     } finally {
       setSaving(false)
     }
@@ -332,7 +319,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       // Trigger a refresh of the cocktail list
       window.location.reload()
     } catch (error) {
-      console.error("Fehler beim Ausblenden des Cocktails:", error)
+      console.error("Error hiding the cocktail:", error)
     } finally {
       setHidingCocktail(false)
     }
@@ -422,7 +409,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             onClick={() => openKeyboard("imageUrl", imageUrl)}
             readOnly
             className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1"
-            placeholder="Image URL or choose from gallery"
+            placeholder="Image URL or select from gallery"
           />
           <Button
             type="button"
@@ -435,14 +422,14 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       </div>
 
       <div className="space-y-2">
-        <Label className="text-white">Cocktail Sizes for this Recipe</Label>
+        <Label className="text-white">Cocktail sizes for this recipe</Label>
         <div className="flex gap-2 items-center">
           <Input
             value={newSizeInput}
             onClick={() => openKeyboard("newSize", newSizeInput, true)}
             readOnly
             className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-10 flex-1 cursor-pointer"
-            placeholder="Enter ml"
+            placeholder="enter ml"
           />
         </div>
         {sizes.length > 0 && (

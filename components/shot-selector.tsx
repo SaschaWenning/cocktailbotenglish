@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Check, AlertCircle, GlassWater } from "lucide-react"
+import { Check, AlertCircle, GlassWater } from 'lucide-react'
 import type { PumpConfig } from "@/types/pump"
 import { makeSingleShot } from "@/lib/cocktail-machine"
 import type { IngredientLevel } from "@/types/ingredient-level"
@@ -98,6 +98,17 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
     let intervalId: NodeJS.Timeout
 
     try {
+      try {
+        console.log("[v0] Shot: Activating preparation lighting")
+        await fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "cocktailPreparation" }),
+        })
+      } catch (error) {
+        console.error("[v0] Error activating preparation lighting:", error)
+      }
+
       intervalId = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
@@ -113,6 +124,17 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
       clearInterval(intervalId)
       setProgress(100)
 
+      try {
+        console.log("[v0] Shot: Activating finished lighting")
+        await fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "cocktailFinished" }),
+        })
+      } catch (error) {
+        console.error("[v0] Error activating finished lighting:", error)
+      }
+
       const ingredient = allIngredients.find((i) => i.id === selectedIngredient)
       const ingredientName = ingredient?.name || selectedIngredient.replace(/^custom-\d+-/, "")
       setStatusMessage(`${ingredientName} Shot (${shotSize}ml) ready!`)
@@ -121,14 +143,21 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
       await onShotComplete()
 
       setTimeout(() => {
+        console.log("[v0] Shot: Returning to idle lighting")
         setIsMaking(false)
         setShowSuccess(false)
         setSelectedIngredient(null)
+
+        fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "idle" }),
+        }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, 3000)
     } catch (error) {
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Error during preparation!")
+      setStatusMessage("Preparation error!")
       setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setTimeout(() => setIsMaking(false), 3000)
     }
@@ -215,7 +244,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
               <h2 className="text-xl font-semibold text-[hsl(var(--cocktail-text))]">{cleanName} Shot</h2>
 
               <div className="w-full max-w-xs">
-                <h4 className="text-base mb-2 text-center text-[hsl(var(--cocktail-text))]">Choose shot size:</h4>
+                <h4 className="text-base mb-2 text-center text-[hsl(var(--cocktail-text))]">Select shot size:</h4>
                 <div className="flex gap-3 justify-center">
                   {availableSizes.map((size) => (
                     <button
@@ -248,7 +277,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
                   onClick={handleMakeShot}
                   disabled={!isAvailable}
                 >
-                  Make Shot
+                  Prepare shot
                 </Button>
               </div>
             </div>

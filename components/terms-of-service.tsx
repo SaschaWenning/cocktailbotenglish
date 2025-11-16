@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle } from 'lucide-react'
 
 interface TermsOfServiceProps {
   onAccept: () => void
@@ -13,6 +13,7 @@ export default function TermsOfService({ onAccept }: TermsOfServiceProps) {
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
+    // Check if terms have already been accepted
     const termsAccepted = localStorage.getItem("cocktailbot-terms-accepted")
     if (!termsAccepted) {
       setIsVisible(true)
@@ -20,6 +21,7 @@ export default function TermsOfService({ onAccept }: TermsOfServiceProps) {
   }, [])
 
   const handleAccept = () => {
+    // Save acceptance in localStorage
     localStorage.setItem("cocktailbot-terms-accepted", "true")
     setIsVisible(false)
     onAccept()
@@ -41,16 +43,17 @@ export default function TermsOfService({ onAccept }: TermsOfServiceProps) {
         <CardContent className="flex-1 overflow-y-auto space-y-6">
           <div className="text-gray-200 leading-relaxed space-y-4">
             <p>
-              This software and the associated build instructions are intended exclusively for
+              This software and the associated construction manual are intended exclusively for
               <strong className="text-green-400"> private use</strong>.
             </p>
             <p>
-              Any <strong className="text-red-400">commercial use</strong> - in particular the construction and sale of
-              the Cocktailbot, use in gastronomy or at events, as well as commercial use of the software - is{" "}
-              <strong className="text-red-400">not permitted</strong> without prior written license agreement with the
-              author.
+              Any <strong className="text-red-400">commercial use</strong> - in particular the construction and sale
+              of the CocktailBot, use in gastronomy, at events, or commercial use of the software -
+              is <strong className="text-red-400">not permitted</strong> without prior written license agreement with the author.
             </p>
-            <p>By continuing, you confirm that you have read, understood, and accepted these terms.</p>
+            <p>
+              By continuing, you confirm that you have read, understood and accepted these terms.
+            </p>
             <div className="bg-gray-800 p-4 rounded-lg border border-gray-600">
               <p className="text-sm text-gray-300">
                 <strong>Contact for license inquiries:</strong>

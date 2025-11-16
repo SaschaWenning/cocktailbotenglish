@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { X, ArrowLeft, XCircle } from "lucide-react"
+import { X, ArrowLeft } from "lucide-react"
 
 interface VirtualKeyboardProps {
   layout?: "alphanumeric" | "numeric"
@@ -104,7 +104,7 @@ export function VirtualKeyboard({
         </Button>
         {onCancel && (
           <Button onClick={onCancel} className="flex-1 h-8 text-sm bg-gray-600 text-white hover:bg-gray-700">
-            <XCircle className="h-4 w-4" />
+            Abbrechen
           </Button>
         )}
         {onConfirm && (

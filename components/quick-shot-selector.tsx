@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Check, AlertCircle, GlassWater } from "lucide-react"
+import { Check, AlertCircle, GlassWater } from 'lucide-react'
 import type { PumpConfig } from "@/types/pump"
 import { getAllIngredients } from "@/lib/ingredients"
 import type { IngredientLevel } from "@/types/ingredient-level"
@@ -34,11 +34,11 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     loadIngredients()
   }, [])
 
-  const shotSize = 20 // Fixed size: 20ml
+  const shotSize = 20 // Feste Größe: 20ml
 
   const getAllAvailableIngredients = () => {
     return pumpConfig
-      .filter((pump) => pump.enabled) // Only show enabled pumps
+      .filter((pump) => pump.enabled) // Nur aktivierte Pumpen anzeigen
       .map((pump) => {
         const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
         const ingredientName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")
@@ -76,9 +76,17 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     setStatusMessage(`Venting ${ingredientName}...`)
     setErrorMessage(null)
 
+    console.log("[v0] Shot preparation starting, activating LED mode: cocktailPreparation")
+
     let intervalId: NodeJS.Timeout
 
     try {
+      await fetch("/api/lighting-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "cocktailPreparation" }),
+      })
+
       intervalId = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 100) {
@@ -96,7 +104,23 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
       setStatusMessage(`${ingredientName} ready!`)
       setShowSuccess(true)
 
+      console.log("[v0] Shot finished, activating LED mode: cocktailFinished")
+      await fetch("/api/lighting-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "cocktailFinished" }),
+      })
+
       await onShotComplete()
+
+      setTimeout(async () => {
+        console.log("[v0] Returning to idle LED mode after shot")
+        await fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "idle" }),
+        })
+      }, 3000)
 
       setTimeout(() => {
         setIsMaking(false)
@@ -106,7 +130,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     } catch (error) {
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Error during preparation!")
+      setStatusMessage("Preparation error!")
       setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setTimeout(() => {
         setIsMaking(false)

@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, AlertTriangle } from "lucide-react"
+import { Loader2, AlertTriangle } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import AlphaKeyboard from "./alpha-keyboard"
 
@@ -23,6 +23,7 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
   const [isDeleting, setIsDeleting] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(true)
 
+  // Reset password when dialog opens
   useEffect(() => {
     if (isOpen) {
       setPassword("")

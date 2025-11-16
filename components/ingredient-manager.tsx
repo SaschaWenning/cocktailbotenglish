@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Trash2, Plus, ArrowUp, Lock, ArrowLeft, X, Check } from "lucide-react"
+import { Trash2, Plus, ArrowUp, Lock, ArrowLeft, X, Check } from 'lucide-react'
 import type { Ingredient } from "@/types/pump"
 
 interface IngredientManagerProps {
@@ -35,7 +35,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
         setCustomIngredients(JSON.parse(stored))
       }
     } catch (error) {
-      console.error("Error loading custom ingredients:", error)
+      console.error("Fehler beim Laden der benutzerdefinierten Zutaten:", error)
     }
   }
 
@@ -44,7 +44,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
       localStorage.setItem("customIngredients", JSON.stringify(ingredients))
       setCustomIngredients(ingredients)
     } catch (error) {
-      console.error("Error saving custom ingredients:", error)
+      console.error("Fehler beim Speichern der benutzerdefinierten Zutaten:", error)
     }
   }
 
@@ -159,6 +159,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 <CardTitle className="text-white">Manage Ingredients</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 overflow-auto flex-1">
+                {/* Add new ingredient */}
                 <div className="space-y-4 p-4 border border-[hsl(var(--cocktail-card-border))] rounded-lg bg-[hsl(var(--cocktail-card-bg))]">
                   <h3 className="font-semibold text-white">Add New Ingredient</h3>
                   <div className="space-y-3">
@@ -193,6 +194,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                   </div>
                 </div>
 
+                {/* Display custom ingredients */}
                 {customIngredients.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-white">Your Custom Ingredients</h3>
@@ -230,6 +232,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
             </>
           ) : (
             <div className="flex gap-3 my-2 h-[85vh] p-2">
+              {/* Keyboard on left */}
               <div className="flex-1 flex flex-col">
                 <div className="text-center mb-2">
                   <h3 className="text-base font-semibold text-white mb-1">Enter Ingredient Name</h3>
@@ -265,6 +268,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 </div>
               </div>
 
+              {/* Action Buttons rechts */}
               <div className="flex flex-col gap-2 w-24">
                 <Button
                   type="button"

@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type { Cocktail } from "@/types/cocktail"
 import { getAllIngredients } from "@/lib/ingredients"
 import { saveRecipe } from "@/lib/cocktail-machine"
-import { Loader2, ImageIcon, Plus, Minus, FolderOpen, X, ArrowLeft, Check, ArrowUp, Lock } from "lucide-react"
+import { Loader2, ImageIcon, Plus, Minus, FolderOpen, X, ArrowLeft, Check, ArrowUp, Lock } from 'lucide-react'
 import FileBrowser from "./file-browser"
 
 interface RecipeCreatorProps {
@@ -387,13 +387,13 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
           </div>
 
           <div className="space-y-2">
-            <Label className="text-white">Cocktail Sizes for this Recipe</Label>
+            <Label className="text-white">Cocktail sizes for this recipe</Label>
             <div className="flex gap-2">
               <Input
                 value={newSizeValue}
                 onClick={() => openKeyboard("newSize", newSizeValue, true)}
                 readOnly
-                placeholder="Enter ml"
+                placeholder="enter ml"
                 className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-10 flex-1 cursor-pointer"
               />
               <Button
@@ -522,7 +522,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
                     onClick={() => openInstructionKeyboard(index, item.instruction)}
                     readOnly
                     className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-9"
-                    placeholder="Instruction (e.g. 'fill with ice cubes')"
+                    placeholder="Instructions (e.g. 'fill with ice cubes')"
                   />
                 </div>
               )}
@@ -538,7 +538,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
                 {keyboardMode === "description" && "Enter Description"}
                 {keyboardMode === "imageUrl" && "Enter Image Path"}
                 {keyboardMode.startsWith("amount-") && "Enter Amount (ml)"}
-                {keyboardMode === "instruction" && "Enter Instruction"}
+                {keyboardMode === "instruction" && "Enter Instructions"}
                 {keyboardMode === "newSize" && "Enter New Cocktail Size (ml)"}
               </h3>
               <div className="bg-white text-black text-lg p-4 rounded mb-4 min-h-[60px] break-all border-2 border-[hsl(var(--cocktail-primary))]">

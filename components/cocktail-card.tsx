@@ -51,7 +51,7 @@ export default function CocktailCard({ cocktail, onClick, onEdit }: CocktailCard
       console.log("[v0] CocktailCard: Auto-refreshing data...")
       loadData()
       setRefreshTrigger((prev) => prev + 1)
-    }, 5000) // Refresh every 5 seconds
+    }, 5000) // Alle 5 Sekunden aktualisieren
 
     return () => clearInterval(interval)
   }, [])
@@ -82,7 +82,7 @@ export default function CocktailCard({ cocktail, onClick, onEdit }: CocktailCard
       ingredientLevels.map((l) => ({ pumpId: l.pumpId, level: l.currentLevel })),
     )
 
-    const selectedSize = 300 // Standard size for checking
+    const selectedSize = 300 // Standard-Größe für die Prüfung
     const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
     const scaleFactor = selectedSize / totalRecipeVolume
     const missingIngredients: Array<{ ingredient: string; needed: number; available: number }> = []

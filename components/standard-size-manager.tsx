@@ -103,7 +103,7 @@ const StandardSizeManager = ({ onSizesChange }: StandardSizeManagerProps) => {
   return (
     <Card className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
       <CardHeader>
-        <CardTitle className="text-[hsl(var(--cocktail-text))]">Standard Cocktail Sizes</CardTitle>
+        <CardTitle className="text-[hsl(var(--cocktail-text))]">Standard-Cocktailgrößen</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
@@ -134,7 +134,7 @@ const StandardSizeManager = ({ onSizesChange }: StandardSizeManagerProps) => {
           <Input
             value={newSize}
             readOnly
-            placeholder="Add new size"
+            placeholder="Neue Größe hinzufügen"
             onClick={() => handleInputClick("new-size", newSize)}
             className="flex-1 bg-[hsl(var(--cocktail-bg))] border-[hsl(var(--cocktail-card-border))] text-[hsl(var(--cocktail-text))] cursor-pointer"
           />

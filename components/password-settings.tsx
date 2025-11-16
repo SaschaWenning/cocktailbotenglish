@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Key, Eye, EyeOff } from "lucide-react"
+import { Key, Eye, EyeOff } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import AlphaKeyboard from "./alpha-keyboard"
 
@@ -41,8 +41,8 @@ export default function PasswordSettings() {
       setIsEditing(false)
       setShowKeyboardModal(false)
       toast({
-        title: "Password Saved",
-        description: "The custom password has been saved successfully.",
+        title: "Password saved",
+        description: "Your custom password has been successfully saved.",
       })
     } catch (error) {
       console.error("Error saving password:", error)
@@ -98,7 +98,7 @@ export default function PasswordSettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-[hsl(var(--cocktail-text))]">Current Custom Password:</Label>
+            <Label className="text-[hsl(var(--cocktail-text))]">Current custom password:</Label>
             <div className="flex items-center gap-2">
               <Input
                 type={showPassword ? "text" : "password"}

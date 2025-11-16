@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle } from 'lucide-react'
 import type { IngredientAvailability } from "@/lib/ingredient-availability"
 
 interface LowLevelWarningProps {
@@ -13,7 +13,7 @@ export default function LowLevelWarning({ availability }: LowLevelWarningProps) 
     missingIngredients: availability.missingIngredients,
   })
 
-  // Don't show warning if enough ingredients available
+  // No warning if enough ingredients are available
   if (availability.canMake && availability.lowIngredients.length === 0) {
     console.log("[v0] LowLevelWarning - No warning needed (enough ingredients)")
     return null
@@ -25,18 +25,18 @@ export default function LowLevelWarning({ availability }: LowLevelWarningProps) 
     return (
       <Badge className="absolute top-2 left-2 bg-red-600 text-white font-medium shadow-lg flex items-center gap-1 text-xs px-2 py-1">
         <AlertTriangle className="h-3 w-3" />
-        Low Level
+        Low Fill Level
       </Badge>
     )
   }
 
-  // Orange: Can be made, but low levels
+  // Orange: Can be made, but low fill levels
   if (availability.lowIngredients.length > 0) {
     console.log("[v0] LowLevelWarning - Showing ORANGE warning (low ingredients)")
     return (
       <Badge className="absolute top-2 left-2 bg-orange-500 text-white font-medium shadow-lg flex items-center gap-1 text-xs px-2 py-1">
         <AlertTriangle className="h-3 w-3" />
-        Low Level
+        Low Fill Level
       </Badge>
     )
   }

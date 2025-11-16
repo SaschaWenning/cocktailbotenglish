@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Loader2, Wind, Play } from "lucide-react"
+import { Loader2, Wind, Play } from 'lucide-react'
 import type { PumpConfig } from "@/types/pump"
 import { cleanPump } from "@/lib/cocktail-machine"
 
@@ -22,27 +22,27 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
 
   const enabledPumps = pumpConfig.filter((pump) => pump.enabled)
 
-  // Automatic Venting of all pumps
+  // Automatische Entlüftung aller Pumpen
   const startAutoVenting = async () => {
     setAutoVentingStatus("venting")
     setProgress(0)
     setPumpsDone([])
     setCurrentPump(null)
 
-    // Vent each pump for 2 seconds
+    // Jede Pumpe nacheinander für 2 Sekunden entlüften
     for (let i = 0; i < enabledPumps.length; i++) {
       const pump = enabledPumps[i]
       setCurrentPump(pump.id)
 
       try {
-        // Run pump for 2 seconds
+        // Pumpe für 2 Sekunden laufen lassen
         await cleanPump(pump.id, 2000)
         setPumpsDone((prev) => [...prev, pump.id])
 
-        // Update progress
+        // Fortschritt aktualisieren
         setProgress(Math.round(((i + 1) / enabledPumps.length) * 100))
       } catch (error) {
-        console.error(`Error venting pump ${pump.id}:`, error)
+        console.error(`Fehler beim Entlüften der Pumpe ${pump.id}:`, error)
       }
     }
 
@@ -50,16 +50,16 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
     setAutoVentingStatus("idle")
   }
 
-  // Vent single pump (1 second, without loading screen)
+  // Einzelne Pumpe entlüften (1 Sekunde, ohne Ladebildschirm)
   const ventSinglePump = async (pumpId: number) => {
     setManualVentingPumps((prev) => new Set(prev).add(pumpId))
 
     try {
-      await cleanPump(pumpId, 1000) // 1 second
+      await cleanPump(pumpId, 1000) // 1 Sekunde
     } catch (error) {
-      console.error(`Error venting pump ${pumpId}:`, error)
+      console.error(`Fehler beim Entlüften der Pumpe ${pumpId}:`, error)
     } finally {
-      // Short delay for visual feedback
+      // Kurze Verzögerung für visuelle Rückmeldung
       setTimeout(() => {
         setManualVentingPumps((prev) => {
           const newSet = new Set(prev)
@@ -79,7 +79,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
 
   return (
     <div className="space-y-4">
-      {/* Automatic Venting */}
+      {/* Automatische Entlüftung */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -95,8 +95,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <p>
-                Place a collection container under the outlets and ensure all intake hoses are in the respective
-                liquids.
+                Place a catch container under the outlets and ensure all suction hoses are in their respective liquids.
               </p>
             </AlertDescription>
           </Alert>
@@ -164,7 +163,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
         </CardContent>
       </Card>
 
-      {/* Manual Venting */}
+      {/* Manuelle Einzelpumpen-Entlüftung */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -178,7 +177,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
         <CardContent className="space-y-3">
           <Alert className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
-              Click on a pump to vent it for 1 second. The pump starts immediately without a loading screen.
+              Click on a pump to vent it for 1 second. The pump starts immediately without loading screen.
             </AlertDescription>
           </Alert>
 
