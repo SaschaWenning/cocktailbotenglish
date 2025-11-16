@@ -4,13 +4,14 @@ export interface TabConfig {
   icon?: string
   location: "main" | "service"
   passwordProtected?: boolean
-  alwaysVisible?: boolean // Translated comment: For tabs that must always be visible (e.g. Service Menu)
+  alwaysVisible?: boolean // For tabs that must always be visible (e.g., Service menu)
 }
 
 export interface AppConfig {
   tabs: TabConfig[]
 }
 
+// Default configuration
 export const defaultTabConfig: AppConfig = {
   tabs: [
     {
@@ -21,7 +22,7 @@ export const defaultTabConfig: AppConfig = {
     },
     {
       id: "virgin",
-      name: "Non-Alcoholic", // Translated from "Alkoholfrei"
+      name: "Non-Alcoholic",
       location: "main",
       passwordProtected: false,
     },
@@ -33,55 +34,55 @@ export const defaultTabConfig: AppConfig = {
     },
     {
       id: "recipe-creator",
-      name: "New Recipe", // Translated from "Neues Rezept"
+      name: "New Recipe",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "levels",
-      name: "Fill Levels", // Translated from "Füllstände"
+      name: "Fill Levels",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "ingredients",
-      name: "Ingredients", // Translated from "Zutaten"
+      name: "Ingredients",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "calibration",
-      name: "Calibration", // Translated from "Kalibrierung"
+      name: "Calibration",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "cleaning",
-      name: "Cleaning", // Translated from "Reinigung"
+      name: "Cleaning",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "venting",
-      name: "Venting", // Translated from "Entlüften"
+      name: "Venting",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "hidden-cocktails",
-      name: "Hidden Cocktails", // Translated from "Ausgeblendete Cocktails"
+      name: "Hidden Cocktails",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "beleuchtung",
-      name: "Lighting", // Translated from "Beleuchtung"
+      name: "Lighting",
       location: "service",
       passwordProtected: true,
     },
     {
       id: "service",
-      name: "Service Menu", // Translated from "Servicemenü"
+      name: "Service Menu",
       location: "main",
       passwordProtected: false,
       alwaysVisible: true,

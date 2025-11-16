@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
     console.log(`[v0] Vent pump request: pumpId=${pumpId}, duration=${durationMs}ms`)
 
     const result = await ventPumpAction(pumpId, durationMs)
-
     return NextResponse.json(result)
   } catch (error) {
     console.error("Error venting pump:", error)

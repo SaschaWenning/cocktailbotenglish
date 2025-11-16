@@ -1,17 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
-// import fs from "fs/promises"
-// import path from "path"
+import fs from "fs/promises"
+import path from "path"
 
-// const LEVELS_FILE = path.join(process.cwd(), "data", "ingredient-levels.json")
+const LEVELS_FILE = path.join(process.cwd(), "data", "ingredient-levels.json")
 
-// GET - Load ingredient levels from localStorage (client-side)
+// GET - Load ingredient levels from file
 export async function GET() {
   try {
-    // Return empty array and let client handle it
+    const data = await fs.readFile(LEVELS_FILE, "utf-8")
+    const levels = JSON.parse(data)
+
     return NextResponse.json({
       success: true,
-      levels: [],
-      message: "Levels are stored in localStorage in v0 preview",
+      levels: levels.map((level: any) => ({
+        ...level,
+        lastUpdated: new Date(level.lastUpdated),
+      })),
     })
   } catch (error) {
     console.error("Error loading ingredient levels:", error)
@@ -26,7 +30,7 @@ export async function GET() {
   }
 }
 
-// POST - Save ingredient levels (no-op in v0 preview)
+// POST - Save ingredient levels to file
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -39,8 +43,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // In production on Raspberry Pi, this would write to file
-    console.log("[v0] Ingredient levels update received (localStorage used in v0 preview)")
+    await fs.mkdir(path.dirname(LEVELS_FILE), { recursive: true })
+    await fs.writeFile(LEVELS_FILE, JSON.stringify(levels, null, 2))
 
     return NextResponse.json({ success: true })
   } catch (error) {

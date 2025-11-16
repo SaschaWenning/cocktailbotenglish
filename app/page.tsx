@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { pumpConfig as initialPumpConfig } from "@/data/pump-config"
 import { makeCocktail, getPumpConfig, saveRecipe, getAllCocktails, deleteRecipe } from "@/lib/cocktail-machine"
-import { AlertCircle, Edit, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { AlertCircle, Edit, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { Cocktail } from "@/types/cocktail"
 import { getIngredientLevels } from "@/lib/ingredient-level-service"
@@ -29,10 +29,11 @@ import type { AppConfig } from "@/lib/tab-config"
 import IngredientManager from "@/components/ingredient-manager"
 import PumpCalibration from "@/components/pump-calibration"
 import { Progress } from "@/components/ui/progress"
-import { Check, GlassWater } from "lucide-react"
+import { Check, GlassWater } from 'lucide-react'
 import TermsOfService from "@/components/terms-of-service"
+import LightingControl from "@/components/lighting-control"
 
-// Anzahl der Cocktails pro Seite
+// Number of cocktails per page
 const COCKTAILS_PER_PAGE = 9
 
 export default function Home() {
@@ -57,20 +58,18 @@ export default function Home() {
   const [pumpConfig, setPumpConfig] = useState<PumpConfig[]>(initialPumpConfig)
   const [loading, setLoading] = useState(true)
   const [showImageEditor, setShowImageEditor] = useState(false)
-  const [allIngredientsData, setAllIngredientsData] = useState<any[]>([]) // State für alle Zutaten (Standard + benutzerdefiniert) hinzugefügt
+  const [allIngredientsData, setAllIngredientsData] = useState<any[]>([])
   const [manualIngredients, setManualIngredients] = useState<
     Array<{ ingredientId: string; amount: number; instructions?: string }>
-  >([]) // State für manuelle Zutaten hinzugefügt
+  >([])
   const [showManualIngredientsModal, setShowManualIngredientsModal] = useState(false)
-  const [showImageEditorPasswordModal, setShowImageEditorPasswordModal] = useState(false) // Neues State für Image Editor Passwort-Modal
+  const [showImageEditorPasswordModal, setShowImageEditorPasswordModal] = useState(false)
   const [tabConfig, setTabConfig] = useState<AppConfig | null>(null)
   const [mainTabs, setMainTabs] = useState<string[]>([])
 
-  // Kiosk-Modus Exit Zähler
   const [kioskExitClicks, setKioskExitClicks] = useState(0)
   const [lastClickTime, setLastClickTime] = useState(0)
 
-  // Paginierung
   const [currentPage, setCurrentPage] = useState(1)
   const [virginCurrentPage, setVirginCurrentPage] = useState(1)
 
@@ -88,26 +87,21 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // Filtere Cocktails nach alkoholisch und nicht-alkoholisch
   const alcoholicCocktails = cocktailsData.filter((cocktail) => cocktail.alcoholic)
   const virginCocktails = cocktailsData.filter((cocktail) => !cocktail.alcoholic)
 
-  // Berechne die Gesamtanzahl der Seiten
   const totalPages = Math.ceil(alcoholicCocktails.length / COCKTAILS_PER_PAGE)
   const virginTotalPages = Math.ceil(virginCocktails.length / COCKTAILS_PER_PAGE)
 
-  // Hole die Cocktails für die aktuelle Seite
   const getCurrentPageCocktails = (cocktails: Cocktail[], page: number) => {
     const startIndex = (page - 1) * COCKTAILS_PER_PAGE
     const endIndex = startIndex + COCKTAILS_PER_PAGE
     return cocktails.slice(startIndex, endIndex)
   }
 
-  // Aktuelle Seite von Cocktails
   const currentPageCocktails = getCurrentPageCocktails(alcoholicCocktails, currentPage)
   const currentPageVirginCocktails = getCurrentPageCocktails(virginCocktails, virginCurrentPage)
 
-  // Berechne alle verfügbaren Zutaten aus den Cocktail-Rezepten
   const getAvailableIngredientsFromCocktails = () => {
     const allIngredients = new Set<string>()
     cocktailsData.forEach((cocktail) => {
@@ -118,7 +112,6 @@ export default function Home() {
     return Array.from(allIngredients)
   }
 
-  // Lade Füllstände, Pumpenkonfiguration und Cocktails beim ersten Rendern
   useEffect(() => {
     const loadData = async () => {
       setLoading(true)
@@ -131,7 +124,7 @@ export default function Home() {
           loadTabConfig(),
         ])
       } catch (error) {
-        console.error("Fehler beim Laden der Daten:", error)
+        console.error("Error loading data:", error)
       } finally {
         setLoading(false)
       }
@@ -143,13 +136,33 @@ export default function Home() {
     }
 
     loadData()
+
+    loadAndApplyIdleLighting()
   }, [])
+
+  const loadAndApplyIdleLighting = async () => {
+    try {
+      console.log("[v0] Loading and applying idle LED configuration...")
+      const response = await fetch("/api/lighting-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "idle" }),
+      })
+
+      if (response.ok) {
+        console.log("[v0] Idle LED configuration applied successfully")
+      } else {
+        console.error("[v0] Failed to apply idle LED configuration:", response.status)
+      }
+    } catch (error) {
+      console.error("[v0] Error applying idle LED configuration:", error)
+    }
+  }
 
   useEffect(() => {
     const handleRefresh = () => {
       console.log("[v0] Main page: Received cocktail-data-refresh event")
       setRefreshTrigger((prev) => prev + 1)
-      // Lade auch die Ingredient-Levels neu
       loadIngredientLevels()
     }
 
@@ -176,7 +189,6 @@ export default function Home() {
       const cocktails = await getAllCocktails()
       console.log("[v0] Loaded cocktails from getAllCocktails:", cocktails?.length || 0)
 
-      // Load hidden cocktails from API instead of localStorage
       try {
         const response = await fetch("/api/hidden-cocktails")
         if (response.ok) {
@@ -200,7 +212,7 @@ export default function Home() {
         setCocktailsData(cocktails)
       }
     } catch (error) {
-      console.error("Fehler beim Laden der Daten:", error)
+      console.error("Error loading data:", error)
       console.log("[v0] Using empty fallback - no server imports in browser")
       setCocktailsData([])
     }
@@ -211,7 +223,7 @@ export default function Home() {
       const config = await getPumpConfig()
       setPumpConfig(config)
     } catch (error) {
-      console.error("Fehler beim Laden der Pumpenkonfiguration:", error)
+      console.error("Error loading pump configuration:", error)
       console.log("[v0] Using fallback pump configuration")
       setPumpConfig(initialPumpConfig)
     }
@@ -221,7 +233,6 @@ export default function Home() {
     try {
       console.log("[v0] Loading ingredient levels from server...")
 
-      // Versuche zuerst vom Server zu laden
       const response = await fetch("/api/ingredient-levels")
       if (response.ok) {
         const data = await response.json()
@@ -230,32 +241,29 @@ export default function Home() {
           setIngredientLevels(
             data.levels.map((level: any) => ({
               ...level,
-              currentAmount: level.currentLevel, // Map currentLevel to currentAmount for compatibility
+              currentAmount: level.currentLevel,
             })),
           )
 
-          // Prüfe auf niedrige Füllstände
           const lowLevels = data.levels.filter((level: any) => level.currentLevel < 100)
           setLowIngredients(lowLevels.map((level: any) => level.ingredientId))
           return
         }
       }
 
-      // Fallback zu localStorage
       console.log("[v0] Falling back to localStorage...")
       const levels = await getIngredientLevels()
       setIngredientLevels(levels)
 
-      // Prüfe auf niedrige Füllstände
       const lowLevels = levels.filter((level) => level.currentAmount < 100)
       setLowIngredients(lowLevels.map((level) => level.ingredientId))
     } catch (error) {
-      console.error("Fehler beim Laden der Füllstände:", error)
+      console.error("Error loading levels:", error)
       console.log("[v0] Using empty ingredient levels as fallback")
       const defaultLevels: IngredientLevel[] = initialPumpConfig.map((pump) => ({
         pumpId: pump.id,
         ingredientId: pump.ingredient,
-        currentAmount: 1000, // Standard-Füllstand
+        currentAmount: 1000,
         currentLevel: 1000,
         maxAmount: 1000,
         lastUpdated: new Date().toISOString(),
@@ -270,7 +278,7 @@ export default function Home() {
       const ingredients = await getAllIngredients()
       setAllIngredientsData(ingredients)
     } catch (error) {
-      console.error("Fehler beim Laden der Zutaten:", error)
+      console.error("Error loading ingredients:", error)
       console.log("[v0] Using empty fallback ingredients - no server imports in browser")
       setAllIngredientsData([])
     }
@@ -302,7 +310,7 @@ export default function Home() {
       const fallbackConfig: AppConfig = {
         tabs: [
           { id: "cocktails", name: "Cocktails", location: "main" },
-          { id: "virgin", name: "Alkoholfrei", location: "main" },
+          { id: "virgin", name: "Non-Alcoholic", location: "main" },
           { id: "shots", name: "Shots", location: "main" },
         ],
       }
@@ -368,13 +376,11 @@ export default function Home() {
     try {
       await saveRecipe(updatedCocktail)
 
-      // Aktualisiere die lokale Liste
       setCocktailsData((prev) => prev.map((c) => (c.id === updatedCocktail.id ? updatedCocktail : c)))
 
-      // Aktualisiere auch die Füllstände für neue Zutaten
       await loadIngredientLevels()
     } catch (error) {
-      console.error("Fehler beim Speichern des Bildes:", error)
+      console.error("Error saving image:", error)
     }
   }
 
@@ -382,13 +388,11 @@ export default function Home() {
     try {
       await saveRecipe(updatedCocktail)
 
-      // Aktualisiere die lokale Liste
       setCocktailsData((prev) => prev.map((c) => (c.id === updatedCocktail.id ? updatedCocktail : c)))
 
-      // Aktualisiere auch die Füllstände für neue Zutaten
       await loadIngredientLevels()
     } catch (error) {
-      console.error("Fehler beim Speichern des Rezepts:", error)
+      console.error("Error saving recipe:", error)
     }
   }
 
@@ -396,13 +400,11 @@ export default function Home() {
     try {
       await saveRecipe(newCocktail)
 
-      // Füge den neuen Cocktail zur lokalen Liste hinzu
       setCocktailsData((prev) => [...prev, newCocktail])
 
-      // Aktualisiere auch die Füllstände für neue Zutaten
       await loadIngredientLevels()
     } catch (error) {
-      console.error("Fehler beim Speichern des neuen Rezepts:", error)
+      console.error("Error saving new recipe:", error)
     }
   }
 
@@ -424,11 +426,9 @@ export default function Home() {
       await deleteRecipe(cocktailToDelete.id)
       console.log("[v0] Cocktail deleted permanently from database")
 
-      // Remove cocktail from local state
       setCocktailsData((prev) => prev.filter((c) => c.id !== cocktailToDelete.id))
       console.log("[v0] Removed cocktail from local state")
 
-      // If the deleted cocktail was selected, reset selection
       if (selectedCocktail?.id === cocktailToDelete.id) {
         setSelectedCocktail(null)
       }
@@ -436,17 +436,16 @@ export default function Home() {
       setCocktailToDelete(null)
       setShowDeleteConfirmation(false)
 
-      // Show success message
       toast({
-        title: "Cocktail gelöscht",
-        description: `${cocktailToDelete.name} wurde erfolgreich gelöscht.`,
+        title: "Cocktail deleted",
+        description: `${cocktailToDelete.name} was successfully deleted.`,
       })
     } catch (error) {
-      console.error("Fehler beim Löschen des Cocktails:", error)
+      console.error("Error deleting cocktail:", error)
 
       toast({
-        title: "Fehler beim Löschen",
-        description: "Der Cocktail konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+        title: "Delete Error",
+        description: "The cocktail could not be deleted. Please try again.",
         variant: "destructive",
       })
     }
@@ -463,10 +462,9 @@ export default function Home() {
         const pump = pumpConfig.find((p) => p.ingredient === item.ingredientId && p.enabled)
         if (pump) {
           const scaledAmount = Math.round(item.amount * scaleFactor)
-          const duration = (scaledAmount / pump.flowRate) * 1000 // ms
+          const duration = (scaledAmount / pump.flowRate) * 1000
           totalDuration += duration
 
-          // Zusätzliche Zeit für Grenadine (Schichteffekt)
           if (item.ingredientId === "grenadine") {
             totalDuration += 2000
           }
@@ -492,14 +490,14 @@ export default function Home() {
       console.log("[v0] PumpConfig not available, loading...")
       await loadPumpConfig()
       if (!pumpConfig || pumpConfig.length === 0) {
-        setErrorMessage("Pumpenkonfiguration nicht verfügbar. Bitte versuchen Sie es erneut.")
+        setErrorMessage("Pump configuration not available. Please try again.")
         return
       }
     }
 
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage("Bereite Cocktail vor...")
+    setStatusMessage("Preparing cocktail...")
     setErrorMessage(null)
     setManualIngredients([])
 
@@ -514,14 +512,13 @@ export default function Home() {
         .map((item) => ({
           ingredientId: item.ingredientId,
           amount: Math.round(item.amount * scaleFactor),
-          // keine unskalierten Zusatztexte übernehmen
           instructions: undefined,
         }))
 
       setManualIngredients(manualRecipeItems)
 
       const estimatedDuration = calculateCocktailDuration(cocktail, currentPumpConfig, selectedSize)
-      const progressInterval = Math.max(100, estimatedDuration / 100) // Update alle 1% oder mindestens alle 100ms
+      const progressInterval = Math.max(100, estimatedDuration / 100)
 
       console.log(`[v0] Estimated cocktail duration: ${estimatedDuration}ms, progress interval: ${progressInterval}ms`)
       console.log(
@@ -535,7 +532,6 @@ export default function Home() {
       intervalId = setInterval(() => {
         setProgress((prev) => {
           if (prev >= 95) {
-            // Stoppe bei 95%, damit der echte Abschluss bei 100% angezeigt wird
             clearInterval(intervalId)
             return prev
           }
@@ -543,14 +539,35 @@ export default function Home() {
         })
       }, progressInterval)
 
-      await makeCocktail(cocktail, currentPumpConfig, selectedSize)
+      try {
+        await fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "cocktailPreparation" }),
+        })
+      } catch (error) {
+        console.error("[v0] Error activating preparation lighting:", error)
+      }
+
+      const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
+      await makeCocktail(cocktail, currentPumpConfig, selectedSize, category)
 
       clearInterval(intervalId)
       setProgress(100)
 
+      try {
+        await fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "cocktailFinished" }),
+        })
+      } catch (error) {
+        console.error("[v0] Error activating finished lighting:", error)
+      }
+
       if (manualRecipeItems.length > 0) {
         setStatusMessage(
-          `${cocktail.name} (${selectedSize}ml) automatisch zubereitet! Bitte manuelle Zutaten hinzufügen.`,
+          `${cocktail.name} (${selectedSize}ml) prepared automatically! Please add manual ingredients.`,
         )
         setTimeout(() => {
           setShowManualIngredientsModal(true)
@@ -560,7 +577,7 @@ export default function Home() {
           }, 6000)
         }, 2000)
       } else {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) fertig!`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) ready!`)
       }
 
       setShowSuccess(true)
@@ -572,30 +589,32 @@ export default function Home() {
       console.log("[v0] Triggering cocktail-data-refresh event after cocktail preparation")
       window.dispatchEvent(new CustomEvent("cocktail-data-refresh"))
 
-      setTimeout(
-        () => {
-          setIsMaking(false)
-          setShowSuccess(false)
-          setSelectedCocktail(null)
-        },
-        manualRecipeItems.length > 0 ? 8000 : 3000,
-      )
+      const displayDuration = manualRecipeItems.length > 0 ? 8000 : 3000
+      setTimeout(() => {
+        setIsMaking(false)
+        setShowSuccess(false)
+        setSelectedCocktail(null)
+
+        fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "idle" }),
+        }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
+      }, displayDuration)
     } catch (error) {
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Fehler bei der Zubereitung!")
-      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
+      setStatusMessage("Preparation error!")
+      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setManualIngredients([])
       setTimeout(() => setIsMaking(false), 3000)
     }
   }
 
-  // Berechne das aktuelle Gesamtvolumen des ausgewählten Cocktails
   const getCurrentVolume = () => {
     const cocktail = selectedCocktail
     if (!cocktail) return 0
-    // Summiere alle Mengen, unabhängig vom Typ (automatisch/manuell)
     return cocktail.recipe.reduce((total, item) => total + item.amount, 0)
   }
 
@@ -615,7 +634,6 @@ export default function Home() {
     const scaleFactor = selectedSize / totalRecipeVolume
     const missingIngredients: Array<{ ingredient: string; needed: number; available: number }> = []
 
-    // Erstelle einen schnellen Lookup für Zutatenamen
     const ingredientLookup = allIngredientsData.reduce(
       (acc, ingredient) => {
         acc[ingredient.id] = { name: ingredient.name }
@@ -683,7 +701,7 @@ export default function Home() {
 
     console.log("[v0] Main page: Availability result:", result)
     return result
-  }, [selectedCocktail, pumpConfig, ingredientLevels, selectedSize, allIngredientsData, refreshTrigger]) // Füge refreshTrigger zu Dependencies hinzu
+  }, [selectedCocktail, pumpConfig, ingredientLevels, selectedSize, allIngredientsData, refreshTrigger])
 
   const ingredientsAvailable = ingredientAvailability.available
 
@@ -692,13 +710,11 @@ export default function Home() {
     return ingredient ? ingredient.name : id
   }
 
-  // Tab-Wechsel Handler - schließt automatisch die Cocktail-Detailansicht
   const handleTabChange = (newTab: string) => {
-    setSelectedCocktail(null) // Schließe die Cocktail-Detailansicht
+    setSelectedCocktail(null)
     setActiveTab(newTab)
   }
 
-  // Funktion zum Beenden des Kiosk-Modus
   const handleExitKiosk = async () => {
     try {
       const response = await fetch("/api/exit-kiosk", {
@@ -709,31 +725,29 @@ export default function Home() {
 
       if (data.success) {
         toast({
-          title: "Kiosk-Modus wird beendet",
-          description: "Die Anwendung wird in wenigen Sekunden geschlossen.",
+          title: "Exiting Kiosk Mode",
+          description: "The application will close in a few seconds.",
         })
       } else {
         toast({
-          title: "Fehler",
-          description: "Kiosk-Modus konnte nicht beendet werden.",
+          title: "Error",
+          description: "Could not exit kiosk mode.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Fehler beim Beenden des Kiosk-Modus:", error)
+      console.error("Error exiting kiosk mode:", error)
       toast({
-        title: "Fehler",
-        description: "Verbindungsproblem beim Beenden des Kiosk-Modus.",
+        title: "Error",
+        description: "Connection problem while exiting kiosk mode.",
         variant: "destructive",
       })
     }
   }
 
-  // Handler für Klicks auf den Titel
   const handleTitleClick = () => {
     const currentTime = Date.now()
 
-    // Wenn mehr als 3 Sekunden seit dem letzten Klick vergangen sind, setze den Zähler zurück
     if (currentTime - lastClickTime > 3000 && kioskExitClicks > 0) {
       setKioskExitClicks(1)
     } else {
@@ -742,59 +756,45 @@ export default function Home() {
 
     setLastClickTime(currentTime)
 
-    // Nach 5 Klicks den Kiosk-Modus beenden
     if (kioskExitClicks + 1 >= 5) {
       handleExitKiosk()
       setKioskExitClicks(0)
     }
   }
 
-  // Erweiterte Bildlogik für Cocktail-Detail
   const findDetailImagePath = async (cocktail: Cocktail): Promise<string> => {
     if (!cocktail.image) {
       console.log(`[v0] No image specified for ${cocktail.name}, using placeholder`)
       return `/placeholder.svg?height=400&width=400&query=${encodeURIComponent(cocktail.name)}`
     }
 
-    // Extrahiere den Dateinamen aus dem Pfad
     const filename = cocktail.image.split("/").pop() || cocktail.image
-    const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "") // Entferne Dateierweiterung
+    const filenameWithoutExt = filename.replace(/\.[^/.]+$/, "")
     const originalExt = filename.split(".").pop()?.toLowerCase() || ""
 
-    // Alle gängigen Bildformate
     const imageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"]
 
-    // Verwende originale Erweiterung zuerst, dann alle anderen
     const extensionsToTry = originalExt
       ? [originalExt, ...imageExtensions.filter((ext) => ext !== originalExt)]
       : imageExtensions
 
-    const basePaths = [
-      "/images/cocktails/", // Alkoholische Cocktails
-      "/", // Alkoholfreie Cocktails (direkt im public/)
-      "", // Ohne Pfad
-    ]
+    const basePaths = ["/images/cocktails/", "/", ""]
 
     const strategies: string[] = []
 
-    // Generiere alle Kombinationen von Pfaden und Dateierweiterungen
     for (const basePath of basePaths) {
-      for (const ext of extensionsToTry) {
+      for (const ext of extensionsToToTry) {
         strategies.push(`${basePath}${filenameWithoutExt}.${ext}`)
       }
-      // Auch den originalen Dateinamen probieren
       strategies.push(`${basePath}${filename}`)
     }
 
     strategies.push(
-      cocktail.image, // original, unverändert
-      cocktail.image.startsWith("/")
-        ? cocktail.image.slice(1) // ohne führenden Slash
-        : `/${cocktail.image}`, // mit führendem Slash
-      cocktail.image.split("?")[0], // ohne Query-Teil
+      cocktail.image,
+      cocktail.image.startsWith("/") ? cocktail.image.slice(1) : `/${cocktail.image}`,
+      cocktail.image.split("?")[0],
     )
 
-    // Entferne Duplikate
     const uniqueStrategies = [...new Set(strategies)]
 
     console.log(
@@ -807,7 +807,7 @@ export default function Home() {
 
       try {
         const img = new Image()
-        img.crossOrigin = "anonymous" // Für CORS
+        img.crossOrigin = "anonymous"
 
         const loadPromise = new Promise<boolean>((resolve) => {
           img.onload = () => resolve(true)
@@ -822,16 +822,14 @@ export default function Home() {
           return testPath
         }
       } catch (error) {
-        // Fehler ignorieren und nächste Strategie versuchen
+        // Error ignored, trying next strategy
       }
     }
 
-    // Fallback auf Platzhalter
     console.log(`[v0] ❌ No working detail image found for ${cocktail.name}, using placeholder`)
     return `/placeholder.svg?height=400&width=400&query=${encodeURIComponent(cocktail.name)}`
   }
 
-  // Neue Komponente für die Cocktail-Detailansicht
   function CocktailDetail({
     cocktail,
     onBack,
@@ -868,9 +866,8 @@ export default function Home() {
     }, [cocktail])
 
     useEffect(() => {
-      // Scroll nach oben wenn sich der Cocktail ändert
       window.scrollTo({ top: 0, behavior: "smooth" })
-    }, [cocktail.id]) // Abhängigkeit von cocktail.id statt leerem Array
+    }, [cocktail.id])
 
     const handleDetailImageError = () => {
       console.log(`[v0] CocktailDetail: Image error for ${cocktail.name}, current src: ${detailImageSrc}`)
@@ -884,7 +881,6 @@ export default function Home() {
 
     const isCompleted = progress === 100
 
-    // Erstelle einen schnellen Lookup für Zutatenamen
     const ingredientLookup = allIngredients.reduce(
       (acc, ingredient) => {
         acc[ingredient.id] = { name: ingredient.name }
@@ -893,7 +889,6 @@ export default function Home() {
       {} as Record<string, { name: string }>,
     )
 
-    // Erstelle eine Liste der manuellen Zutaten für die Anzeige
     const manualRecipeItems = cocktail.recipe
       .filter((item) => item?.manual === true)
       .map((item) => {
@@ -1030,7 +1025,7 @@ export default function Home() {
           </div>
         </div>
         {isCompleted &&
-          statusMessage.includes("Bitte manuelle Zutaten hinzufügen.") &&
+          statusMessage.includes("Please add manual ingredients.") &&
           cocktail &&
           manualRecipeItems.length > 0 && (
             <div className="mt-3 p-4 bg-[hsl(var(--cocktail-card-bg))]/50 rounded-b-lg">
@@ -1050,7 +1045,6 @@ export default function Home() {
     )
   }
 
-  // Paginierungskomponente
   function PaginationComponent({
     currentPage,
     totalPages,
@@ -1087,7 +1081,6 @@ export default function Home() {
     )
   }
 
-  // Hauptinhalt basierend auf dem ausgewählten Tab
   const renderContent = () => {
     if (selectedCocktail) {
       return (
@@ -1117,7 +1110,7 @@ export default function Home() {
                   key={cocktail.id}
                   cocktail={cocktail}
                   onClick={() => setSelectedCocktail(cocktail)}
-                  onEdit={() => handleRecipeEditClick(cocktail.id)} // Added recipe edit handler
+                  onEdit={() => handleRecipeEditClick(cocktail.id)}
                 />
               ))}
             </div>
@@ -1142,7 +1135,7 @@ export default function Home() {
                   key={cocktail.id}
                   cocktail={cocktail}
                   onClick={() => setSelectedCocktail(cocktail)}
-                  onEdit={() => handleRecipeEditClick(cocktail.id)} // Added recipe edit handler
+                  onEdit={() => handleRecipeEditClick(cocktail.id)}
                 />
               ))}
             </div>
@@ -1187,6 +1180,8 @@ export default function Home() {
             onShotComplete={loadIngredientLevels}
           />
         )
+      case "beleuchtung":
+        return <LightingControl />
       case "service":
         return (
           <ServiceMenu
@@ -1266,17 +1261,7 @@ export default function Home() {
                     const tab = tabConfig.tabs.find((t) => t.id === tabId)
                     return tab ? renderTabButton(tab.id, tab.name) : null
                   })}
-              <Button
-                key="service"
-                onClick={() => handleTabChange("service")}
-                className={`py-1 px-2 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl focus:outline-none text-xs ${
-                  activeTab === "service"
-                    ? "bg-[#00ff00] text-black scale-105 focus:bg-[#00ff00]"
-                    : "bg-[hsl(var(--cocktail-card-bg))] text-[hsl(var(--cocktail-text))] hover:bg-[hsl(var(--cocktail-card-border))] hover:scale-102 focus:bg-[#00ff00] focus:text-black"
-                }`}
-              >
-                Service Menu
-              </Button>
+              {renderTabButton("service", "Service Menu")}
             </div>
           </nav>
         </div>
@@ -1298,7 +1283,7 @@ export default function Home() {
                   <div className="space-y-3">
                     <Progress value={progress} className="h-4" />
                     <div className="text-center text-lg text-[hsl(var(--cocktail-text-muted))]">
-                      {progress}% completed
+                      {progress}% complete
                     </div>
                   </div>
 
@@ -1322,7 +1307,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Modals */}
         <PasswordModal
           isOpen={showPasswordModal}
           onClose={() => setShowPasswordModal(false)}
@@ -1418,13 +1402,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* Modals */}
-        <PasswordModal
-          isOpen={showPasswordModal}
-          onClose={() => setShowPasswordModal(false)}
-          onSuccess={handlePasswordSuccess}
-        />
       </div>
     </div>
   )

@@ -51,6 +51,7 @@ export const cocktails: Cocktail[] = [
     recipe: [
       { ingredientId: "malibu", amount: 80 },
       { ingredientId: "pineapple-juice", amount: 150 },
+      // Cream of Coconut to be added manually
     ],
   },
   {
@@ -88,13 +89,7 @@ export const cocktails: Cocktail[] = [
     description: "Refreshing cocktail with passion fruit and vanilla",
     image: "/images/cocktails/solero.jpg",
     alcoholic: true,
-    ingredients: [
-      "100ml Passion Fruit Juice",
-      "80ml Orange Juice",
-      "20ml Lime Juice",
-      "20ml Vanilla Syrup",
-      "60ml Vodka",
-    ],
+    ingredients: ["100ml Passion Fruit Juice", "80ml Orange Juice", "20ml Lime Juice", "20ml Vanilla Syrup", "60ml Vodka"],
     recipe: [
       { ingredientId: "passion-fruit-juice", amount: 100 },
       { ingredientId: "orange-juice", amount: 80 },
@@ -137,6 +132,7 @@ export const cocktails: Cocktail[] = [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "lime-juice", amount: 60 },
       { ingredientId: "soda-water", amount: 100, manual: true, instructions: "Add 100ml soda water" },
+      // Add mint manually
     ],
   },
   {
@@ -155,7 +151,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "long-island-iced-tea",
     name: "Long Island Iced Tea",
-    description: "Classic strong cocktail with five different spirits and cola",
+    description: "Classic, strong cocktail with five different spirits and cola",
     image: "/images/cocktails/long_island_iced_tea.jpg",
     alcoholic: true,
     ingredients: ["15ml Dark Rum", "15ml Triple Sec", "15ml Vodka", "15ml Tequila", "15ml Gin", "30ml Lime Juice"],
@@ -195,7 +191,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "swimming-pool",
     name: "Swimming Pool",
-    description: "Blue tropical cocktail with vodka and pineapple juice",
+    description: "Blue, tropical cocktail with vodka and pineapple juice",
     image: "/images/cocktails/swimming_pool.jpg",
     alcoholic: true,
     ingredients: [
@@ -244,7 +240,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "zombie",
     name: "Zombie",
-    description: "Strong fruity cocktail with dark rum and various fruit juices",
+    description: "Strong, fruity cocktail with dark rum and various fruit juices",
     image: "/images/cocktails/zombie.jpg",
     alcoholic: true,
     ingredients: [
@@ -272,13 +268,7 @@ export const cocktails: Cocktail[] = [
     description: "Classic tiki cocktail with dark rum and almond syrup",
     image: "/images/cocktails/mai_tai.jpg",
     alcoholic: true,
-    ingredients: [
-      "60ml Dark Rum",
-      "15ml Orange Liqueur",
-      "50ml Pineapple Juice",
-      "15ml Almond Syrup",
-      "20ml Lime Juice",
-    ],
+    ingredients: ["60ml Dark Rum", "15ml Orange Liqueur", "50ml Pineapple Juice", "15ml Almond Syrup", "20ml Lime Juice"],
     recipe: [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "triple-sec", amount: 15 },
@@ -287,6 +277,7 @@ export const cocktails: Cocktail[] = [
       { ingredientId: "lime-juice", amount: 20 },
     ],
   },
+  // New non-alcoholic cocktails with images
   {
     id: "tropical-sunrise",
     name: "Tropical Sunrise",
@@ -418,7 +409,7 @@ export const cocktails: Cocktail[] = [
       {
         name: "Soda Water",
         amount: "50ml",
-        instruction: "To top up and for fizz effect",
+        instruction: "For topping and fizz effect",
       },
       {
         name: "Lime Slice",
@@ -470,7 +461,7 @@ export const cocktails: Cocktail[] = [
       {
         name: "Cream",
         amount: "20ml",
-        instruction: "Carefully pour on top for layered effect",
+        instruction: "Pour carefully on top for layered effect",
       },
       {
         name: "Orange Zest",
@@ -501,7 +492,7 @@ export const cocktails: Cocktail[] = [
       {
         name: "Extra Grenadine",
         amount: "5ml",
-        instruction: "Slowly pour down glass rim for sunrise effect",
+        instruction: "Let run down slowly on glass rim for sunrise effect",
       },
     ],
   },
