@@ -143,14 +143,22 @@ export default function Home() {
   const loadAndApplyIdleLighting = async () => {
     try {
       console.log("[v0] Loading and applying idle LED configuration...")
+
+      // Load saved brightness from localStorage
+      const savedBrightness = localStorage.getItem("led-brightness")
+      const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
+
       const response = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "idle" }),
+        body: JSON.stringify({
+          mode: "idle",
+          brightness: brightness,
+        }),
       })
 
       if (response.ok) {
-        console.log("[v0] Idle LED configuration applied successfully")
+        console.log("[v0] Idle LED configuration applied successfully with brightness:", brightness)
       } else {
         console.error("[v0] Failed to apply idle LED configuration:", response.status)
       }
