@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, Loader2, Sparkles, Sun } from "lucide-react"
+import { Loader2, Sparkles, Sun } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type LightingConfig = {
@@ -98,8 +98,20 @@ export default function LightingControl() {
     }
   }
 
-  const applyLighting = async (mode: "preparation" | "finished" | "idle" | "off", isTest = false) => {
+  const applyLighting = async (mode: "preparation" | "finished" | "idle" | "off", autoReturnToIdle = false) => {
     setApplying(mode)
+
+    if (mode === "preparation" || mode === "finished") {
+      try {
+        await fetch("/api/lighting-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        })
+      } catch (error) {
+        console.error("[v0] Error saving config before applying:", error)
+      }
+    }
 
     try {
       const lightingPayload: {
@@ -147,10 +159,10 @@ export default function LightingControl() {
 
       toast({
         title: "Success",
-        description: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode ${isTest ? "preview" : "applied"}`,
+        description: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode ${autoReturnToIdle ? "preview" : "applied"}`,
       })
 
-      if (isTest && lastIdleConfig) {
+      if (autoReturnToIdle && lastIdleConfig) {
         setTimeout(async () => {
           try {
             const idleConfig = JSON.parse(lastIdleConfig)
@@ -380,33 +392,20 @@ export default function LightingControl() {
               Blinking effect
             </label>
           </div>
-          <div className="flex gap-3 pt-2">
-            <Button
-              onClick={() => {
-                saveConfig()
-              }}
-              className="flex-1 bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] font-semibold h-14 text-base border-2 border-[hsl(var(--cocktail-card-border))]"
-            >
-              Save
-            </Button>
-            <Button
-              onClick={() => applyLighting("preparation", true)}
-              disabled={applying !== null}
-              className="flex-1 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
-            >
-              {applying === "preparation" ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Testing...
-                </>
-              ) : (
-                <>
-                  <Eye className="mr-2 h-5 w-5" />
-                  Test (3s)
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={() => applyLighting("preparation", true)}
+            disabled={applying !== null}
+            className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base disabled:opacity-50"
+          >
+            {applying === "preparation" ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              "Apply"
+            )}
+          </Button>
         </CardContent>
       </Card>
 
@@ -460,33 +459,20 @@ export default function LightingControl() {
               Blinking effect
             </label>
           </div>
-          <div className="flex gap-3 pt-2">
-            <Button
-              onClick={() => {
-                saveConfig()
-              }}
-              className="flex-1 bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] font-semibold h-14 text-base border-2 border-[hsl(var(--cocktail-card-border))]"
-            >
-              Save
-            </Button>
-            <Button
-              onClick={() => applyLighting("finished", true)}
-              disabled={applying !== null}
-              className="flex-1 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
-            >
-              {applying === "finished" ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Testing...
-                </>
-              ) : (
-                <>
-                  <Eye className="mr-2 h-5 w-5" />
-                  Test (3s)
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={() => applyLighting("finished", true)}
+            disabled={applying !== null}
+            className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base disabled:opacity-50"
+          >
+            {applying === "finished" ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              "Apply"
+            )}
+          </Button>
         </CardContent>
       </Card>
 
@@ -525,13 +511,7 @@ export default function LightingControl() {
             config.idleMode.scheme === "pulse" ||
             config.idleMode.scheme === "blink") && (
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">
-                {config.idleMode.scheme === "static"
-                  ? "Static color"
-                  : config.idleMode.scheme === "pulse"
-                    ? "Pulse color"
-                    : "Blink color"}
-              </label>
+              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color</label>
               <div className="grid grid-cols-5 gap-2">
                 {colorPresets.map((preset) => (
                   <button
@@ -555,22 +535,23 @@ export default function LightingControl() {
               />
             </div>
           )}
-          <div className="pt-2">
-            <Button
-              onClick={() => applyLighting("idle", false)}
-              disabled={applying !== null}
-              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
-            >
-              {applying === "idle" ? (
-                <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                  Activating...
-                </>
-              ) : (
-                "Activate Idle Mode"
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={async () => {
+              await saveConfig()
+              applyLighting("idle", false)
+            }}
+            disabled={applying !== null}
+            className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base disabled:opacity-50"
+          >
+            {applying === "idle" ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Applying...
+              </>
+            ) : (
+              "Apply"
+            )}
+          </Button>
         </CardContent>
       </Card>
     </div>
