@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { pumpConfig as initialPumpConfig } from "@/data/pump-config"
 import { makeCocktail, getPumpConfig, saveRecipe, getAllCocktails, deleteRecipe } from "@/lib/cocktail-machine"
-import { AlertCircle, Edit, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { AlertCircle, Edit, ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import type { Cocktail } from "@/types/cocktail"
 import { getIngredientLevels } from "@/lib/ingredient-level-service"
@@ -29,7 +29,7 @@ import type { AppConfig } from "@/lib/tab-config"
 import IngredientManager from "@/components/ingredient-manager"
 import PumpCalibration from "@/components/pump-calibration"
 import { Progress } from "@/components/ui/progress"
-import { Check, GlassWater } from 'lucide-react'
+import { Check, GlassWater } from "lucide-react"
 import TermsOfService from "@/components/terms-of-service"
 import LightingControl from "@/components/lighting-control"
 
@@ -475,14 +475,14 @@ export default function Home() {
     return totalDuration
   }
 
-  const handleMakeCocktail = async () => {
+  const handleMakeCocktail = async (cocktail: Cocktail) => {
     if (!selectedCocktail || isMaking) {
       return
     }
 
-    const cocktail = selectedCocktail
+    const cocktailToMake = selectedCocktail // Use a different variable name to avoid conflict
 
-    if (!cocktail) {
+    if (!cocktailToMake) {
       return
     }
 
@@ -504,10 +504,10 @@ export default function Home() {
     try {
       const currentPumpConfig = pumpConfig
 
-      const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
+      const totalRecipeVolume = cocktailToMake.recipe.reduce((total, item) => total + item.amount, 0)
       const scaleFactor = selectedSize / totalRecipeVolume
 
-      const manualRecipeItems = cocktail.recipe
+      const manualRecipeItems = cocktailToMake.recipe
         .filter((item) => item?.manual === true)
         .map((item) => ({
           ingredientId: item.ingredientId,
@@ -517,7 +517,7 @@ export default function Home() {
 
       setManualIngredients(manualRecipeItems)
 
-      const estimatedDuration = calculateCocktailDuration(cocktail, currentPumpConfig, selectedSize)
+      const estimatedDuration = calculateCocktailDuration(cocktailToMake, currentPumpConfig, selectedSize)
       const progressInterval = Math.max(100, estimatedDuration / 100)
 
       console.log(`[v0] Estimated cocktail duration: ${estimatedDuration}ms, progress interval: ${progressInterval}ms`)
@@ -540,34 +540,48 @@ export default function Home() {
       }, progressInterval)
 
       try {
+        const savedBrightness = localStorage.getItem("led-brightness")
+        const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
+
         await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailPreparation" }),
+          body: JSON.stringify({
+            mode: "cocktailPreparation",
+            brightness: brightness, // Send brightness along with mode
+          }),
         })
+        console.log("[v0] Preparation lighting activated with brightness:", brightness)
       } catch (error) {
         console.error("[v0] Error activating preparation lighting:", error)
       }
 
       const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
-      await makeCocktail(cocktail, currentPumpConfig, selectedSize, category)
+      await makeCocktail(cocktailToMake, currentPumpConfig, selectedSize, category)
 
       clearInterval(intervalId)
       setProgress(100)
 
       try {
+        const savedBrightness = localStorage.getItem("led-brightness")
+        const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
+
         await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailFinished" }),
+          body: JSON.stringify({
+            mode: "cocktailFinished",
+            brightness: brightness, // Send brightness along with mode
+          }),
         })
+        console.log("[v0] Finished lighting activated with brightness:", brightness)
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
       }
 
       if (manualRecipeItems.length > 0) {
         setStatusMessage(
-          `${cocktail.name} (${selectedSize}ml) prepared automatically! Please add manual ingredients.`,
+          `${cocktailToMake.name} (${selectedSize}ml) prepared automatically! Please add manual ingredients.`,
         )
         setTimeout(() => {
           setShowManualIngredientsModal(true)
@@ -577,7 +591,7 @@ export default function Home() {
           }, 6000)
         }, 2000)
       } else {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) ready!`)
+        setStatusMessage(`${cocktailToMake.name} (${selectedSize}ml) ready!`)
       }
 
       setShowSuccess(true)
@@ -595,10 +609,16 @@ export default function Home() {
         setShowSuccess(false)
         setSelectedCocktail(null)
 
+        const savedBrightness = localStorage.getItem("led-brightness")
+        const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
+
         fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "idle" }),
+          body: JSON.stringify({
+            mode: "idle",
+            brightness: brightness, // Send brightness with idle mode
+          }),
         }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, displayDuration)
     } catch (error) {
@@ -783,7 +803,7 @@ export default function Home() {
     const strategies: string[] = []
 
     for (const basePath of basePaths) {
-      for (const ext of extensionsToToTry) {
+      for (const ext of extensionsToTry) {
         strategies.push(`${basePath}${filenameWithoutExt}.${ext}`)
       }
       strategies.push(`${basePath}${filename}`)
@@ -1005,7 +1025,7 @@ export default function Home() {
                 )}
                 <div className="flex flex-col gap-3 mt-auto">
                   <Button
-                    onClick={onMakeCocktail}
+                    onClick={() => handleMakeCocktail(cocktail)}
                     disabled={!ingredientsAvailable || isMaking}
                     className="w-full bg-[#00ff00] hover:bg-[#00ff00]/90 text-black font-bold py-3 px-6 rounded-lg text-base"
                   >
@@ -1090,7 +1110,7 @@ export default function Home() {
           onEdit={handleEditRecipe}
           onDelete={handleDeleteClick}
           onImageEdit={handleImageEditClick}
-          onMakeCocktail={handleMakeCocktail}
+          onMakeCocktail={() => handleMakeCocktail(selectedCocktail)}
           pumpConfig={pumpConfig}
           ingredientLevels={ingredientLevels}
           allIngredients={allIngredientsData}
