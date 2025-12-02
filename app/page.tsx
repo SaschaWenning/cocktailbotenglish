@@ -551,15 +551,16 @@ export default function Home() {
         const savedBrightness = localStorage.getItem("led-brightness")
         const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
 
-        await fetch("/api/lighting-control", {
+        console.log("[v0] Activating preparation lighting with brightness:", brightness)
+        const response = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            mode: "cocktailPreparation",
-            brightness: brightness, // Send brightness along with mode
+            mode: "preparation",
+            brightness: brightness,
           }),
         })
-        console.log("[v0] Preparation lighting activated with brightness:", brightness)
+        console.log("[v0] Preparation lighting API response:", response.ok ? "success" : "failed")
       } catch (error) {
         console.error("[v0] Error activating preparation lighting:", error)
       }
@@ -574,15 +575,16 @@ export default function Home() {
         const savedBrightness = localStorage.getItem("led-brightness")
         const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
 
-        await fetch("/api/lighting-control", {
+        console.log("[v0] Activating finished lighting with brightness:", brightness)
+        const response = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            mode: "cocktailFinished",
-            brightness: brightness, // Send brightness along with mode
+            mode: "finished",
+            brightness: brightness,
           }),
         })
-        console.log("[v0] Finished lighting activated with brightness:", brightness)
+        console.log("[v0] Finished lighting API response:", response.ok ? "success" : "failed")
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
       }
@@ -617,6 +619,7 @@ export default function Home() {
         setShowSuccess(false)
         setSelectedCocktail(null)
 
+        console.log("[v0] Returning to idle lighting...")
         const savedBrightness = localStorage.getItem("led-brightness")
         const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
 
@@ -625,9 +628,13 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             mode: "idle",
-            brightness: brightness, // Send brightness with idle mode
+            brightness: brightness,
           }),
-        }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
+        })
+          .then((response) => {
+            console.log("[v0] Idle lighting API response:", response.ok ? "success" : "failed")
+          })
+          .catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, displayDuration)
     } catch (error) {
       let intervalId: NodeJS.Timeout
