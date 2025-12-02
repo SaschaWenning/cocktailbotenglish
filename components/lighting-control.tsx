@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Lightbulb, Zap, Palette, RotateCcw, Play, Loader2, Sun } from 'lucide-react'
+import { Lightbulb, Zap, Palette, RotateCcw, Play, Loader2, Sun } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 import { type LightingConfig, defaultConfig } from "@/lib/lighting-config-types"
 
@@ -34,7 +34,6 @@ export default function LightingControl() {
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState<string | null>(null)
   const [brightness, setBrightness] = useState(128) // 0-255, default 50%
-  const [tempBrightness, setTempBrightness] = useState(128)
 
   useEffect(() => {
     loadConfig()
@@ -65,7 +64,6 @@ export default function LightingControl() {
       if (saved) {
         const value = Number.parseInt(saved)
         setBrightness(value)
-        setTempBrightness(value)
       }
     } catch (error) {
       console.error("[v0] Error loading brightness:", error)
@@ -73,66 +71,47 @@ export default function LightingControl() {
   }
 
   const applyLighting = async (mode: "preparation" | "finished" | "idle" | "off", isTest = false) => {
-    setApplying(mode)
+    if (!isTest) {
+      setApplying(mode)
+    }
+
     try {
-      console.log("[v0] Applying lighting mode:", mode, "isTest:", isTest)
-
-      console.log("[v0] Saving config before applying:", config)
-      const saveResponse = await fetch("/api/lighting-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      })
-
-      if (!saveResponse.ok) {
-        throw new Error("Failed to save configuration")
+      const lightingPayload: {
+        mode: string
+        color?: string
+        blinking?: boolean
+        brightness: number // Always include brightness
+      } = {
+        mode,
+        brightness: brightness, // Include current brightness
       }
-      console.log("[v0] Config saved successfully")
-
-      let body: any = {}
 
       if (mode === "preparation") {
-        body = {
-          mode: "cocktailPreparation",
-          blinking: config.cocktailPreparation.blinking,
-          color: config.cocktailPreparation.color,
-        }
+        lightingPayload.color = config.cocktailPreparation.color
+        lightingPayload.blinking = config.cocktailPreparation.blinking
       } else if (mode === "finished") {
-        body = {
-          mode: "cocktailFinished",
-          blinking: config.cocktailFinished.blinking,
-          color: config.cocktailFinished.color,
-        }
+        lightingPayload.color = config.cocktailFinished.color
+        lightingPayload.blinking = config.cocktailFinished.blinking
       } else if (mode === "idle") {
-        if (config.idleMode.scheme === "static" && config.idleMode.colors.length > 0) {
-          body = { mode: "color", color: config.idleMode.colors[0] }
-        } else if (config.idleMode.scheme === "off") {
-          body = { mode: "off" }
-        } else if (config.idleMode.scheme === "pulse" || config.idleMode.scheme === "blink") {
-          body = {
-            mode: "idle",
-            scheme: config.idleMode.scheme,
-            color: config.idleMode.colors.length > 0 ? config.idleMode.colors[0] : "#ffffff",
+        if (config.idleMode.scheme === "pulse" || config.idleMode.scheme === "blink") {
+          if (config.idleMode.colors.length > 0) {
+            lightingPayload.color = config.idleMode.colors[0]
           }
-        } else {
-          body = { mode: "idle", scheme: config.idleMode.scheme }
         }
-      } else if (mode === "off") {
-        body = { mode: "off" }
       }
 
-      const res = await fetch("/api/lighting-control", {
+      const response = await fetch("/api/lighting-control", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lightingPayload),
       })
 
-      console.log("[v0] API response status:", res.status)
+      console.log("[v0] API response status:", response.status)
 
-      if (!res.ok) {
-        const errorText = await res.text()
+      if (!response.ok) {
+        const errorText = await response.text()
         console.error("[v0] API error response:", errorText)
-        throw new Error(`HTTP ${res.status}: ${errorText}`)
+        throw new Error(`HTTP ${response.status}: ${errorText}`)
       }
 
       const modeNames: Record<string, string> = {
@@ -173,7 +152,9 @@ export default function LightingControl() {
         variant: "destructive",
       })
     } finally {
-      setApplying(null)
+      if (!isTest) {
+        setApplying(null)
+      }
     }
   }
 
@@ -206,43 +187,6 @@ export default function LightingControl() {
     }
   }
 
-  const handleApplyBrightness = async () => {
-    setApplying("brightness")
-    try {
-      setBrightness(tempBrightness)
-      localStorage.setItem("led-brightness", tempBrightness.toString())
-
-      const response = await fetch("/api/lighting-control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "brightness",
-          brightness: tempBrightness,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to set brightness")
-      }
-
-      toast({
-        title: "Brightness Applied",
-        description: `Brightness set to ${Math.round((tempBrightness / 255) * 100)}%.`,
-      })
-
-      console.log("[v0] Brightness set to:", tempBrightness)
-    } catch (error) {
-      console.error("[v0] Error setting brightness:", error)
-      toast({
-        title: "Error",
-        description: "Brightness could not be applied",
-        variant: "destructive",
-      })
-    } finally {
-      setApplying(null)
-    }
-  }
-
   const resetToDefault = () => {
     setConfig(defaultConfig)
   }
@@ -267,9 +211,7 @@ export default function LightingControl() {
       <div className="flex items-center justify-center py-16 bg-[hsl(var(--cocktail-bg))] min-h-[400px]">
         <div className="text-center space-y-4">
           <Lightbulb className="h-16 w-16 mx-auto animate-pulse text-[hsl(var(--cocktail-primary))]" />
-          <h3 className="text-xl font-semibold text-[hsl(var(--cocktail-text))]">
-            Loading lighting settings
-          </h3>
+          <h3 className="text-xl font-semibold text-[hsl(var(--cocktail-text))]">Loading lighting settings</h3>
         </div>
       </div>
     )
@@ -314,37 +256,20 @@ export default function LightingControl() {
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <span className="text-sm font-semibold text-[hsl(var(--cocktail-text))] w-16">
-                {Math.round((tempBrightness / 255) * 100)}%
+                {Math.round((brightness / 255) * 100)}%
               </span>
               <input
                 type="range"
                 min="0"
                 max="255"
-                value={tempBrightness}
-                onChange={(e) => setTempBrightness(Number.parseInt(e.target.value))}
+                value={brightness}
+                onChange={(e) => applyBrightness(Number.parseInt(e.target.value))}
                 className="flex-1 h-3 bg-[hsl(var(--cocktail-card-bg))] rounded-lg appearance-none cursor-pointer accent-[hsl(var(--cocktail-primary))]"
               />
-              <span className="text-sm text-[hsl(var(--cocktail-text-muted))] w-16 text-right">{tempBrightness}/255</span>
+              <span className="text-sm text-[hsl(var(--cocktail-text-muted))] w-16 text-right">{brightness}/255</span>
             </div>
-            <Button
-              onClick={handleApplyBrightness}
-              disabled={applying !== null || tempBrightness === brightness}
-              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-12 text-base px-4 disabled:opacity-50"
-            >
-              {applying === "brightness" ? (
-                <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Applying...
-                </>
-              ) : (
-                <>
-                  <Play className="h-5 w-5 mr-2" />
-                  Apply
-                </>
-              )}
-            </Button>
             <p className="text-xs text-[hsl(var(--cocktail-text-muted))]">
-              Controls the brightness of all LED modes (0-255)
+              Controls the brightness of all LED modes (0-255). Changes apply immediately and when activating idle mode.
             </p>
           </div>
         </CardContent>
