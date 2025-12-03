@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     await sendLightingControlCommand(mode, color, brightness, blinking, scheme)
 
     if (brightness !== undefined) {
+      await new Promise((resolve) => setTimeout(resolve, 50))
       await runLed("BRIGHT", String(brightness))
       console.log(`[v0] LED Brightness applied after mode: ${brightness}`)
     }
@@ -75,7 +76,9 @@ async function sendLightingControlCommand(
       case "cocktailPreparation":
       case "preparation":
         const prepColor = color || (config?.preparationMode?.colors && config.preparationMode.colors[0]) || "#ff0000"
-        const prepBlinking = blinking !== undefined ? blinking : config?.preparationMode?.blinking || false
+        const prepBlinking = blinking !== undefined ? blinking : (config?.preparationMode?.blinking ?? false)
+
+        console.log(`[v0] Preparation mode - Color: ${prepColor}, Blinking: ${prepBlinking}`)
 
         const prepRgb = hexToRgb(prepColor)
         if (prepRgb) {
@@ -92,7 +95,9 @@ async function sendLightingControlCommand(
       case "cocktailFinished":
       case "finished":
         const finColor = color || (config?.finishedMode?.colors && config.finishedMode.colors[0]) || "#00ff00"
-        const finBlinking = blinking !== undefined ? blinking : config?.finishedMode?.blinking || false
+        const finBlinking = blinking !== undefined ? blinking : (config?.finishedMode?.blinking ?? false)
+
+        console.log(`[v0] Finished mode - Color: ${finColor}, Blinking: ${finBlinking}`)
 
         const finRgb = hexToRgb(finColor)
         if (finRgb) {
@@ -109,6 +114,8 @@ async function sendLightingControlCommand(
       case "idle":
         const idleScheme = scheme || config?.idleMode?.scheme || "rainbow"
         const idleColor = color || (config?.idleMode?.colors && config.idleMode.colors[0]) || "#00ff00"
+
+        console.log(`[v0] Idle mode - Scheme: ${idleScheme}, Color: ${idleColor}`)
 
         if (idleScheme === "rainbow") {
           await runLed("RAINBOW")
