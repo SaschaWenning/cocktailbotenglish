@@ -551,7 +551,10 @@ export default function Home() {
         const savedBrightness = localStorage.getItem("led-brightness")
         const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
 
-        console.log("[v0] Activating preparation lighting with brightness:", brightness)
+        console.log("[v0] ========== STARTING PREPARATION LIGHTING ==========")
+        console.log("[v0] Brightness from localStorage:", savedBrightness, "parsed:", brightness)
+        console.log("[v0] About to call /api/lighting-control with mode: preparation")
+
         const response = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -560,8 +563,13 @@ export default function Home() {
             brightness: brightness,
           }),
         })
-        console.log("[v0] Preparation lighting API response:", response.ok ? "success" : "failed")
+
+        const responseData = await response.json()
+        console.log("[v0] Preparation lighting API response status:", response.status)
+        console.log("[v0] Preparation lighting API response data:", responseData)
+        console.log("[v0] ========== PREPARATION LIGHTING API CALL COMPLETE ==========")
       } catch (error) {
+        console.error("[v0] ========== ERROR IN PREPARATION LIGHTING ==========")
         console.error("[v0] Error activating preparation lighting:", error)
       }
 
@@ -575,7 +583,10 @@ export default function Home() {
         const savedBrightness = localStorage.getItem("led-brightness")
         const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
 
-        console.log("[v0] Activating finished lighting with brightness:", brightness)
+        console.log("[v0] ========== STARTING FINISHED LIGHTING ==========")
+        console.log("[v0] Brightness from localStorage:", savedBrightness, "parsed:", brightness)
+        console.log("[v0] About to call /api/lighting-control with mode: finished")
+
         const response = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -584,8 +595,31 @@ export default function Home() {
             brightness: brightness,
           }),
         })
-        console.log("[v0] Finished lighting API response:", response.ok ? "success" : "failed")
+
+        const responseData = await response.json()
+        console.log("[v0] Finished lighting API response status:", response.status)
+        console.log("[v0] Finished lighting API response data:", responseData)
+        console.log("[v0] ========== FINISHED LIGHTING API CALL COMPLETE ==========")
+
+        setTimeout(async () => {
+          console.log("[v0] ========== RETURNING TO IDLE MODE ==========")
+          try {
+            const idleResponse = await fetch("/api/lighting-control", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                mode: "idle",
+                brightness: brightness,
+              }),
+            })
+            const idleData = await idleResponse.json()
+            console.log("[v0] Idle mode API response:", idleData)
+          } catch (error) {
+            console.error("[v0] Error returning to idle mode:", error)
+          }
+        }, 3000)
       } catch (error) {
+        console.error("[v0] ========== ERROR IN FINISHED LIGHTING ==========")
         console.error("[v0] Error activating finished lighting:", error)
       }
 

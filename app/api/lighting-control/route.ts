@@ -8,12 +8,20 @@ const execFileAsync = promisify(execFile)
 
 async function runLed(...args: string[]): Promise<void> {
   const scriptPath = path.join(process.cwd(), "scripts", "led_client.py")
-  console.log("[v0] LED command:", { scriptPath, args })
+  const timestamp = new Date().toISOString()
+  console.log(`[v0] [${timestamp}] ====== LED COMMAND SENDING ======`)
+  console.log(`[v0] [${timestamp}] Script: ${scriptPath}`)
+  console.log(`[v0] [${timestamp}] Arguments: [${args.join(", ")}]`)
+  console.log(`[v0] [${timestamp}] Full command: python3 ${scriptPath} ${args.join(" ")}`)
+
   try {
     const result = await execFileAsync("python3", [scriptPath, ...args])
-    console.log("[v0] LED command success:", result)
+    console.log(`[v0] [${timestamp}] ====== LED COMMAND SUCCESS ======`)
+    console.log(`[v0] [${timestamp}] stdout:`, result.stdout)
+    console.log(`[v0] [${timestamp}] stderr:`, result.stderr)
   } catch (error) {
-    console.error("[v0] LED command failed:", error)
+    console.error(`[v0] [${timestamp}] ====== LED COMMAND FAILED ======`)
+    console.error(`[v0] [${timestamp}] Error:`, error)
     throw error
   }
 }
@@ -30,29 +38,43 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
 }
 
 export async function POST(request: NextRequest) {
+  const requestTimestamp = new Date().toISOString()
+
   try {
     const { mode, color, brightness, blinking, scheme } = await request.json()
 
-    console.log("[v0] Lighting control POST request:", { mode, color, brightness, blinking, scheme })
+    console.log(`[v0] [${requestTimestamp}] ========================================`)
+    console.log(`[v0] [${requestTimestamp}] LIGHTING CONTROL POST REQUEST RECEIVED`)
+    console.log(`[v0] [${requestTimestamp}] ========================================`)
+    console.log(`[v0] [${requestTimestamp}] Request body:`, { mode, color, brightness, blinking, scheme })
 
     if (mode !== "off") {
-      console.log("[v0] Sending OFF command to stop any running animation...")
+      console.log(`[v0] [${requestTimestamp}] Sending OFF command to stop any running animation...`)
       await runLed("OFF")
+      console.log(`[v0] [${requestTimestamp}] Waiting 100ms after OFF command...`)
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
 
+    console.log(`[v0] [${requestTimestamp}] Calling sendLightingControlCommand with mode: ${mode}`)
     await sendLightingControlCommand(mode, color, brightness, blinking, scheme)
 
     if (brightness !== undefined) {
+      console.log(`[v0] [${requestTimestamp}] Waiting 50ms before sending brightness...`)
       await new Promise((resolve) => setTimeout(resolve, 50))
+      console.log(`[v0] [${requestTimestamp}] Sending BRIGHT command: ${brightness}`)
       await runLed("BRIGHT", String(brightness))
-      console.log(`[v0] LED Brightness applied after mode: ${brightness}`)
+      console.log(`[v0] [${requestTimestamp}] LED Brightness applied after mode: ${brightness}`)
     }
 
-    console.log("[v0] Lighting control command sent successfully")
+    console.log(`[v0] [${requestTimestamp}] ========================================`)
+    console.log(`[v0] [${requestTimestamp}] LIGHTING CONTROL COMPLETE - SUCCESS`)
+    console.log(`[v0] [${requestTimestamp}] ========================================`)
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Error controlling lighting:", error)
+    console.error(`[v0] [${requestTimestamp}] ========================================`)
+    console.error(`[v0] [${requestTimestamp}] LIGHTING CONTROL COMPLETE - ERROR`)
+    console.error(`[v0] [${requestTimestamp}] Error:`, error)
+    console.error(`[v0] [${requestTimestamp}] ========================================`)
     return NextResponse.json({ error: "Failed to control lighting" }, { status: 500 })
   }
 }
