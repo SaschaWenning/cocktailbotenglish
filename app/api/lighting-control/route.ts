@@ -49,10 +49,14 @@ export async function POST(request: NextRequest) {
     console.log(`[v0] [${requestTimestamp}] Request body:`, { mode, color, brightness, blinking, scheme })
 
     if (mode !== "off") {
-      console.log(`[v0] [${requestTimestamp}] Sending OFF command to stop any running animation...`)
-      await runLed("OFF")
-      console.log(`[v0] [${requestTimestamp}] Waiting 100ms after OFF command...`)
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      console.log(`[v0] [${requestTimestamp}] Sending multiple OFF commands to stop any running animation...`)
+      // Send OFF command 3 times with delays to ensure it's received during animation loops
+      for (let i = 0; i < 3; i++) {
+        await runLed("OFF")
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+      console.log(`[v0] [${requestTimestamp}] Waiting additional 200ms for animation to fully stop...`)
+      await new Promise((resolve) => setTimeout(resolve, 200))
     }
 
     console.log(`[v0] [${requestTimestamp}] Calling sendLightingControlCommand with mode: ${mode}`)
@@ -104,9 +108,12 @@ async function sendLightingControlCommand(
     switch (mode) {
       case "cocktailPreparation":
       case "preparation":
-        const prepColor = color || (config?.preparationMode?.colors && config.preparationMode.colors[0]) || "#ff0000"
-        const prepBlinking = blinking !== undefined ? blinking : (config?.preparationMode?.blinking ?? false)
+        const prepConfigMode = (config as any)?.preparationMode || (config as any)?.cocktailPreparation
+        const prepColor =
+          color || (prepConfigMode?.colors && prepConfigMode.colors[0]) || prepConfigMode?.color || "#ff0000"
+        const prepBlinking = blinking !== undefined ? blinking : (prepConfigMode?.blinking ?? false)
 
+        console.log(`[v0] Preparation mode - Config:`, prepConfigMode)
         console.log(`[v0] Preparation mode - Color: ${prepColor}, Blinking: ${prepBlinking}`)
 
         const prepRgb = hexToRgb(prepColor)
@@ -125,9 +132,12 @@ async function sendLightingControlCommand(
 
       case "cocktailFinished":
       case "finished":
-        const finColor = color || (config?.finishedMode?.colors && config.finishedMode.colors[0]) || "#00ff00"
-        const finBlinking = blinking !== undefined ? blinking : (config?.finishedMode?.blinking ?? false)
+        const finConfigMode = (config as any)?.finishedMode || (config as any)?.cocktailFinished
+        const finColor =
+          color || (finConfigMode?.colors && finConfigMode.colors[0]) || finConfigMode?.color || "#00ff00"
+        const finBlinking = blinking !== undefined ? blinking : (finConfigMode?.blinking ?? false)
 
+        console.log(`[v0] Finished mode - Config:`, finConfigMode)
         console.log(`[v0] Finished mode - Color: ${finColor}, Blinking: ${finBlinking}`)
 
         const finRgb = hexToRgb(finColor)
