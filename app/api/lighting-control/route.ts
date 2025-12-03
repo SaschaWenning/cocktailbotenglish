@@ -49,13 +49,15 @@ export async function POST(request: NextRequest) {
     console.log(`[v0] [${requestTimestamp}] Request body:`, { mode, color, brightness, blinking, scheme })
 
     if (mode !== "off") {
-      console.log(`[v0] [${requestTimestamp}] Sending multiple OFF commands to stop any running animation...`)
-      // Send OFF command 3 times with delays to ensure it's received during animation loops
-      for (let i = 0; i < 3; i++) {
+      console.log(`[v0] [${requestTimestamp}] Sending aggressive OFF burst to break animations...`)
+      // Rainbow animation runs 256 iterations, checking for commands between each
+      // Each iteration takes ~10ms * 240 LEDs = ~2.4 seconds per full cycle
+      // We send 20 OFF commands with 30ms intervals to catch the brief check moments
+      for (let i = 0; i < 20; i++) {
         await runLed("OFF")
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 30))
       }
-      console.log(`[v0] [${requestTimestamp}] Waiting additional 200ms for animation to fully stop...`)
+      console.log(`[v0] [${requestTimestamp}] OFF burst complete. Waiting 200ms for full stop...`)
       await new Promise((resolve) => setTimeout(resolve, 200))
     }
 
