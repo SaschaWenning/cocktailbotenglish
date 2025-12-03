@@ -35,6 +35,12 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Lighting control POST request:", { mode, color, brightness, blinking, scheme })
 
+    if (mode !== "off") {
+      console.log("[v0] Sending OFF command to stop any running animation...")
+      await runLed("OFF")
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
     await sendLightingControlCommand(mode, color, brightness, blinking, scheme)
 
     if (brightness !== undefined) {
@@ -71,6 +77,7 @@ async function sendLightingControlCommand(
 ) {
   try {
     const config = await loadLightingConfig()
+    console.log("[v0] Loaded lighting config:", JSON.stringify(config, null, 2))
 
     switch (mode) {
       case "cocktailPreparation":
@@ -83,9 +90,11 @@ async function sendLightingControlCommand(
         const prepRgb = hexToRgb(prepColor)
         if (prepRgb) {
           if (prepBlinking) {
+            console.log(`[v0] Executing BLINK command with RGB(${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
             await runLed("BLINK", String(prepRgb.r), String(prepRgb.g), String(prepRgb.b))
             console.log(`[v0] LED Mode: Preparation (BLINK RGB ${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
           } else {
+            console.log(`[v0] Executing COLOR command with RGB(${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
             await runLed("COLOR", String(prepRgb.r), String(prepRgb.g), String(prepRgb.b))
             console.log(`[v0] LED Mode: Preparation (COLOR RGB ${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
           }
@@ -102,9 +111,11 @@ async function sendLightingControlCommand(
         const finRgb = hexToRgb(finColor)
         if (finRgb) {
           if (finBlinking) {
+            console.log(`[v0] Executing BLINK command with RGB(${finRgb.r}, ${finRgb.g}, ${finRgb.b})`)
             await runLed("BLINK", String(finRgb.r), String(finRgb.g), String(finRgb.b))
             console.log(`[v0] LED Mode: Finished (BLINK RGB ${finRgb.r}, ${finRgb.g}, ${finRgb.b})`)
           } else {
+            console.log(`[v0] Executing COLOR command with RGB(${finRgb.r}, ${finRgb.g}, ${finRgb.b})`)
             await runLed("COLOR", String(finRgb.r), String(finRgb.g), String(finRgb.b))
             console.log(`[v0] LED Mode: Finished (COLOR RGB ${finRgb.r}, ${finRgb.g}, ${finRgb.b})`)
           }
