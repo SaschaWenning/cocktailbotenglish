@@ -574,18 +574,18 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
   )
 
   const renderKeyboardView = () => (
-    <div className="flex flex-col h-[90vh] gap-2">
+    <div className="flex flex-col h-[80vh] gap-2">
       <div className="flex-shrink-0">
         <div className="bg-white text-black text-sm p-2 rounded border-2 border-[hsl(var(--cocktail-primary))]">
           {keyboardValue || <span className="text-gray-400">Input...</span>}
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col gap-2">
+      <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
         {keys.map((row, rowIndex) => (
           <div
             key={rowIndex}
-            className={`flex ${isNumericKeyboard ? "gap-3 justify-center" : "gap-1 justify-center"} flex-1`}
+            className={`flex ${isNumericKeyboard ? "gap-2 justify-center" : "gap-1 justify-center"} flex-shrink-0`}
           >
             {row.map((key) => {
               let displayKey = key
@@ -599,7 +599,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
                   key={key}
                   type="button"
                   onClick={() => handleKeyPress(key)}
-                  className={`${isNumericKeyboard ? "w-20 h-12" : "flex-1 h-12"} text-sm bg-gray-700 hover:bg-gray-600 text-white min-h-0`}
+                  className={`${isNumericKeyboard ? "w-20 h-10" : "flex-1 h-10"} text-sm bg-gray-700 hover:bg-gray-600 text-white min-h-0`}
                 >
                   {displayKey}
                 </Button>
@@ -615,47 +615,51 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             <Button
               type="button"
               onClick={handleShift}
-              className={`h-12 w-20 text-white flex flex-col items-center justify-center ${
+              className={`h-10 w-16 text-white flex flex-col items-center justify-center text-xs ${
                 isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
               <ArrowUp className="h-3 w-3" />
-              <span className="text-xs">Shift</span>
+              <span className="text-[10px]">Shift</span>
             </Button>
             <Button
               type="button"
               onClick={handleCapsLock}
-              className={`h-12 w-20 text-white flex flex-col items-center justify-center ${
+              className={`h-10 w-16 text-white flex flex-col items-center justify-center text-xs ${
                 isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
               <Lock className="h-3 w-3" />
-              <span className="text-xs">Caps</span>
+              <span className="text-[10px]">Caps</span>
             </Button>
           </>
         )}
 
-        <Button type="button" onClick={handleBackspace} className="flex-1 h-12 bg-red-700 hover:bg-red-600 text-white">
-          <Delete className="h-4 w-4 mr-2" />
+        <Button
+          type="button"
+          onClick={handleBackspace}
+          className="flex-1 h-10 bg-red-700 hover:bg-red-600 text-white text-xs"
+        >
+          <Delete className="h-3 w-3 mr-1" />
           Back
         </Button>
 
         <Button
           type="button"
           onClick={() => setShowKeyboard(false)}
-          className="flex-1 h-12 bg-gray-700 hover:bg-gray-600 text-white"
+          className="flex-1 h-10 bg-gray-700 hover:bg-gray-600 text-white text-xs"
         >
-          <X className="h-4 w-4 mr-2" />
+          <X className="h-3 w-3 mr-1" />
           Cancel
         </Button>
 
         <Button
           type="button"
           onClick={handleKeyboardConfirm}
-          className="flex-1 h-12 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black"
+          className="flex-1 h-10 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black text-xs"
         >
-          <Check className="h-4 w-4 mr-2" />
-          OK
+          <Check className="h-3 w-3 mr-1" />
+          Confirm
         </Button>
       </div>
     </div>
