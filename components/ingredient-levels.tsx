@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Bug } from "lucide-react"
-import { ArrowLeft, X } from "lucide-react"
+import { Bug } from 'lucide-react'
+import { ArrowLeft, X } from 'lucide-react'
 import { pumpConfig } from "@/data/pump-config"
 import {
   getIngredientLevels,
@@ -269,7 +269,7 @@ export function IngredientLevels() {
               <div className="bg-black rounded-lg p-4 max-h-60 overflow-y-auto">
                 <div className="font-mono text-sm space-y-1">
                   {debugLogs.length === 0 ? (
-                    <div className="text-gray-500">No Debug Logs Available</div>
+                    <div className="text-gray-500">Keine Debug-Logs verfügbar</div>
                   ) : (
                     debugLogs.map((log, index) => (
                       <div key={index} className="text-green-400">
@@ -280,7 +280,7 @@ export function IngredientLevels() {
                 </div>
               </div>
               <div className="mt-4 text-sm text-[hsl(var(--cocktail-text-muted))]">
-                Current Levels: {levels.length} | Last Updated: {new Date().toLocaleTimeString()}
+                Aktuelle Levels: {levels.length} | Letzte Aktualisierung: {new Date().toLocaleTimeString()}
               </div>
             </CardContent>
           </Card>
@@ -412,28 +412,28 @@ export function IngredientLevels() {
                     <Button
                       onClick={() => setTempValue("")}
                       className="flex-1 h-8 text-sm bg-red-600 text-white hover:bg-red-700"
-                      title="Clear"
+                      title="Löschen"
                     >
                       <X className="h-4 w-4" />
                     </Button>
                     <Button
                       onClick={() => setTempValue(tempValue.slice(0, -1))}
                       className="flex-1 h-8 text-sm bg-gray-600 text-white hover:bg-gray-700"
-                      title="Back"
+                      title="Zurück"
                     >
                       <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <Button
                       onClick={handleCancel}
                       className="flex-1 h-8 text-sm bg-orange-600 text-white hover:bg-orange-700"
-                      title="Cancel"
+                      title="Abbrechen"
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleSave}
                       className="flex-1 h-8 text-sm bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-bold"
-                      title="Save"
+                      title="Speichern"
                     >
                       Save
                     </Button>

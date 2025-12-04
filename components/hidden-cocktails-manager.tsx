@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import type { Cocktail } from "@/types/cocktail"
 
 interface HiddenCocktailsManagerProps {
@@ -94,7 +94,9 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
           <CardContent className="py-12 text-center">
             <EyeOff className="h-12 w-12 mx-auto mb-4 text-[hsl(var(--cocktail-text-muted))]" />
             <p className="text-[hsl(var(--cocktail-text-muted))] text-lg">No hidden cocktails available</p>
-            <p className="text-[hsl(var(--cocktail-text-muted))] text-sm mt-2">Cocktails can be hidden via edit mode</p>
+            <p className="text-[hsl(var(--cocktail-text-muted))] text-sm mt-2">
+              Cocktails can be hidden via edit mode
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -132,7 +134,7 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
                   {updating === cocktail.id ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Showing...
+                      Unhiding...
                     </>
                   ) : (
                     <>

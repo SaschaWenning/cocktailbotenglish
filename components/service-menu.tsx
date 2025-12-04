@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Lock, Settings, Info } from "lucide-react"
+import { Lock, Settings, Info } from 'lucide-react'
 import PumpCleaning from "@/components/pump-cleaning"
 import PumpVenting from "@/components/pump-venting"
 import PumpCalibration from "@/components/pump-calibration"
@@ -313,12 +313,12 @@ export default function ServiceMenu({
               <Info className="h-12 w-12 text-[hsl(var(--cocktail-primary))]" />
               <h3 className="text-xl font-bold text-[hsl(var(--cocktail-text))]">License Notice</h3>
               <p className="text-[hsl(var(--cocktail-text-muted))] text-center text-sm leading-relaxed">
-                This software and the associated construction manual are intended for private use only.
+                This software and the associated construction manual are intended exclusively for private use.
                 <br />
                 <br />
-                Any commercial use - especially the construction and sale of the Cocktailbot, use in gastronomy or at
-                events, as well as commercial use of the software - is not permitted without prior written license
-                agreement with the author.
+                Any commercial use - in particular the construction and sale of the CocktailBot, use in
+                gastronomy or at events, or commercial use of the software - is not permitted without prior
+                written license agreement with the author.
                 <br />
                 <br />📧 Contact for license inquiries: printcore@outlook.de
               </p>

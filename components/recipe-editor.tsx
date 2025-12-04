@@ -17,12 +17,12 @@ import {
   Plus,
   Minus,
   FolderOpen,
-  ArrowLeft,
   X,
   Check,
   ArrowUp,
   Lock,
   EyeOff,
+  Delete,
 } from "lucide-react"
 import FileBrowser from "./file-browser"
 import type { RecipeEditorProps } from "@/types/recipe-editor"
@@ -281,7 +281,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
         ingredients: recipe.map((item) => {
           const ingredient = ingredients.find((i) => i.id === item.ingredientId)
           const ingredientName = ingredient?.name || item.ingredientId.replace(/^custom-\d+-/, "")
-          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manual)" : ""}`
+          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manuell)" : ""}`
         }),
       }
 
@@ -291,7 +291,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
       window.scrollTo({ top: 0, behavior: "smooth" })
     } catch (error) {
-      console.error("Error saving recipe:", error)
+      console.error("Error saving the recipe:", error)
     } finally {
       setSaving(false)
     }
@@ -332,7 +332,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       // Trigger a refresh of the cocktail list
       window.location.reload()
     } catch (error) {
-      console.error("Error hiding cocktail:", error)
+      console.error("Error hiding the cocktail:", error)
     } finally {
       setHidingCocktail(false)
     }
@@ -422,7 +422,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             onClick={() => openKeyboard("imageUrl", imageUrl)}
             readOnly
             className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1"
-            placeholder="Image URL or choose from gallery"
+            placeholder="Image URL or select from gallery"
           />
           <Button
             type="button"
@@ -435,7 +435,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       </div>
 
       <div className="space-y-2">
-        <Label className="text-white">Cocktail Sizes for this Recipe</Label>
+        <Label className="text-white">Cocktail sizes for this recipe</Label>
         <div className="flex gap-2 items-center">
           <Input
             value={newSizeInput}
@@ -574,59 +574,48 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
   )
 
   const renderKeyboardView = () => (
-    <div className="flex gap-3 my-2 h-[80vh]">
-      <div className="flex-1 flex flex-col">
-        <div className="text-center mb-2">
-          <h3 className="text-base font-semibold text-white mb-1">
-            {keyboardMode === "name" && "Enter Name"}
-            {keyboardMode === "description" && "Enter Description"}
-            {keyboardMode === "imageUrl" && "Enter Image Path"}
-            {keyboardMode.startsWith("amount-") && "Enter Amount (ml)"}
-            {keyboardMode.startsWith("instruction-") && "Enter Instructions"}
-            {keyboardMode === "newSize" && "Enter New Cocktail Size (ml)"}
-          </h3>
-          <div className="bg-white text-black text-lg p-4 rounded mb-4 min-h-[60px] break-all border-2 border-[hsl(var(--cocktail-primary))]">
-            {keyboardValue || <span className="text-gray-400">Eingabe...</span>}
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-col gap-2">
-          {keys.map((row, rowIndex) => (
-            <div
-              key={rowIndex}
-              className={`flex ${isNumericKeyboard ? "gap-3 justify-center" : "gap-1 justify-center"} flex-1`}
-            >
-              {row.map((key) => {
-                let displayKey = key
-                if (key.length === 1 && key.match(/[A-Za-z]/)) {
-                  const shouldShowUppercase =
-                    (isShiftActive && !isCapsLockActive) || (!isShiftActive && isCapsLockActive)
-                  displayKey = shouldShowUppercase ? key.toUpperCase() : key.toLowerCase()
-                }
-
-                return (
-                  <Button
-                    key={key}
-                    type="button"
-                    onClick={() => handleKeyPress(key)}
-                    className={`${isNumericKeyboard ? "w-20 h-12" : "flex-1 h-12"} text-sm bg-gray-700 hover:bg-gray-600 text-white min-h-0`}
-                  >
-                    {displayKey}
-                  </Button>
-                )
-              })}
-            </div>
-          ))}
+    <div className="flex flex-col h-[90vh] gap-2">
+      <div className="flex-shrink-0">
+        <div className="bg-white text-black text-sm p-2 rounded border-2 border-[hsl(var(--cocktail-primary))]">
+          {keyboardValue || <span className="text-gray-400">Input...</span>}
         </div>
       </div>
 
-      <div className="flex flex-col gap-2 w-24">
+      <div className="flex-1 flex flex-col gap-2">
+        {keys.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            className={`flex ${isNumericKeyboard ? "gap-3 justify-center" : "gap-1 justify-center"} flex-1`}
+          >
+            {row.map((key) => {
+              let displayKey = key
+              if (key.length === 1 && key.match(/[A-Za-z]/)) {
+                const shouldShowUppercase = (isShiftActive && !isCapsLockActive) || (!isShiftActive && isCapsLockActive)
+                displayKey = shouldShowUppercase ? key.toUpperCase() : key.toLowerCase()
+              }
+
+              return (
+                <Button
+                  key={key}
+                  type="button"
+                  onClick={() => handleKeyPress(key)}
+                  className={`${isNumericKeyboard ? "w-20 h-12" : "flex-1 h-12"} text-sm bg-gray-700 hover:bg-gray-600 text-white min-h-0`}
+                >
+                  {displayKey}
+                </Button>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 flex-shrink-0">
         {!isNumericKeyboard && (
           <>
             <Button
               type="button"
               onClick={handleShift}
-              className={`h-12 text-white flex flex-col items-center justify-center ${
+              className={`h-12 w-20 text-white flex flex-col items-center justify-center ${
                 isShiftActive ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
@@ -636,7 +625,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             <Button
               type="button"
               onClick={handleCapsLock}
-              className={`h-12 text-white flex flex-col items-center justify-center ${
+              className={`h-12 w-20 text-white flex flex-col items-center justify-center ${
                 isCapsLockActive ? "bg-orange-600 hover:bg-orange-700" : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
@@ -646,36 +635,27 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           </>
         )}
 
+        <Button type="button" onClick={handleBackspace} className="flex-1 h-12 bg-red-700 hover:bg-red-600 text-white">
+          <Delete className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
         <Button
           type="button"
-          onClick={handleBackspace}
-          className="h-12 bg-red-700 hover:bg-red-600 text-white flex flex-col items-center justify-center"
+          onClick={() => setShowKeyboard(false)}
+          className="flex-1 h-12 bg-gray-700 hover:bg-gray-600 text-white"
         >
-          <ArrowLeft className="h-3 w-3" />
-          <span className="text-xs">Back</span>
+          <X className="h-4 w-4 mr-2" />
+          Cancel
         </Button>
-        <Button
-          type="button"
-          onClick={handleClear}
-          className="h-12 bg-yellow-700 hover:bg-yellow-600 text-white flex flex-col items-center justify-center"
-        >
-          <X className="h-3 w-3" />
-          <span className="text-xs">Clear</span>
-        </Button>
-        <Button
-          type="button"
-          onClick={handleKeyboardCancel}
-          className="h-12 bg-gray-700 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
-        >
-          <span className="text-xs">Cancel</span>
-        </Button>
+
         <Button
           type="button"
           onClick={handleKeyboardConfirm}
-          className="h-12 bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center"
+          className="flex-1 h-12 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black"
         >
-          <Check className="h-3 w-3" />
-          <span className="text-xs">OK</span>
+          <Check className="h-4 w-4 mr-2" />
+          OK
         </Button>
       </div>
     </div>

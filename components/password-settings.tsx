@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Key, Eye, EyeOff } from "lucide-react"
+import { Key, Eye, EyeOff } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import AlphaKeyboard from "./alpha-keyboard"
 
@@ -42,7 +42,7 @@ export default function PasswordSettings() {
       setShowKeyboardModal(false)
       toast({
         title: "Password saved",
-        description: "The custom password has been saved successfully.",
+        description: "Your custom password has been successfully saved.",
       })
     } catch (error) {
       console.error("Error saving password:", error)
