@@ -10,13 +10,13 @@ export default function ClientLayout({
 }: {
   children: React.ReactNode
 }) {
-  // <CHANGE> Füge beforeunload Event-Listener hinzu für Persistierung beim App-Beenden
+  // Füge beforeunload Event-Listener hinzu für Persistierung beim App-Beenden
   useEffect(() => {
     const handleBeforeUnload = async (event: BeforeUnloadEvent) => {
-      console.log("[v0] App wird beendet - speichere Füllstände und Behältergrößen...")
+      console.log("[v0] App closing - saving fill levels and container sizes...")
 
       try {
-        // Hole aktuelle Füllstände
+        // Get current fill levels
         const response = await fetch("/api/ingredient-levels", {
           method: "GET",
           cache: "no-store",
@@ -25,7 +25,7 @@ export default function ClientLayout({
         if (response.ok) {
           const levels = await response.json()
 
-          // Speichere in localStorage als Backup
+          // Save to localStorage as backup
           if (typeof window !== "undefined") {
             localStorage.setItem(
               "ingredient-levels-backup",
@@ -34,10 +34,10 @@ export default function ClientLayout({
                 timestamp: new Date().toISOString(),
               }),
             )
-            console.log("[v0] Füllstände erfolgreich beim App-Beenden gespeichert")
+            console.log("[v0] Fill levels successfully saved on app close")
           }
 
-          // Explizite Speicherung über API
+          // Explicit save via API
           await fetch("/api/ingredient-levels", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -45,25 +45,25 @@ export default function ClientLayout({
           })
         }
       } catch (error) {
-        console.error("[v0] Fehler beim Speichern der Füllstände beim App-Beenden:", error)
+        console.error("[v0] Error saving fill levels on app close:", error)
       }
 
-      // Zeige Bestätigung an (optional)
+      // Show confirmation (optional)
       event.preventDefault()
       event.returnValue = ""
     }
 
-    // Event-Listener hinzufügen
+    // Add event listener
     window.addEventListener("beforeunload", handleBeforeUnload)
 
-    // Cleanup beim Unmount
+    // Cleanup on unmount
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload)
     }
   }, [])
 
   return (
-    <html lang="de" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-[hsl(var(--cocktail-bg))]">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           {children}

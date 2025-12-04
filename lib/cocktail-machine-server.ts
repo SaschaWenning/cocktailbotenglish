@@ -332,7 +332,7 @@ export async function makeCocktailAction(cocktail: Cocktail, pumpConfig: PumpCon
   const delayedItems = scaledRecipe.filter((item) => item.delayed === true)
   const immediateItems = scaledRecipe.filter((item) => item.delayed !== true)
 
-  console.log(`[v0] Immediate ingredients: ${immediateItems.length}, Delayed ingredients: ${delayedItems.length}`)
+  console.log(`[v0] Sofortige Zutaten: ${immediateItems.length}, Verzögerte Zutaten: ${delayedItems.length}`)
 
   // Sammle Pumpen-Updates für Level-Reduktion
   const levelUpdates: { pumpId: number; amount: number }[] = []
@@ -362,10 +362,10 @@ export async function makeCocktailAction(cocktail: Cocktail, pumpConfig: PumpCon
   await Promise.all(immediatePumpPromises)
 
   if (delayedItems.length > 0) {
-    console.log(`[v0] Waiting 2 seconds before adding ${delayedItems.length} delayed ingredients...`)
+    console.log(`[v0] Warte 2 Sekunden vor dem Hinzufügen von ${delayedItems.length} verzögerten Zutaten...`)
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    // Add delayed ingredients
+    // Füge verzögerte Zutaten hinzu
     for (const item of delayedItems) {
       const pump = pumpConfig.find((p) => p.ingredient === item.ingredientId)
 
