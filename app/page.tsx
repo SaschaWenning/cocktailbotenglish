@@ -33,7 +33,7 @@ import { Check, GlassWater } from "lucide-react"
 import TermsOfService from "@/components/terms-of-service"
 import LightingControl from "@/components/lighting-control"
 
-// Number of cocktails per page
+// Anzahl der Cocktails pro Seite
 const COCKTAILS_PER_PAGE = 9
 
 export default function Home() {
@@ -143,22 +143,14 @@ export default function Home() {
   const loadAndApplyIdleLighting = async () => {
     try {
       console.log("[v0] Loading and applying idle LED configuration...")
-
-      // Load saved brightness from localStorage
-      const savedBrightness = localStorage.getItem("led-brightness")
-      const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
-
       const response = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "idle",
-          brightness: brightness,
-        }),
+        body: JSON.stringify({ mode: "idle" }),
       })
 
       if (response.ok) {
-        console.log("[v0] Idle LED configuration applied successfully with brightness:", brightness)
+        console.log("[v0] Idle LED configuration applied successfully")
       } else {
         console.error("[v0] Failed to apply idle LED configuration:", response.status)
       }
@@ -220,7 +212,7 @@ export default function Home() {
         setCocktailsData(cocktails)
       }
     } catch (error) {
-      console.error("Error loading data:", error)
+      console.error("Fehler beim Laden der Daten:", error)
       console.log("[v0] Using empty fallback - no server imports in browser")
       setCocktailsData([])
     }
@@ -231,7 +223,7 @@ export default function Home() {
       const config = await getPumpConfig()
       setPumpConfig(config)
     } catch (error) {
-      console.error("Error loading pump configuration:", error)
+      console.error("Fehler beim Laden der Pumpenkonfiguration:", error)
       console.log("[v0] Using fallback pump configuration")
       setPumpConfig(initialPumpConfig)
     }
@@ -266,7 +258,7 @@ export default function Home() {
       const lowLevels = levels.filter((level) => level.currentAmount < 100)
       setLowIngredients(lowLevels.map((level) => level.ingredientId))
     } catch (error) {
-      console.error("Error loading levels:", error)
+      console.error("Fehler beim Laden der Füllstände:", error)
       console.log("[v0] Using empty ingredient levels as fallback")
       const defaultLevels: IngredientLevel[] = initialPumpConfig.map((pump) => ({
         pumpId: pump.id,
@@ -286,7 +278,7 @@ export default function Home() {
       const ingredients = await getAllIngredients()
       setAllIngredientsData(ingredients)
     } catch (error) {
-      console.error("Error loading ingredients:", error)
+      console.error("Fehler beim Laden der Zutaten:", error)
       console.log("[v0] Using empty fallback ingredients - no server imports in browser")
       setAllIngredientsData([])
     }
@@ -306,10 +298,12 @@ export default function Home() {
       const mainTabIds = config.tabs.filter((tab) => tab.location === "main").map((tab) => tab.id)
 
       console.log("[v0] Tab config loaded successfully:", config)
+      console.log("[v0] Main tab IDs:", mainTabIds)
       setTabConfig(config)
       setMainTabs(mainTabIds)
 
       if (mainTabIds.length > 0 && !mainTabIds.includes(activeTab) && activeTab !== "service") {
+        console.log("[v0] Setting active tab to first main tab:", mainTabIds[0])
         setActiveTab(mainTabIds[0])
       }
     } catch (error) {
@@ -445,15 +439,15 @@ export default function Home() {
       setShowDeleteConfirmation(false)
 
       toast({
-        title: "Cocktail deleted",
-        description: `${cocktailToDelete.name} was successfully deleted.`,
+        title: "Cocktail gelöscht",
+        description: `${cocktailToDelete.name} wurde erfolgreich gelöscht.`,
       })
     } catch (error) {
-      console.error("Error deleting cocktail:", error)
+      console.error("Fehler beim Löschen des Cocktails:", error)
 
       toast({
-        title: "Delete Error",
-        description: "The cocktail could not be deleted. Please try again.",
+        title: "Fehler beim Löschen",
+        description: "Der Cocktail konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       })
     }
@@ -483,14 +477,14 @@ export default function Home() {
     return totalDuration
   }
 
-  const handleMakeCocktail = async (cocktail: Cocktail) => {
+  const handleMakeCocktail = async () => {
     if (!selectedCocktail || isMaking) {
       return
     }
 
-    const cocktailToMake = selectedCocktail // Use a different variable name to avoid conflict
+    const cocktail = selectedCocktail
 
-    if (!cocktailToMake) {
+    if (!cocktail) {
       return
     }
 
@@ -498,24 +492,24 @@ export default function Home() {
       console.log("[v0] PumpConfig not available, loading...")
       await loadPumpConfig()
       if (!pumpConfig || pumpConfig.length === 0) {
-        setErrorMessage("Pump configuration not available. Please try again.")
+        setErrorMessage("Pumpenkonfiguration nicht verfügbar. Bitte versuchen Sie es erneut.")
         return
       }
     }
 
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage("Preparing cocktail...")
+    setStatusMessage("Bereite Cocktail vor...")
     setErrorMessage(null)
     setManualIngredients([])
 
     try {
       const currentPumpConfig = pumpConfig
 
-      const totalRecipeVolume = cocktailToMake.recipe.reduce((total, item) => total + item.amount, 0)
+      const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
       const scaleFactor = selectedSize / totalRecipeVolume
 
-      const manualRecipeItems = cocktailToMake.recipe
+      const manualRecipeItems = cocktail.recipe
         .filter((item) => item?.manual === true)
         .map((item) => ({
           ingredientId: item.ingredientId,
@@ -525,7 +519,7 @@ export default function Home() {
 
       setManualIngredients(manualRecipeItems)
 
-      const estimatedDuration = calculateCocktailDuration(cocktailToMake, currentPumpConfig, selectedSize)
+      const estimatedDuration = calculateCocktailDuration(cocktail, currentPumpConfig, selectedSize)
       const progressInterval = Math.max(100, estimatedDuration / 100)
 
       console.log(`[v0] Estimated cocktail duration: ${estimatedDuration}ms, progress interval: ${progressInterval}ms`)
@@ -548,85 +542,33 @@ export default function Home() {
       }, progressInterval)
 
       try {
-        const savedBrightness = localStorage.getItem("led-brightness")
-        const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
-
-        console.log("[v0] ========== STARTING PREPARATION LIGHTING ==========")
-        console.log("[v0] Brightness from localStorage:", savedBrightness, "parsed:", brightness)
-        console.log("[v0] About to call /api/lighting-control with mode: preparation")
-
-        const response = await fetch("/api/lighting-control", {
+        await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "preparation",
-            brightness: brightness,
-          }),
+          body: JSON.stringify({ mode: "cocktailPreparation" }),
         })
-
-        const responseData = await response.json()
-        console.log("[v0] Preparation lighting API response status:", response.status)
-        console.log("[v0] Preparation lighting API response data:", responseData)
-        console.log("[v0] ========== PREPARATION LIGHTING API CALL COMPLETE ==========")
       } catch (error) {
-        console.error("[v0] ========== ERROR IN PREPARATION LIGHTING ==========")
         console.error("[v0] Error activating preparation lighting:", error)
       }
 
       const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
-      await makeCocktail(cocktailToMake, currentPumpConfig, selectedSize, category)
+      await makeCocktail(cocktail, currentPumpConfig, selectedSize, category)
 
       clearInterval(intervalId)
       setProgress(100)
 
       try {
-        const savedBrightness = localStorage.getItem("led-brightness")
-        const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
-
-        console.log("[v0] ========== STARTING FINISHED LIGHTING ==========")
-        console.log("[v0] Brightness from localStorage:", savedBrightness, "parsed:", brightness)
-        console.log("[v0] About to call /api/lighting-control with mode: finished")
-
-        const response = await fetch("/api/lighting-control", {
+        await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "finished",
-            brightness: brightness,
-          }),
+          body: JSON.stringify({ mode: "cocktailFinished" }),
         })
-
-        const responseData = await response.json()
-        console.log("[v0] Finished lighting API response status:", response.status)
-        console.log("[v0] Finished lighting API response data:", responseData)
-        console.log("[v0] ========== FINISHED LIGHTING API CALL COMPLETE ==========")
-
-        setTimeout(async () => {
-          console.log("[v0] ========== RETURNING TO IDLE MODE ==========")
-          try {
-            const idleResponse = await fetch("/api/lighting-control", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                mode: "idle",
-                brightness: brightness,
-              }),
-            })
-            const idleData = await idleResponse.json()
-            console.log("[v0] Idle mode API response:", idleData)
-          } catch (error) {
-            console.error("[v0] Error returning to idle mode:", error)
-          }
-        }, 3000)
       } catch (error) {
-        console.error("[v0] ========== ERROR IN FINISHED LIGHTING ==========")
         console.error("[v0] Error activating finished lighting:", error)
       }
 
       if (manualRecipeItems.length > 0) {
-        setStatusMessage(
-          `${cocktailToMake.name} (${selectedSize}ml) prepared automatically! Please add manual ingredients.`,
-        )
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) automatically prepared! Please add manual ingredients.`)
         setTimeout(() => {
           setShowManualIngredientsModal(true)
           setTimeout(() => {
@@ -635,7 +577,7 @@ export default function Home() {
           }, 6000)
         }, 2000)
       } else {
-        setStatusMessage(`${cocktailToMake.name} (${selectedSize}ml) ready!`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) fertig!`)
       }
 
       setShowSuccess(true)
@@ -653,29 +595,18 @@ export default function Home() {
         setShowSuccess(false)
         setSelectedCocktail(null)
 
-        console.log("[v0] Returning to idle lighting...")
-        const savedBrightness = localStorage.getItem("led-brightness")
-        const brightness = savedBrightness ? Number.parseInt(savedBrightness) : 128
-
         fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            mode: "idle",
-            brightness: brightness,
-          }),
-        })
-          .then((response) => {
-            console.log("[v0] Idle lighting API response:", response.ok ? "success" : "failed")
-          })
-          .catch((error) => console.error("[v0] Error returning to idle lighting:", error))
+          body: JSON.stringify({ mode: "idle" }),
+        }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, displayDuration)
     } catch (error) {
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Preparation error!")
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
+      setStatusMessage("Fehler bei der Zubereitung!")
+      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
       setManualIngredients([])
       setTimeout(() => setIsMaking(false), 3000)
     }
@@ -794,21 +725,21 @@ export default function Home() {
 
       if (data.success) {
         toast({
-          title: "Exiting Kiosk Mode",
-          description: "The application will close in a few seconds.",
+          title: "Kiosk-Modus wird beendet",
+          description: "Die Anwendung wird in wenigen Sekunden geschlossen.",
         })
       } else {
         toast({
-          title: "Error",
-          description: "Could not exit kiosk mode.",
+          title: "Fehler",
+          description: "Kiosk-Modus konnte nicht beendet werden.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Error exiting kiosk mode:", error)
+      console.error("Fehler beim Beenden des Kiosk-Modus:", error)
       toast({
-        title: "Error",
-        description: "Connection problem while exiting kiosk mode.",
+        title: "Fehler",
+        description: "Verbindungsproblem beim Beenden des Kiosk-Modus.",
         variant: "destructive",
       })
     }
@@ -891,7 +822,7 @@ export default function Home() {
           return testPath
         }
       } catch (error) {
-        // Error ignored, trying next strategy
+        // Fehler ignorieren und nächste Strategie versuchen
       }
     }
 
@@ -1034,7 +965,7 @@ export default function Home() {
               <div className="md:w-2/5 flex flex-col">
                 <div className="flex flex-col items-center mb-6">
                   <h4 className="text-lg font-semibold mb-4 text-[hsl(var(--cocktail-text))] text-center">
-                    Cocktail Size:
+                    Cocktail size:
                   </h4>
                   <div className="flex gap-2 w-full justify-center">
                     {allAvailableSizes.map((size) => (
@@ -1074,11 +1005,11 @@ export default function Home() {
                 )}
                 <div className="flex flex-col gap-3 mt-auto">
                   <Button
-                    onClick={() => handleMakeCocktail(cocktail)}
+                    onClick={onMakeCocktail}
                     disabled={!ingredientsAvailable || isMaking}
                     className="w-full bg-[#00ff00] hover:bg-[#00ff00]/90 text-black font-bold py-3 px-6 rounded-lg text-base"
                   >
-                    {isMaking ? "Preparing..." : "Make Cocktail"}
+                    {isMaking ? "Preparing..." : "Prepare Cocktail"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1094,6 +1025,7 @@ export default function Home() {
           </div>
         </div>
         {isCompleted &&
+          // Translated text check from German to English
           statusMessage.includes("Please add manual ingredients.") &&
           cocktail &&
           manualRecipeItems.length > 0 && (
@@ -1159,7 +1091,7 @@ export default function Home() {
           onEdit={handleEditRecipe}
           onDelete={handleDeleteClick}
           onImageEdit={handleImageEditClick}
-          onMakeCocktail={() => handleMakeCocktail(selectedCocktail)}
+          onMakeCocktail={handleMakeCocktail}
           pumpConfig={pumpConfig}
           ingredientLevels={ingredientLevels}
           allIngredients={allIngredientsData}
@@ -1171,7 +1103,7 @@ export default function Home() {
       case "cocktails":
         return (
           <div className="space-y-8">
-            <h2 className="text-2xl font-bold text-[hsl(var(--cocktail-text))] text-center">Alcoholic Cocktails</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--cocktail-text))] text-center">Cocktails with Alcohol</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {currentPageCocktails.map((cocktail) => (
@@ -1352,7 +1284,7 @@ export default function Home() {
                   <div className="space-y-3">
                     <Progress value={progress} className="h-4" />
                     <div className="text-center text-lg text-[hsl(var(--cocktail-text-muted))]">
-                      {progress}% complete
+                      {progress}% completed
                     </div>
                   </div>
 

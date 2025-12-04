@@ -1,4 +1,4 @@
-// Service für LED-Beleuchtungssteuerung während Cocktail-Zubereitung
+// Service for LED lighting control during cocktail preparation
 
 interface LightingConfig {
   cocktailPreparation: {

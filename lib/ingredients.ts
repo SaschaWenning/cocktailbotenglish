@@ -11,7 +11,7 @@ export function getAllIngredients(): Ingredient[] {
     const custom: Ingredient[] = customIngredients ? JSON.parse(customIngredients) : []
     return [...defaultIngredients, ...custom]
   } catch (error) {
-    console.error("Fehler beim Laden der Zutaten:", error)
+    console.error("Error loading ingredients:", error)
     return defaultIngredients
   }
 }

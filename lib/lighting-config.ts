@@ -1,35 +1,25 @@
 import { type LightingConfig, defaultConfig } from "./lighting-config-types"
-import fs from "fs/promises"
-import path from "path"
 
 export type { LightingConfig }
 export { defaultConfig }
 
-const CONFIG_FILE_PATH = path.join(process.cwd(), "data", "lighting-config.json")
+// In-memory storage (simulating localStorage on server)
+let storedConfig: LightingConfig = defaultConfig
 
 export async function loadLightingConfig(): Promise<LightingConfig> {
   try {
-    const fileContent = await fs.readFile(CONFIG_FILE_PATH, "utf-8")
-    const config = JSON.parse(fileContent)
-    console.log("[v0] Lighting config loaded from file:", JSON.stringify(config, null, 2))
-    return config
+    // For server-side, we return the stored config
+    return storedConfig
   } catch (error) {
-    console.log("[v0] No lighting config file found, using default config")
+    console.error("[v0] Error loading lighting config:", error)
   }
   return defaultConfig
 }
 
 export async function saveLightingConfig(config: LightingConfig): Promise<void> {
   try {
-    const dataDir = path.join(process.cwd(), "data")
-    try {
-      await fs.access(dataDir)
-    } catch {
-      await fs.mkdir(dataDir, { recursive: true })
-    }
-
-    await fs.writeFile(CONFIG_FILE_PATH, JSON.stringify(config, null, 2), "utf-8")
-    console.log("[v0] Lighting config saved to file successfully")
+    storedConfig = config
+    console.log("[v0] Lighting config saved successfully")
   } catch (error) {
     console.error("[v0] Error saving lighting config:", error)
     throw error
