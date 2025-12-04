@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Check, AlertCircle, GlassWater } from 'lucide-react'
+import { Check, AlertCircle, GlassWater } from "lucide-react"
 import type { PumpConfig } from "@/types/pump"
 import { getAllIngredients } from "@/lib/ingredients"
 import type { IngredientLevel } from "@/types/ingredient-level"
@@ -34,11 +34,11 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     loadIngredients()
   }, [])
 
-  const shotSize = 20 // Feste Größe: 20ml
+  const shotSize = 20 // Fixed size: 20ml
 
   const getAllAvailableIngredients = () => {
     return pumpConfig
-      .filter((pump) => pump.enabled) // Nur aktivierte Pumpen anzeigen
+      .filter((pump) => pump.enabled) // Only show enabled pumps
       .map((pump) => {
         const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
         const ingredientName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")
@@ -130,7 +130,7 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     } catch (error) {
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Preparation error!")
+      setStatusMessage("Error during preparation!")
       setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setTimeout(() => {
         setIsMaking(false)

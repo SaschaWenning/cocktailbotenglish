@@ -37,7 +37,7 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
   const [imageLoading, setImageLoading] = useState(false)
 
-  // Lade Dateisystem-Daten
+  // Load filesystem data
   const loadDirectory = async (path: string) => {
     setLoading(true)
     setError(null)
@@ -45,7 +45,7 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
       const response = await fetch(`/api/filesystem?path=${encodeURIComponent(path)}`)
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Fehler beim Laden des Verzeichnisses")
+        throw new Error(errorData.error || "Error loading directory")
       }
       const data: FileBrowserData = await response.json()
       setBrowserData(data)
@@ -53,29 +53,29 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
       setSelectedImage(null)
       setImagePreviewUrl(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unbekannter Fehler")
+      setError(err instanceof Error ? err.message : "Unknown error")
       setBrowserData(null)
     } finally {
       setLoading(false)
     }
   }
 
-  // Lade Bildvorschau
+  // Load image preview
   const loadImagePreview = async (imagePath: string) => {
     setImageLoading(true)
     try {
-      // Erstelle URL für die Bildvorschau über unsere API
+      // Create URL for image preview via our API
       const previewUrl = `/api/image?path=${encodeURIComponent(imagePath)}`
       setImagePreviewUrl(previewUrl)
     } catch (err) {
-      console.error("Fehler beim Laden der Bildvorschau:", err)
+      console.error("Error loading image preview:", err)
       setImagePreviewUrl(null)
     } finally {
       setImageLoading(false)
     }
   }
 
-  // Lade Root-Verzeichnis beim Öffnen
+  // Load root directory when opening
   useEffect(() => {
     if (isOpen) {
       loadDirectory("/home/pi").catch(() => {
@@ -137,7 +137,7 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-black border-[hsl(var(--cocktail-card-border))] text-white sm:max-w-6xl">
         <DialogHeader>
-          <DialogTitle>Dateibrowser - Bild auswählen</DialogTitle>
+          <DialogTitle>File Browser - Select Image</DialogTitle>
         </DialogHeader>
 
         <div className="flex flex-col h-[70vh]">
@@ -205,31 +205,31 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
                 className="text-white hover:bg-[hsl(var(--cocktail-card-border))]"
               >
                 <ArrowLeft className="h-4 w-4 mr-1" />
-                Zurück
+                Back
               </Button>
             )}
           </div>
 
           {/* Current Path Display */}
           <div className="text-sm text-gray-300 mb-2 p-2 bg-[hsl(var(--cocktail-card-bg))] rounded">
-            Aktueller Pfad: {currentPath}
+            Current Path: {currentPath}
           </div>
 
           <div className="grid grid-cols-[2fr_1fr] gap-4 flex-1">
             {/* File List */}
             <div className="border border-[hsl(var(--cocktail-card-border))] rounded-md">
               <div className="p-2 bg-[hsl(var(--cocktail-card-bg))] border-b border-[hsl(var(--cocktail-card-border))]">
-                <h3 className="font-semibold">Dateien und Ordner</h3>
+                <h3 className="font-semibold">Files and Folders</h3>
               </div>
               <ScrollArea className="h-[calc(70vh-200px)]">
                 {loading ? (
                   <div className="flex items-center justify-center p-8">
                     <Loader2 className="h-8 w-8 animate-spin" />
-                    <span className="ml-2">Lade Verzeichnis...</span>
+                    <span className="ml-2">Loading directory...</span>
                   </div>
                 ) : error ? (
                   <div className="p-4 text-red-400">
-                    <p>Fehler: {error}</p>
+                    <p>Error: {error}</p>
                   </div>
                 ) : browserData ? (
                   <div className="p-2">
@@ -261,7 +261,7 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
                       </div>
                     ))}
                     {browserData.items.length === 0 && (
-                      <div className="p-4 text-gray-400 text-center">Dieser Ordner ist leer</div>
+                      <div className="p-4 text-gray-400 text-center">This folder is empty</div>
                     )}
                   </div>
                 ) : null}
@@ -271,7 +271,7 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
             {/* Image Preview */}
             <div className="border border-[hsl(var(--cocktail-card-border))] rounded-md">
               <div className="p-2 bg-[hsl(var(--cocktail-card-bg))] border-b border-[hsl(var(--cocktail-card-border))]">
-                <h3 className="font-semibold">Vorschau</h3>
+                <h3 className="font-semibold">Preview</h3>
               </div>
               <div className="p-4 flex flex-col items-center justify-center h-[calc(70vh-200px)]">
                 {selectedImage ? (
@@ -284,10 +284,10 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
                       ) : imagePreviewUrl ? (
                         <img
                           src={imagePreviewUrl || "/placeholder.svg"}
-                          alt="Vorschau"
+                          alt="Preview"
                           className="w-full h-full object-contain"
                           onError={(e) => {
-                            console.error("Fehler beim Laden des Bildes:", selectedImage)
+                            console.error("Error loading image:", selectedImage)
                             e.currentTarget.src = "/placeholder.svg?height=200&width=200"
                           }}
                         />
@@ -303,7 +303,7 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
                 ) : (
                   <div className="text-center text-gray-400">
                     <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Wähle ein Bild aus der Liste aus</p>
+                    <p>Select an image from the list</p>
                   </div>
                 )}
               </div>
@@ -318,14 +318,14 @@ export default function FileBrowser({ isOpen, onClose, onSelectImage }: FileBrow
             onClick={onClose}
             className="bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))]"
           >
-            Abbrechen
+            Cancel
           </Button>
           <Button
             onClick={handleSelectImage}
             disabled={!selectedImage}
             className="bg-[hsl(var(--cocktail-primary))] text-black hover:bg-[hsl(var(--cocktail-primary-hover))]"
           >
-            Bild auswählen
+            Select Image
           </Button>
         </DialogFooter>
       </DialogContent>

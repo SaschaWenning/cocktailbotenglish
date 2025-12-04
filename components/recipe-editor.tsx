@@ -10,7 +10,20 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type { Cocktail } from "@/types/cocktail"
 import { getAllIngredients } from "@/lib/ingredients"
 import { saveRecipe } from "@/lib/cocktail-machine"
-import { Loader2, ImageIcon, Trash2, Plus, Minus, FolderOpen, ArrowLeft, X, Check, ArrowUp, Lock, EyeOff } from 'lucide-react'
+import {
+  Loader2,
+  ImageIcon,
+  Trash2,
+  Plus,
+  Minus,
+  FolderOpen,
+  ArrowLeft,
+  X,
+  Check,
+  ArrowUp,
+  Lock,
+  EyeOff,
+} from "lucide-react"
 import FileBrowser from "./file-browser"
 import type { RecipeEditorProps } from "@/types/recipe-editor"
 
@@ -268,7 +281,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
         ingredients: recipe.map((item) => {
           const ingredient = ingredients.find((i) => i.id === item.ingredientId)
           const ingredientName = ingredient?.name || item.ingredientId.replace(/^custom-\d+-/, "")
-          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manuell)" : ""}`
+          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manual)" : ""}`
         }),
       }
 
@@ -278,7 +291,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
 
       window.scrollTo({ top: 0, behavior: "smooth" })
     } catch (error) {
-      console.error("Error saving the recipe:", error)
+      console.error("Error saving recipe:", error)
     } finally {
       setSaving(false)
     }
@@ -319,7 +332,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       // Trigger a refresh of the cocktail list
       window.location.reload()
     } catch (error) {
-      console.error("Error hiding the cocktail:", error)
+      console.error("Error hiding cocktail:", error)
     } finally {
       setHidingCocktail(false)
     }
@@ -409,7 +422,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
             onClick={() => openKeyboard("imageUrl", imageUrl)}
             readOnly
             className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1"
-            placeholder="Image URL or select from gallery"
+            placeholder="Image URL or choose from gallery"
           />
           <Button
             type="button"
@@ -422,7 +435,7 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
       </div>
 
       <div className="space-y-2">
-        <Label className="text-white">Cocktail sizes for this recipe</Label>
+        <Label className="text-white">Cocktail Sizes for this Recipe</Label>
         <div className="flex gap-2 items-center">
           <Input
             value={newSizeInput}
@@ -567,13 +580,13 @@ export default function RecipeEditor({ isOpen, onClose, cocktail, onSave, onRequ
           <h3 className="text-base font-semibold text-white mb-1">
             {keyboardMode === "name" && "Enter Name"}
             {keyboardMode === "description" && "Enter Description"}
-            {keyboardMode === "imageUrl" && "Enter Image URL"}
-            {keyboardMode === "newSize" && "Enter New Cocktail Size (ml)"}
+            {keyboardMode === "imageUrl" && "Enter Image Path"}
             {keyboardMode.startsWith("amount-") && "Enter Amount (ml)"}
             {keyboardMode.startsWith("instruction-") && "Enter Instructions"}
+            {keyboardMode === "newSize" && "Enter New Cocktail Size (ml)"}
           </h3>
           <div className="bg-white text-black text-lg p-4 rounded mb-4 min-h-[60px] break-all border-2 border-[hsl(var(--cocktail-primary))]">
-            {keyboardValue || <span className="text-gray-400">Input...</span>}
+            {keyboardValue || <span className="text-gray-400">Eingabe...</span>}
           </div>
         </div>
 

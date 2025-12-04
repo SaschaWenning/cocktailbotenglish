@@ -16,7 +16,7 @@ export default function BasicKeyboard({ initialValue, onSubmit, onCancel, isNume
 
   const handleKeyPress = (key: string) => {
     if (isNumeric) {
-      // Für numerische Eingaben
+      // For numeric input
       if (key === "." && value.includes(".")) return
       if (key === "00" && value === "") {
         setValue("0")
@@ -38,7 +38,7 @@ export default function BasicKeyboard({ initialValue, onSubmit, onCancel, isNume
     onSubmit(value)
   }
 
-  // Tastaturen definieren
+  // Define keyboards
   const alphaKeys = [
     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
     ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P"],
@@ -60,7 +60,7 @@ export default function BasicKeyboard({ initialValue, onSubmit, onCancel, isNume
     <div className="fixed inset-0 bg-black/90 flex flex-col items-center justify-center z-[9999]">
       <div className="w-full max-w-md bg-black border border-gray-700 rounded-lg p-4 mb-4">
         <div className="bg-white text-black text-xl p-2 rounded mb-4 min-h-[40px] break-all">
-          {value || <span className="text-gray-400">Eingabe...</span>}
+          {value || <span className="text-gray-400">Input...</span>}
         </div>
 
         <div className="grid gap-2">
@@ -95,7 +95,7 @@ export default function BasicKeyboard({ initialValue, onSubmit, onCancel, isNume
               <X className="h-6 w-6" />
             </Button>
             <Button type="button" onClick={onCancel} className="flex-1 h-12 bg-gray-700 hover:bg-gray-600 text-white">
-              Abbrechen
+              Cancel
             </Button>
             <Button
               type="button"

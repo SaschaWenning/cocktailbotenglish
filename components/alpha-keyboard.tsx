@@ -1,14 +1,14 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Backpack as Backspace, X, Check } from 'lucide-react'
+import { Backpack as Backspace, X, Check } from "lucide-react"
 
 interface AlphaKeyboardProps {
   onKeyPress: (key: string) => void
   onBackspace: () => void
   onClear: () => void
   onConfirm: () => void
-  onCancel?: () => void // Füge optionale onCancel Funktion hinzu
+  onCancel?: () => void // Add optional onCancel function
 }
 
 export default function AlphaKeyboard({ onKeyPress, onBackspace, onClear, onConfirm, onCancel }: AlphaKeyboardProps) {
@@ -53,7 +53,7 @@ export default function AlphaKeyboard({ onKeyPress, onBackspace, onClear, onConf
         {row3.map((key) => (
           <Button
             key={key}
-            className="h-6 text-xs font-medium bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] active:bg-[hsl(var(--cocktail-primary))] active:text-black transition-colors"
+            className="h-6 text-xs font-medium bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] hover:text-[hsl(var(--cocktail-primary))] active:bg-[hsl(var(--cocktail-primary))] active:text-black transition-colors"
             onClick={() => onKeyPress(key)}
           >
             {key.toUpperCase()}
