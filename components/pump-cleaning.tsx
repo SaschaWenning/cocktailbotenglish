@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Loader2, Droplets, Check, AlertTriangle, Settings } from 'lucide-react'
+import { Loader2, Droplets, Check, AlertTriangle, Settings } from "lucide-react"
 import type { PumpConfig } from "@/types/pump"
 import { cleanPump } from "@/lib/cocktail-machine"
 
@@ -24,7 +24,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
   const enabledPumps = pumpConfig.filter((pump) => pump.enabled)
 
   const startCleaning = async () => {
-    // Cleaning process start
+    // Start cleaning process
     setCleaningStatus("preparing")
     setProgress(0)
     setPumpsDone([])
@@ -36,19 +36,19 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     if (cleaningProcessRef.current.cancel) return
     setCleaningStatus("cleaning")
 
-    // Clean each pump one after another
+    // Clean each pump in sequence
     for (let i = 0; i < enabledPumps.length; i++) {
       const pump = enabledPumps[i]
       setCurrentPump(pump.id)
 
-      // Check if the process has been paused or canceled
+      // Check if process was paused or canceled
       if (cleaningProcessRef.current.cancel) return
 
       try {
         // Run pump for 10 seconds
         await cleanPumpWithPauseSupport(pump.id, 10000)
 
-        // If the process has been canceled during cleaning, stop
+        // If process was canceled during cleaning, stop
         if (cleaningProcessRef.current.cancel) return
 
         setPumpsDone((prev) => [...prev, pump.id])
@@ -65,7 +65,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setCleaningStatus("complete")
   }
 
-  // Function to clean a pump with support for pauses
+  // Function to clean a pump with pause support
   const cleanPumpWithPauseSupport = async (pumpId: number, duration: number) => {
     try {
       await cleanPump(pumpId, duration)
@@ -82,7 +82,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setPumpsDone([])
   }
 
-  // Manual cleaning of a single pump
+  // Manual single pump cleaning
   const cleanSinglePump = async (pumpId: number) => {
     setManualCleaningPumps((prev) => new Set(prev).add(pumpId))
 
@@ -102,7 +102,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
 
   return (
     <div className="space-y-4">
-      {/* Automatic Pump Cleaning */}
+      {/* Automatic Cleaning */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -110,7 +110,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             Automatic Pump Cleaning
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Clean all pumps one after another with warm water and dish soap
+            Clean all pumps in sequence with warm water and detergent
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -118,8 +118,8 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <ol className="list-decimal pl-4 space-y-1 text-sm">
-                <li>Prepare a container with warm water and some dish soap.</li>
-                <li>Place the intake hoses of all pumps into this container.</li>
+                <li>Prepare a container with warm water and some detergent.</li>
+                <li>Place the suction hoses of all pumps into this container.</li>
                 <li>Place an empty collection container under the outlets.</li>
               </ol>
             </AlertDescription>
@@ -214,7 +214,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                 <AlertTriangle className="h-4 w-4 text-[hsl(var(--cocktail-warning))]" />
                 <AlertDescription className="text-[hsl(var(--cocktail-text))]">
                   <p className="font-medium mb-1">Important:</p>
-                  <p>Now rinse the pumps with clean water to remove soap residue.</p>
+                  <p>Now rinse the pumps with clean water to remove detergent residue.</p>
                 </AlertDescription>
               </Alert>
 
@@ -243,8 +243,8 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
         <CardContent className="space-y-3">
           <Alert className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
-              Click on a pump to clean it individually for 10 seconds. Make sure the intake hose
-              of the respective pump is in the cleaning water.
+              Click on a pump to clean it individually for 10 seconds. Make sure the suction hose of the respective pump
+              is in the cleaning water.
             </AlertDescription>
           </Alert>
 
@@ -258,7 +258,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                     manualCleaningPumps.has(pump.id)
                       ? "bg-[hsl(var(--cocktail-primary))]/20 border border-[hsl(var(--cocktail-primary))]/50"
                       : "bg-[hsl(var(--cocktail-card-bg))] hover:bg-[hsl(var(--cocktail-primary))] hover:text-black"
-                  } text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))}`}
+                  } text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))]`}
                 >
                   {manualCleaningPumps.has(pump.id) ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

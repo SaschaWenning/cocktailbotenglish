@@ -175,8 +175,8 @@ export default function Statistics() {
       console.log("[v0] Loaded statistics from localStorage")
 
       toast({
-        title: "Statistiken aktualisiert",
-        description: "Die Statistiken wurden erfolgreich geladen.",
+        title: "Statistics Updated",
+        description: "Statistics were successfully loaded.",
       })
     } catch (error) {
       console.error("[v0] Error loading statistics:", error)
@@ -189,8 +189,8 @@ export default function Statistics() {
       })
 
       toast({
-        title: "Fehler",
-        description: "Statistiken konnten nicht geladen werden.",
+        title: "Error",
+        description: "Statistics could not be loaded.",
         variant: "destructive",
       })
     } finally {
@@ -292,7 +292,7 @@ export default function Statistics() {
       <div className="flex items-center justify-center py-16">
         <div className="text-center space-y-4">
           <BarChart3 className="h-16 w-16 mx-auto animate-pulse" style={{ color: "hsl(var(--cocktail-primary))" }} />
-          <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>Lade Statistiken...</p>
+          <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>Loading statistics...</p>
         </div>
       </div>
     )
@@ -311,7 +311,7 @@ export default function Statistics() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-2xl font-bold" style={{ color: "hsl(var(--cocktail-text))" }}>
-          Statistiken
+          Statistics
         </h3>
         <div className="flex gap-3">
           <Button
@@ -325,7 +325,7 @@ export default function Statistics() {
             }}
           >
             <Settings className="h-4 w-4 mr-2" />
-            Preise
+            Prices
           </Button>
           <Button
             onClick={loadStatistics}
@@ -339,7 +339,7 @@ export default function Statistics() {
             }}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-            {refreshing ? "Lädt..." : "Aktualisieren"}
+            {refreshing ? "Loading..." : "Refresh"}
           </Button>
           {hasStatistics && (
             <Button
@@ -353,7 +353,7 @@ export default function Statistics() {
               }}
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Zurücksetzen
+              Reset
             </Button>
           )}
         </div>
@@ -370,7 +370,7 @@ export default function Statistics() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2" style={{ color: "hsl(var(--cocktail-text))" }}>
               <Euro className="h-5 w-5" style={{ color: "hsl(var(--cocktail-primary))" }} />
-              Literpreise konfigurieren
+              Configure Liter Prices
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -414,7 +414,7 @@ export default function Statistics() {
                   color: "black",
                 }}
               >
-                {savingPrices ? "Speichern..." : "Preise speichern"}
+                {savingPrices ? "Saving..." : "Save Prices"}
               </Button>
             </div>
           </CardContent>
@@ -425,18 +425,16 @@ export default function Statistics() {
         <div className="flex flex-col items-center justify-center py-16 space-y-6">
           <BarChart3 className="h-16 w-16" style={{ color: "hsl(var(--cocktail-text-muted))" }} />
           <h3 className="text-xl font-semibold" style={{ color: "hsl(var(--cocktail-text))" }}>
-            Noch keine Statistiken
+            No Statistics Yet
           </h3>
-          <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-            Bereiten Sie Cocktails zu, um Statistiken zu sehen.
-          </p>
+          <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>Prepare cocktails to see statistics.</p>
           <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-            Sie können bereits jetzt Preise für Zutaten konfigurieren.
+            You can configure ingredient prices now.
           </p>
         </div>
       ) : (
         <>
-          {/* Übersicht */}
+          {/* Overview */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card
               className="border"
@@ -455,7 +453,7 @@ export default function Statistics() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                      Zubereitete Cocktails
+                      Prepared Cocktails
                     </p>
                     <p className="text-2xl font-bold" style={{ color: "hsl(var(--cocktail-text))" }}>
                       {totalCocktails}
@@ -482,7 +480,7 @@ export default function Statistics() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                      Gesamtvolumen
+                      Total Volume
                     </p>
                     <p className="text-2xl font-bold" style={{ color: "hsl(var(--cocktail-text))" }}>
                       {(totalVolume / 1000).toFixed(2)}L
@@ -509,7 +507,7 @@ export default function Statistics() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                      Verschiedene Cocktails
+                      Unique Cocktails
                     </p>
                     <p className="text-2xl font-bold" style={{ color: "hsl(var(--cocktail-text))" }}>
                       {statistics.cocktailStats.length}
@@ -536,7 +534,7 @@ export default function Statistics() {
                   </div>
                   <div>
                     <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                      Gesamtkosten
+                      Total Cost
                     </p>
                     <p className="text-2xl font-bold" style={{ color: "hsl(var(--cocktail-text))" }}>
                       {totalCost > 0 ? `${totalCost.toFixed(2)}€` : "-"}
@@ -558,7 +556,7 @@ export default function Statistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2" style={{ color: "hsl(var(--cocktail-text))" }}>
                   <GlassWater className="h-5 w-5" style={{ color: "hsl(var(--cocktail-primary))" }} />
-                  Cocktailgrößen
+                  Cocktail Sizes
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -581,7 +579,7 @@ export default function Statistics() {
                             {stat.size}ml
                           </p>
                           <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                            {stat.count}x zubereitet
+                            {stat.count} times prepared
                           </p>
                         </div>
                         <div
@@ -615,7 +613,7 @@ export default function Statistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2" style={{ color: "hsl(var(--cocktail-text))" }}>
                   <Martini className="h-5 w-5" style={{ color: "hsl(var(--cocktail-primary))" }} />
-                  Cocktails (Alkoholisch)
+                  Cocktails (Alcoholic)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -650,7 +648,7 @@ export default function Statistics() {
                                 {stat.cocktailName}
                               </p>
                               <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                                {stat.preparationCount}x zubereitet • {(stat.totalVolume / 1000).toFixed(2)}L gesamt
+                                {stat.preparationCount} times prepared • {(stat.totalVolume / 1000).toFixed(2)}L total
                               </p>
                             </div>
                           </div>
@@ -689,7 +687,7 @@ export default function Statistics() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2" style={{ color: "hsl(var(--cocktail-text))" }}>
                   <GlassWater className="h-5 w-5" style={{ color: "hsl(var(--cocktail-primary))" }} />
-                  Alkoholfreie Cocktails
+                  Non-Alcoholic Cocktails
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -724,7 +722,7 @@ export default function Statistics() {
                                 {stat.cocktailName}
                               </p>
                               <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                                {stat.preparationCount}x zubereitet • {(stat.totalVolume / 1000).toFixed(2)}L gesamt
+                                {stat.preparationCount} times prepared • {(stat.totalVolume / 1000).toFixed(2)}L total
                               </p>
                             </div>
                           </div>
@@ -798,7 +796,7 @@ export default function Statistics() {
                                 {stat.cocktailName}
                               </p>
                               <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                                {stat.preparationCount}x zubereitet • {(stat.totalVolume / 1000).toFixed(2)}L gesamt
+                                {stat.preparationCount} times prepared • {(stat.totalVolume / 1000).toFixed(2)}L total
                               </p>
                             </div>
                           </div>
@@ -826,7 +824,7 @@ export default function Statistics() {
             </Card>
           )}
 
-          {/* Zutaten-Verbrauch */}
+          {/* Ingredient Consumption */}
           <Card
             className="border"
             style={{
@@ -837,7 +835,7 @@ export default function Statistics() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2" style={{ color: "hsl(var(--cocktail-text))" }}>
                 <Droplet className="h-5 w-5" style={{ color: "hsl(var(--cocktail-primary))" }} />
-                Zutaten-Verbrauch
+                Ingredient Consumption
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -863,7 +861,7 @@ export default function Statistics() {
                             {ingredient.ingredientName}
                           </p>
                           <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                            {ingredient.usageCount}x verwendet
+                            {ingredient.usageCount} times used
                             {cost > 0 && ` • ${cost.toFixed(2)}€`}
                           </p>
                         </div>
@@ -900,12 +898,10 @@ export default function Statistics() {
           }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle style={{ color: "hsl(var(--cocktail-text))" }}>
-              Statistiken zurücksetzen?
-            </AlertDialogTitle>
+            <AlertDialogTitle style={{ color: "hsl(var(--cocktail-text))" }}>Reset Statistics?</AlertDialogTitle>
             <AlertDialogDescription style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-              Möchten Sie wirklich alle Statistiken zurücksetzen? Diese Aktion kann nicht rückgängig gemacht werden.
-              Alle Zubereitungsdaten gehen verloren. Die gespeicherten Preise bleiben erhalten.
+              Do you really want to reset all statistics? This action cannot be undone. All preparation data will be
+              lost. Saved prices will remain.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -916,7 +912,7 @@ export default function Statistics() {
                 borderColor: "hsl(var(--cocktail-card-border))",
               }}
             >
-              Abbrechen
+              Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={resetStatistics}
@@ -925,7 +921,7 @@ export default function Statistics() {
                 color: "white",
               }}
             >
-              Zurücksetzen
+              Reset
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -941,13 +937,13 @@ export default function Statistics() {
           }}
         >
           <DialogHeader>
-            <DialogTitle style={{ color: "hsl(var(--cocktail-text))" }}>Preis eingeben</DialogTitle>
+            <DialogTitle style={{ color: "hsl(var(--cocktail-text))" }}>Enter Price</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <p className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
               {currentEditingIngredient &&
-                `Preis für ${allIngredientsData.find((i) => i.id === currentEditingIngredient)?.name || "Zutat"} (€/L):`}
+                `Price for ${allIngredientsData.find((i) => i.id === currentEditingIngredient)?.name || "Ingredient"} (€/L):`}
             </p>
 
             <div className="flex items-center gap-2">

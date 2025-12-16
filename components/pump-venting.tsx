@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Loader2, Wind, Play } from 'lucide-react'
+import { Loader2, Wind, Play } from "lucide-react"
 import type { PumpConfig } from "@/types/pump"
 import { cleanPump } from "@/lib/cocktail-machine"
 
@@ -22,27 +22,27 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
 
   const enabledPumps = pumpConfig.filter((pump) => pump.enabled)
 
-  // Automatische Entlüftung aller Pumpen
+  // Automatic venting of all pumps
   const startAutoVenting = async () => {
     setAutoVentingStatus("venting")
     setProgress(0)
     setPumpsDone([])
     setCurrentPump(null)
 
-    // Jede Pumpe nacheinander für 2 Sekunden entlüften
+    // Vent each pump in sequence for 2 seconds
     for (let i = 0; i < enabledPumps.length; i++) {
       const pump = enabledPumps[i]
       setCurrentPump(pump.id)
 
       try {
-        // Pumpe für 2 Sekunden laufen lassen
+        // Run pump for 2 seconds
         await cleanPump(pump.id, 2000)
         setPumpsDone((prev) => [...prev, pump.id])
 
-        // Fortschritt aktualisieren
+        // Update progress
         setProgress(Math.round(((i + 1) / enabledPumps.length) * 100))
       } catch (error) {
-        console.error(`Fehler beim Entlüften der Pumpe ${pump.id}:`, error)
+        console.error(`Error venting pump ${pump.id}:`, error)
       }
     }
 
@@ -50,16 +50,16 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
     setAutoVentingStatus("idle")
   }
 
-  // Einzelne Pumpe entlüften (1 Sekunde, ohne Ladebildschirm)
+  // Vent single pump (1 second, without loading screen)
   const ventSinglePump = async (pumpId: number) => {
     setManualVentingPumps((prev) => new Set(prev).add(pumpId))
 
     try {
-      await cleanPump(pumpId, 1000) // 1 Sekunde
+      await cleanPump(pumpId, 1000) // 1 second
     } catch (error) {
-      console.error(`Fehler beim Entlüften der Pumpe ${pumpId}:`, error)
+      console.error(`Error venting pump ${pumpId}:`, error)
     } finally {
-      // Kurze Verzögerung für visuelle Rückmeldung
+      // Short delay for visual feedback
       setTimeout(() => {
         setManualVentingPumps((prev) => {
           const newSet = new Set(prev)
@@ -79,7 +79,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
 
   return (
     <div className="space-y-4">
-      {/* Automatische Entlüftung */}
+      {/* Automatic Venting */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -87,7 +87,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
             Automatic Venting
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Vent all pumps sequentially for 2 seconds
+            Vent all pumps in sequence for 2 seconds
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -95,7 +95,8 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <p>
-                Place a catch container under the outlets and ensure all suction hoses are in their respective liquids.
+                Place a collection container under the outlets and ensure all suction hoses are in the respective
+                liquids.
               </p>
             </AlertDescription>
           </Alert>
@@ -163,7 +164,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
         </CardContent>
       </Card>
 
-      {/* Manuelle Einzelpumpen-Entlüftung */}
+      {/* Manual Single Pump Venting */}
       <Card className="bg-black border-[hsl(var(--cocktail-card-border))]">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-white">
@@ -177,7 +178,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
         <CardContent className="space-y-3">
           <Alert className="bg-[hsl(var(--cocktail-card-bg))] border-[hsl(var(--cocktail-card-border))]">
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
-              Click on a pump to vent it for 1 second. The pump starts immediately without loading screen.
+              Click on a pump to vent it for 1 second. The pump starts immediately without a loading screen.
             </AlertDescription>
           </Alert>
 

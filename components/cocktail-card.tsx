@@ -98,6 +98,7 @@ export default function CocktailCard({ cocktail, onClick, onEdit }: CocktailCard
 
     for (const recipeItem of cocktail.recipe) {
       if (recipeItem.manual) {
+        console.log(`[v0] CocktailCard: Skipping manual ingredient ${recipeItem.ingredientId}`)
         continue
       }
 

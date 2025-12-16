@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import type { Cocktail } from "@/types/cocktail"
 import { getAllIngredients } from "@/lib/ingredients"
 import { saveRecipe } from "@/lib/cocktail-machine"
-import { Loader2, ImageIcon, Plus, Minus, FolderOpen, X, ArrowLeft, Check, ArrowUp, Lock } from 'lucide-react'
+import { Loader2, ImageIcon, Plus, Minus, FolderOpen, X, ArrowLeft, Check, ArrowUp, Lock } from "lucide-react"
 import FileBrowser from "./file-browser"
 
 interface RecipeCreatorProps {
@@ -24,7 +24,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [recipe, setRecipe] = useState<
-    { ingredientId: string; amount: number; type: "automatic" | "manual"; instruction?: string; delayed?: boolean }[]
+    { ingredientId: string; amount: number; manual: boolean; instructions?: string; delayed?: boolean }[]
   >([])
   const [imageUrl, setImageUrl] = useState("")
   const [alcoholic, setAlcoholic] = useState(true)
@@ -87,7 +87,13 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
     if (availableIngredients.length > 0) {
       setRecipe([
         ...recipe,
-        { ingredientId: availableIngredients[0].id, amount: 30, type: "automatic", instruction: "", delayed: false },
+        {
+          ingredientId: availableIngredients[0].id,
+          amount: 30,
+          manual: false,
+          instructions: "",
+          delayed: false,
+        },
       ])
     }
   }
@@ -110,7 +116,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
         ingredients: recipe.map((item) => {
           const ingredient = ingredients.find((i) => i.id === item.ingredientId)
           const ingredientName = ingredient?.name || item.ingredientId.replace(/^custom-\d+-/, "")
-          return `${item.amount}ml ${ingredientName} ${item.type === "manual" ? "(manuell)" : ""}`
+          return `${item.amount}ml ${ingredientName} ${item.manual ? "(manual)" : ""}` // Translated from "(manuell)"
         }),
       }
 
@@ -128,7 +134,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
       setSizes([200, 300, 400])
       setErrors({})
     } catch (error) {
-      console.error("Fehler beim Speichern:", error)
+      console.error("Error saving:", error) // Translated from "Fehler beim Speichern:"
     } finally {
       setSaving(false)
     }
@@ -149,14 +155,14 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
     setRecipe(updatedRecipe)
   }
 
-  const handleTypeChange = (index: number, value: "automatic" | "manual") => {
-    const updatedRecipe = recipe.map((item, i) => {
-      if (i === index) {
-        return { ...item, type: value }
-      }
-      return item
-    })
-    setRecipe(updatedRecipe)
+  const handleTypeChange = (index: number, manual: boolean) => {
+    const updated = [...recipe]
+    updated[index] = {
+      ...updated[index],
+      manual,
+      instructions: manual ? "Add manually" : "",
+    }
+    setRecipe(updated)
   }
 
   const handleDelayedChange = (index: number, delayed: boolean) => {
@@ -245,7 +251,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
           const index = Number.parseInt(keyboardMode.split("-")[1])
           const updatedRecipe = recipe.map((item, i) => {
             if (i === index) {
-              return { ...item, instruction: keyboardValue }
+              return { ...item, instructions: keyboardValue }
             }
             return item
           })
@@ -261,12 +267,12 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
     const newErrors: typeof errors = {}
 
     if (!name.trim()) {
-      newErrors.name = "Name is required"
+      newErrors.name = "Name is required" // Translated from "Name ist erforderlich"
       valid = false
     }
 
     if (imageUrl && !imageUrl.trim().startsWith("/")) {
-      newErrors.imageUrl = "Image path must start with /"
+      newErrors.imageUrl = "Image path must start with /" // Translated from "Bild-Pfad muss mit / beginnen"
       valid = false
     }
 
@@ -319,26 +325,26 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
               onClick={() => openKeyboard("name", name)}
               readOnly
               className={`bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-10 ${errors.name ? "border-red-500" : ""}`}
-              placeholder="Cocktail name"
+              placeholder="Name des Cocktails"
             />
             {errors.name && <p className="text-red-400 text-sm">{errors.name}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label className="text-white">Description</Label>
+            <Label className="text-white">Description</Label> {/* Translated from "Beschreibung" */}
             <Input
               value={description}
               onClick={() => openKeyboard("description", description)}
               readOnly
               className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-10"
-              placeholder="Describe your cocktail..."
+              placeholder="Describe your cocktail..." // Translated from "Beschreibe deinen Cocktail..."
             />
           </div>
 
           <div className="space-y-2">
             <Label className="flex items-center gap-2 text-white">
               <ImageIcon className="h-4 w-4" />
-              Image Path (optional)
+              Image Path (optional) {/* Translated from "Bild-Pfad (optional)" */}
             </Label>
             <div className="flex gap-2">
               <Input
@@ -346,7 +352,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
                 onClick={() => openKeyboard("imageUrl", imageUrl)}
                 readOnly
                 className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer flex-1 h-10"
-                placeholder="/path/to/image.jpg"
+                placeholder="/path/to/image.jpg" // Translated from "/pfad/zum/bild.jpg"
               />
               <Button
                 type="button"
@@ -370,30 +376,31 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
           </div>
 
           <div className="space-y-2">
-            <Label className="text-white">Alcoholic</Label>
+            <Label className="text-white">Alcoholic</Label> {/* Translated from "Alkoholisch" */}
             <Select value={alcoholic ? "true" : "false"} onValueChange={(value) => setAlcoholic(value === "true")}>
               <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-10">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-white border border-[hsl(var(--cocktail-card-border))]">
                 <SelectItem value="true" className="text-black hover:bg-gray-100 cursor-pointer">
-                  Yes
+                  Yes {/* Translated from "Ja" */}
                 </SelectItem>
                 <SelectItem value="false" className="text-black hover:bg-gray-100 cursor-pointer">
-                  No
+                  No {/* Translated from "Nein" */}
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label className="text-white">Cocktail sizes for this recipe</Label>
+            <Label className="text-white">Cocktail Sizes for this Recipe</Label>{" "}
+            {/* Translated from "Cocktailgrößen für dieses Rezept" */}
             <div className="flex gap-2">
               <Input
                 value={newSizeValue}
                 onClick={() => openKeyboard("newSize", newSizeValue, true)}
                 readOnly
-                placeholder="enter ml"
+                placeholder="enter ml" // Translated from "ml eingeben"
                 className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-10 flex-1 cursor-pointer"
               />
               <Button
@@ -429,7 +436,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
 
           <div className="pt-2">
             <div className="flex justify-between items-center mb-2">
-              <Label className="text-white">Ingredients</Label>
+              <Label className="text-white">Ingredients</Label> {/* Translated from "Zutaten" */}
               <Button
                 type="button"
                 size="sm"
@@ -438,7 +445,7 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
                 disabled={recipe.length >= ingredients.length}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Ingredient
+                Add Ingredient {/* Translated from "Zutat hinzufügen" */}
               </Button>
             </div>
           </div>
@@ -477,8 +484,8 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
               <div className="col-span-1 text-sm text-white">ml</div>
               <div className="col-span-2">
                 <Select
-                  value={item.type}
-                  onValueChange={(value: "automatic" | "manual") => handleTypeChange(index, value)}
+                  value={item.manual ? "manual" : "automatic"}
+                  onValueChange={(value) => handleTypeChange(index, value === "manual")}
                 >
                   <SelectTrigger className="bg-white border-[hsl(var(--cocktail-card-border))] text-black h-9">
                     <SelectValue />
@@ -515,14 +522,14 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
                   <Minus className="h-4 w-4" />
                 </Button>
               </div>
-              {item.type === "manual" && (
+              {item.manual && (
                 <div className="col-span-12 mt-2">
                   <Input
-                    value={item.instruction || ""}
-                    onClick={() => openInstructionKeyboard(index, item.instruction)}
+                    value={item.instructions || ""}
+                    onClick={() => openInstructionKeyboard(index, item.instructions)}
                     readOnly
                     className="bg-white border-[hsl(var(--cocktail-card-border))] text-black cursor-pointer h-9"
-                    placeholder="Instructions (e.g. 'fill with ice cubes')"
+                    placeholder="Instructions (e.g. 'Add 150ml cola')"
                   />
                 </div>
               )}
@@ -534,15 +541,17 @@ export default function RecipeCreator({ isOpen, onClose, onSave, asTab = false }
           <div className="flex-1 flex flex-col">
             <div className="text-center mb-2">
               <h3 className="text-base font-semibold text-white mb-1">
-                {keyboardMode === "name" && "Enter Name"}
-                {keyboardMode === "description" && "Enter Description"}
-                {keyboardMode === "imageUrl" && "Enter Image Path"}
-                {keyboardMode.startsWith("amount-") && "Enter Amount (ml)"}
-                {keyboardMode === "instruction" && "Enter Instructions"}
-                {keyboardMode === "newSize" && "Enter New Cocktail Size (ml)"}
+                {keyboardMode === "name" && "Enter Name"} {/* Translated from "Name eingeben" */}
+                {keyboardMode === "description" && "Enter Description"} {/* Translated from "Beschreibung eingeben" */}
+                {keyboardMode === "imageUrl" && "Enter Image Path"} {/* Translated from "Bild-Pfad eingeben" */}
+                {keyboardMode.startsWith("amount-") && "Enter Amount (ml)"}{" "}
+                {/* Translated from "Menge eingeben (ml)" */}
+                {keyboardMode === "instruction" && "Enter Instructions"} {/* Translated from "Anleitung eingeben" */}
+                {keyboardMode === "newSize" && "Enter New Cocktail Size (ml)"}{" "}
+                {/* Translated from "Neue Cocktailgröße eingeben (ml)" */}
               </h3>
               <div className="bg-white text-black text-lg p-4 rounded mb-4 min-h-[60px] break-all border-2 border-[hsl(var(--cocktail-primary))]">
-                {keyboardValue || <span className="text-gray-400">Input...</span>}
+                {keyboardValue || <span className="text-gray-400">Input...</span>} {/* Translated from "Eingabe..." */}
               </div>
             </div>
 

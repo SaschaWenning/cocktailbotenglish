@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
-import { Trash2, Plus, ArrowUp, Lock, ArrowLeft, X, Check } from 'lucide-react'
+import { Trash2, Plus, ArrowUp, Lock, ArrowLeft, X, Check } from "lucide-react"
 import type { Ingredient } from "@/types/pump"
 
 interface IngredientManagerProps {
@@ -35,7 +35,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
         setCustomIngredients(JSON.parse(stored))
       }
     } catch (error) {
-      console.error("Fehler beim Laden der benutzerdefinierten Zutaten:", error)
+      console.error("Error loading custom ingredients:", error)
     }
   }
 
@@ -44,7 +44,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
       localStorage.setItem("customIngredients", JSON.stringify(ingredients))
       setCustomIngredients(ingredients)
     } catch (error) {
-      console.error("Fehler beim Speichern der benutzerdefinierten Zutaten:", error)
+      console.error("Error saving custom ingredients:", error)
     }
   }
 
@@ -60,7 +60,8 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
     if (!newIngredient.name.trim()) return
 
     console.log("[v0] Adding ingredient:", newIngredient.name)
-    const id = `custom-${Date.now()}-${newIngredient.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
+    const sanitizedName = newIngredient.name.toLowerCase().replace(/[^a-z0-9]/g, "-")
+    const id = `custom-${sanitizedName}`
     const ingredient: Ingredient = {
       id,
       name: newIngredient.name.trim(),
@@ -95,7 +96,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
     } else {
       let processedKey = key
       if (key.length === 1 && key.match(/[A-Za-z]/)) {
-        // Für Buchstaben: prüfe Shift und Caps Lock Status
+        // For letters: check Shift and Caps Lock status
         const shouldBeUppercase = (isShiftActive && !isCapsLockActive) || (!isShiftActive && isCapsLockActive)
         processedKey = shouldBeUppercase ? key.toUpperCase() : key.toLowerCase()
       }
@@ -159,7 +160,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 <CardTitle className="text-white">Manage Ingredients</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 overflow-auto flex-1">
-                {/* Add new ingredient */}
+                {/* Add New Ingredient */}
                 <div className="space-y-4 p-4 border border-[hsl(var(--cocktail-card-border))] rounded-lg bg-[hsl(var(--cocktail-card-bg))]">
                   <h3 className="font-semibold text-white">Add New Ingredient</h3>
                   <div className="space-y-3">
@@ -171,7 +172,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                         id="ingredient-name"
                         value={newIngredient.name}
                         readOnly
-                        placeholder="e.g. Strawberry Juice"
+                        placeholder="e.g. Strawberry juice"
                         className="bg-white text-black border-[hsl(var(--cocktail-card-border))] placeholder:text-gray-400 cursor-pointer"
                         onClick={openKeyboard}
                       />
@@ -194,7 +195,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                   </div>
                 </div>
 
-                {/* Display custom ingredients */}
+                {/* Display Custom Ingredients */}
                 {customIngredients.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-white">Your Custom Ingredients</h3>
@@ -232,7 +233,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
             </>
           ) : (
             <div className="flex gap-3 my-2 h-[85vh] p-2">
-              {/* Keyboard on left */}
+              {/* Keyboard on the left */}
               <div className="flex-1 flex flex-col">
                 <div className="text-center mb-2">
                   <h3 className="text-base font-semibold text-white mb-1">Enter Ingredient Name</h3>
@@ -268,7 +269,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 </div>
               </div>
 
-              {/* Action Buttons rechts */}
+              {/* Action Buttons on the right */}
               <div className="flex flex-col gap-2 w-24">
                 <Button
                   type="button"

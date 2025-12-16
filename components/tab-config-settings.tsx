@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ArrowRight, Settings, RotateCcw, Sparkles, Shield } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Settings, RotateCcw, Sparkles, Shield } from "lucide-react"
 import { defaultTabConfig } from "@/lib/tab-config"
 import type { AppConfig, TabConfig } from "@/lib/tab-config"
 import { toast } from "@/components/ui/use-toast"
@@ -27,21 +27,13 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
   const loadConfig = async () => {
     try {
       setLoading(true)
-      let currentConfig: AppConfig
+      console.log("[v0] Loading tab configuration...")
 
-      try {
-        const stored = localStorage.getItem("tab-config")
-        if (stored) {
-          currentConfig = JSON.parse(stored)
-        } else {
-          const response = await fetch("/api/tab-config")
-          if (!response.ok) throw new Error("Failed to load tab config")
-          currentConfig = await response.json()
-        }
-      } catch (error) {
-        console.error("[v0] Error loading tab config:", error)
-        currentConfig = defaultTabConfig
-      }
+      const response = await fetch("/api/tab-config")
+      if (!response.ok) throw new Error("Failed to load tab config")
+
+      const currentConfig: AppConfig = await response.json()
+      console.log("[v0] Tab config loaded:", currentConfig)
 
       setConfig(currentConfig)
       setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)))
@@ -53,6 +45,8 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
         description: "Configuration could not be loaded.",
         variant: "destructive",
       })
+      setConfig(defaultTabConfig)
+      setOriginalConfig(JSON.parse(JSON.stringify(defaultTabConfig)))
     } finally {
       setLoading(false)
     }
@@ -63,25 +57,21 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
 
     try {
       setSaving(true)
+      console.log("[v0] Saving tab configuration:", config)
 
-      localStorage.setItem("tab-config", JSON.stringify(config))
+      const response = await fetch("/api/tab-config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(config),
+      })
 
-      try {
-        const response = await fetch("/api/tab-config", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(config),
-        })
-
-        if (!response.ok) {
-          console.warn("[v0] API save failed, but localStorage save succeeded")
-        }
-      } catch (error) {
-        console.warn("[v0] API save failed, but localStorage save succeeded:", error)
+      if (!response.ok) {
+        throw new Error("Failed to save tab config")
       }
 
+      console.log("[v0] Tab config saved successfully")
       setOriginalConfig(JSON.parse(JSON.stringify(config)))
       setHasChanges(false)
 
@@ -312,7 +302,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
             <h3 className="text-xl font-semibold" style={{ color: "hsl(var(--cocktail-text))" }}>
               Loading configuration
             </h3>
-            <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>One moment please...</p>
+            <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>Please wait...</p>
           </div>
         </div>
       </div>
@@ -451,7 +441,9 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
                 How does it work?
               </h3>
               <p className="leading-relaxed" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                Here you can configure which tabs are displayed in the main navigation and which in the service menu. Use the arrow buttons to move tabs between areas. The service menu always remains available in the main navigation.
+                Here you can configure which tabs are displayed in the main navigation and which in the service menu.
+                Use the arrow keys to move tabs between areas. The service menu always remains available in the main
+                navigation.
               </p>
             </div>
           </div>
@@ -621,7 +613,7 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
                 <ArrowLeft className="h-4 w-4" style={{ color: "hsl(var(--cocktail-primary))" }} />
               </div>
               <span className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                To main navigation
+                To Main Navigation
               </span>
             </div>
             <div
@@ -632,10 +624,10 @@ export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: "hsl(var(--cocktail-card-bg))" }}
               >
-                <ArrowRight className="h-4 w-4" style={{ color: "hsl(var(--cocktail-text-muted))" }} />
+                <ArrowRight className="h-4 w-4" style={{ color: "hsl(var(--cocktail-primary))" }} />
               </div>
               <span className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                To service menu
+                To Service Menu
               </span>
             </div>
           </div>

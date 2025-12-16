@@ -104,7 +104,7 @@ export function VirtualKeyboard({
         </Button>
         {onCancel && (
           <Button onClick={onCancel} className="flex-1 h-8 text-sm bg-gray-600 text-white hover:bg-gray-700">
-            Abbrechen
+            Cancel
           </Button>
         )}
         {onConfirm && (

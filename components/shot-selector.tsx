@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
-import { Check, AlertCircle, GlassWater } from 'lucide-react'
+import { Check, AlertCircle, GlassWater } from "lucide-react"
 import type { PumpConfig } from "@/types/pump"
 import { makeSingleShot } from "@/lib/cocktail-machine"
 import type { IngredientLevel } from "@/types/ingredient-level"
@@ -49,7 +49,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
     }
 
     return pumpConfig
-      .filter((pump) => pump.enabled) // Nur aktivierte Pumpen anzeigen
+      .filter((pump) => pump.enabled) // Only active pumps are shown
       .map((pump) => {
         const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
         const cleanName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")
@@ -157,7 +157,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
     } catch (error) {
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Preparation error!")
+      setStatusMessage("Error during preparation!")
       setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setTimeout(() => setIsMaking(false), 3000)
     }
@@ -277,7 +277,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
                   onClick={handleMakeShot}
                   disabled={!isAvailable}
                 >
-                  Prepare shot
+                  Prepare Shot
                 </Button>
               </div>
             </div>
