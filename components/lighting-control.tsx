@@ -3,10 +3,30 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Lightbulb, Zap, Palette, RotateCcw, Play, Loader2, Sun } from "lucide-react"
+import { Lightbulb, Sun, Play, Loader2, RotateCcw } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { type LightingConfig, defaultConfig } from "@/lib/lighting-config-types"
+
+type IdleScheme = "rainbow" | "pulse" | "blink" | "static" | "off"
+
+interface LightingSettings {
+  preparationColor: string
+  preparationBlinking: boolean
+  finishedColor: string
+  finishedBlinking: boolean
+  idleScheme: IdleScheme
+  idleColor: string
+  brightness: number
+}
+
+const defaultSettings: LightingSettings = {
+  preparationColor: "#ff0000", // Red for preparation
+  preparationBlinking: true,
+  finishedColor: "#00ff00", // Green for finished
+  finishedBlinking: false,
+  idleScheme: "rainbow",
+  idleColor: "#ffffff",
+  brightness: 128,
+}
 
 const colorPresets = [
   { name: "Red", value: "#ff0000" },
@@ -21,7 +41,7 @@ const colorPresets = [
   { name: "Pink", value: "#ff0080" },
 ]
 
-const idleSchemes = [
+const idleSchemes: Array<{ name: string; value: IdleScheme; icon: string }> = [
   { name: "Rainbow", value: "rainbow", icon: "🌈" },
   { name: "Pulse", value: "pulse", icon: "✨" },
   { name: "Blink", value: "blink", icon: "⚡" },
@@ -30,172 +50,114 @@ const idleSchemes = [
 ]
 
 export default function LightingControl() {
-  const [config, setConfig] = useState<LightingConfig>(defaultConfig)
+  const [settings, setSettings] = useState<LightingSettings>(defaultSettings)
+  const [tempBrightness, setTempBrightness] = useState(128)
   const [loading, setLoading] = useState(true)
   const [applying, setApplying] = useState<string | null>(null)
-  const [brightness, setBrightness] = useState(128) // 0-255, default 50%
-  const [tempBrightness, setTempBrightness] = useState(128)
 
   useEffect(() => {
-    loadConfig()
-    loadBrightness()
+    loadSettings()
   }, [])
 
-  const loadConfig = async () => {
+  const loadSettings = () => {
     try {
-      setLoading(true)
-      const response = await fetch("/api/lighting-config")
-      if (response.ok) {
-        const loadedConfig = await response.json()
-        setConfig(loadedConfig)
+      const saved = localStorage.getItem("led-settings")
+      if (saved) {
+        const loaded = JSON.parse(saved)
+        setSettings(loaded)
+        setTempBrightness(loaded.brightness)
+        console.log("[v0] Loaded LED settings:", loaded)
       } else {
-        setConfig(defaultConfig)
+        setSettings(defaultSettings)
+        setTempBrightness(defaultSettings.brightness)
       }
     } catch (error) {
-      console.error("[v0] Error loading lighting config:", error)
-      setConfig(defaultConfig)
+      console.error("[v0] Error loading LED settings:", error)
+      setSettings(defaultSettings)
+      setTempBrightness(defaultSettings.brightness)
     } finally {
       setLoading(false)
     }
   }
 
-  const loadBrightness = () => {
+  const saveSettings = (newSettings: LightingSettings) => {
     try {
-      const saved = localStorage.getItem("led-brightness")
-      if (saved) {
-        const value = Number.parseInt(saved)
-        setBrightness(value)
-        setTempBrightness(value)
-      }
+      localStorage.setItem("led-settings", JSON.stringify(newSettings))
+      setSettings(newSettings)
+      console.log("[v0] Saved LED settings:", newSettings)
     } catch (error) {
-      console.error("[v0] Error loading brightness:", error)
+      console.error("[v0] Error saving LED settings:", error)
     }
   }
 
-  const applyLighting = async (mode: "preparation" | "finished" | "idle" | "off", isTest = false) => {
+  const applyLED = async (mode: "preparation" | "finished" | "idle", isTest = false) => {
     setApplying(mode)
     try {
-      console.log("[v0] Applying lighting mode:", mode, "isTest:", isTest)
-
-      if (!isTest) {
-        console.log("[v0] Saving config:", JSON.stringify(config))
-        const saveResponse = await fetch("/api/lighting-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(config),
-        })
-
-        if (!saveResponse.ok) {
-          const errorText = await saveResponse.text()
-          console.error("[v0] Failed to save config:", errorText)
-          throw new Error("Failed to save configuration")
-        }
-        console.log("[v0] Config saved successfully")
-      }
+      console.log(`[v0] Applying LED mode: ${mode}, isTest: ${isTest}`)
 
       let body: any = {}
 
       if (mode === "preparation") {
         body = {
           mode: "cocktailPreparation",
-          blinking: config.cocktailPreparation.blinking,
-          color: config.cocktailPreparation.color,
+          color: settings.preparationColor,
+          blinking: settings.preparationBlinking,
         }
       } else if (mode === "finished") {
         body = {
           mode: "cocktailFinished",
-          blinking: config.cocktailFinished.blinking,
-          color: config.cocktailFinished.color,
+          color: settings.finishedColor,
+          blinking: settings.finishedBlinking,
         }
       } else if (mode === "idle") {
-        if (config.idleMode.scheme === "static" && config.idleMode.colors.length > 0) {
-          body = { mode: "color", color: config.idleMode.colors[0] }
-        } else if (config.idleMode.scheme === "off") {
+        if (settings.idleScheme === "static") {
+          body = { mode: "color", color: settings.idleColor }
+        } else if (settings.idleScheme === "off") {
           body = { mode: "off" }
-        } else if (config.idleMode.scheme === "pulse" || config.idleMode.scheme === "blink") {
-          body = {
-            mode: "idle",
-            scheme: config.idleMode.scheme,
-            color: config.idleMode.colors.length > 0 ? config.idleMode.colors[0] : "#ffffff",
-          }
+        } else if (settings.idleScheme === "pulse") {
+          body = { mode: "idle", scheme: "pulse", color: settings.idleColor }
+        } else if (settings.idleScheme === "blink") {
+          body = { mode: "idle", scheme: "blink", color: settings.idleColor }
         } else {
-          body = { mode: "idle", scheme: config.idleMode.scheme }
+          body = { mode: "idle", scheme: "rainbow" }
         }
-      } else if (mode === "off") {
-        body = { mode: "off" }
       }
 
-      console.log("[v0] Sending lighting control request:", JSON.stringify(body))
-      const res = await fetch("/api/lighting-control", {
+      console.log("[v0] Sending LED command:", body)
+
+      const response = await fetch("/api/lighting-control", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
 
-      console.log("[v0] API response status:", res.status)
-
-      if (!res.ok) {
-        const errorText = await res.text()
-        console.error("[v0] API error response:", errorText)
-        throw new Error(`Failed to apply lighting: ${errorText}`)
+      if (!response.ok) {
+        throw new Error(`Failed to apply LED: ${response.status}`)
       }
 
-      const modeNames: Record<string, string> = {
-        preparation: "Preparation",
-        finished: "Finished",
-        idle: "Idle",
-        off: "Off",
-      }
+      console.log("[v0] LED command successful")
 
-      if (isTest && (mode === "preparation" || mode === "finished")) {
+      if (isTest) {
         toast({
           title: "Test Mode",
-          description: `${modeNames[mode]} will be shown for 3 seconds, then back to Idle mode.`,
+          description: `Testing ${mode} for 3 seconds...`,
         })
 
         setTimeout(async () => {
-          console.log("[v0] Test complete, returning to idle mode")
-
-          let idleBody: any = {}
-          if (config.idleMode.scheme === "static" && config.idleMode.colors.length > 0) {
-            idleBody = { mode: "color", color: config.idleMode.colors[0] }
-          } else if (config.idleMode.scheme === "off") {
-            idleBody = { mode: "off" }
-          } else if (config.idleMode.scheme === "pulse" || config.idleMode.scheme === "blink") {
-            idleBody = {
-              mode: "idle",
-              scheme: config.idleMode.scheme,
-              color: config.idleMode.colors.length > 0 ? config.idleMode.colors[0] : "#ffffff",
-            }
-          } else {
-            idleBody = { mode: "idle", scheme: config.idleMode.scheme }
-          }
-
-          console.log("[v0] Returning to idle with body:", JSON.stringify(idleBody))
-          const idleRes = await fetch("/api/lighting-control", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(idleBody),
-          })
-
-          if (!idleRes.ok) {
-            console.error("[v0] Failed to return to idle mode")
-          }
+          console.log("[v0] Test complete, returning to idle")
+          await applyLED("idle", false)
         }, 3000)
       } else {
         toast({
-          title: "Applied & Saved",
-          description: `${modeNames[mode] || mode} lighting has been permanently activated and saved.`,
+          title: "Applied",
+          description: `${mode} mode activated successfully`,
         })
       }
-
-      console.log("[v0] Lighting applied successfully")
     } catch (error) {
-      console.error("[v0] Error applying lighting:", error)
-      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      console.error(`[v0] Error applying LED ${mode}:`, error)
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "Failed to apply LED settings",
         variant: "destructive",
       })
     } finally {
@@ -203,40 +165,10 @@ export default function LightingControl() {
     }
   }
 
-  const applyBrightness = async (value: number) => {
-    try {
-      setBrightness(value)
-      localStorage.setItem("led-brightness", value.toString())
-
-      const response = await fetch("/api/lighting-control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "brightness",
-          brightness: value,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to set brightness")
-      }
-
-      console.log("[v0] Brightness set to:", value)
-    } catch (error) {
-      console.error("[v0] Error setting brightness:", error)
-      toast({
-        title: "Error",
-        description: "Brightness could not be applied",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleApplyBrightness = async () => {
+  const applyBrightness = async () => {
     setApplying("brightness")
     try {
-      setBrightness(tempBrightness)
-      localStorage.setItem("led-brightness", tempBrightness.toString())
+      console.log(`[v0] Setting brightness to ${tempBrightness}`)
 
       const response = await fetch("/api/lighting-control", {
         method: "POST",
@@ -251,17 +183,20 @@ export default function LightingControl() {
         throw new Error("Failed to set brightness")
       }
 
+      const newSettings = { ...settings, brightness: tempBrightness }
+      saveSettings(newSettings)
+
       toast({
         title: "Brightness Applied",
-        description: `Brightness set to ${Math.round((tempBrightness / 255) * 100)}%.`,
+        description: `Set to ${Math.round((tempBrightness / 255) * 100)}%`,
       })
 
-      console.log("[v0] Brightness set to:", tempBrightness)
+      console.log("[v0] Brightness applied successfully")
     } catch (error) {
       console.error("[v0] Error setting brightness:", error)
       toast({
         title: "Error",
-        description: "Brightness could not be applied",
+        description: "Failed to set brightness",
         variant: "destructive",
       })
     } finally {
@@ -269,23 +204,15 @@ export default function LightingControl() {
     }
   }
 
-  const resetToDefault = () => {
-    setConfig(defaultConfig)
+  const saveAndApplyIdle = async () => {
+    saveSettings(settings)
+    await applyLED("idle", false)
   }
 
-  const updateConfig = (path: string, value: any) => {
-    setConfig((prev) => {
-      const newConfig = JSON.parse(JSON.stringify(prev))
-      const keys = path.split(".")
-      let current = newConfig
-
-      for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]]
-      }
-      current[keys[keys.length - 1]] = value
-
-      return newConfig
-    })
+  const resetToDefault = () => {
+    setSettings(defaultSettings)
+    setTempBrightness(defaultSettings.brightness)
+    saveSettings(defaultSettings)
   }
 
   if (loading) {
@@ -301,6 +228,7 @@ export default function LightingControl() {
 
   return (
     <div className="space-y-6 bg-[hsl(var(--cocktail-bg))] min-h-screen p-4 lg:p-6">
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
@@ -313,18 +241,17 @@ export default function LightingControl() {
             </div>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={resetToDefault}
-            className="bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] flex-1 lg:flex-none h-12 px-6"
-          >
-            <RotateCcw className="h-5 w-5 mr-2" />
-            Default
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          onClick={resetToDefault}
+          className="bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] h-12 px-6"
+        >
+          <RotateCcw className="h-5 w-5 mr-2" />
+          Reset to Default
+        </Button>
       </div>
 
+      {/* Brightness Control */}
       <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3 text-lg text-[hsl(var(--cocktail-text))]">
@@ -353,9 +280,9 @@ export default function LightingControl() {
               </span>
             </div>
             <Button
-              onClick={handleApplyBrightness}
-              disabled={applying !== null || tempBrightness === brightness}
-              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-12 text-base px-4 disabled:opacity-50"
+              onClick={applyBrightness}
+              disabled={applying !== null || tempBrightness === settings.brightness}
+              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-12 text-base disabled:opacity-50"
             >
               {applying === "brightness" ? (
                 <>
@@ -365,37 +292,33 @@ export default function LightingControl() {
               ) : (
                 <>
                   <Play className="h-5 w-5 mr-2" />
-                  Apply
+                  Apply Brightness
                 </>
               )}
             </Button>
-            <p className="text-xs text-[hsl(var(--cocktail-text-muted))]">
-              Controls the brightness of all LED modes (0-255)
-            </p>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg hover:shadow-xl transition-shadow">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Preparation Settings */}
+        <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3 text-lg text-[hsl(var(--cocktail-text))]">
-              <div className="p-2 rounded-lg bg-[hsl(var(--cocktail-primary))]/10">
-                <Zap className="h-5 w-5 text-[hsl(var(--cocktail-primary))]" />
-              </div>
-              Preparation
-            </CardTitle>
+            <CardTitle className="text-lg text-[hsl(var(--cocktail-text))]">🔴 Preparation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Choose Color</label>
+              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color</label>
               <div className="grid grid-cols-5 gap-2">
                 {colorPresets.map((preset) => (
                   <button
                     key={preset.value}
-                    onClick={() => updateConfig("cocktailPreparation.color", preset.value)}
+                    onClick={() => {
+                      const newSettings = { ...settings, preparationColor: preset.value }
+                      saveSettings(newSettings)
+                    }}
                     className={`w-full aspect-square rounded-xl border-2 transition-all hover:scale-110 ${
-                      config.cocktailPreparation.color === preset.value
+                      settings.preparationColor === preset.value
                         ? "border-[hsl(var(--cocktail-primary))] scale-110 shadow-lg"
                         : "border-[hsl(var(--cocktail-card-border))]"
                     }`}
@@ -406,65 +329,70 @@ export default function LightingControl() {
               </div>
               <input
                 type="color"
-                value={config.cocktailPreparation.color}
-                onChange={(e) => updateConfig("cocktailPreparation.color", e.target.value)}
+                value={settings.preparationColor}
+                onChange={(e) => {
+                  const newSettings = { ...settings, preparationColor: e.target.value }
+                  saveSettings(newSettings)
+                }}
                 className="w-full h-12 rounded-xl border-2 border-[hsl(var(--cocktail-card-border))] cursor-pointer"
               />
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-[hsl(var(--cocktail-card-bg))]/50 border border-[hsl(var(--cocktail-card-border))]/30">
               <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Blinking</label>
               <Button
-                variant={config.cocktailPreparation.blinking ? "default" : "outline"}
+                variant={settings.preparationBlinking ? "default" : "outline"}
                 size="sm"
-                onClick={() => updateConfig("cocktailPreparation.blinking", !config.cocktailPreparation.blinking)}
+                onClick={() => {
+                  const newSettings = { ...settings, preparationBlinking: !settings.preparationBlinking }
+                  saveSettings(newSettings)
+                }}
                 className={
-                  config.cocktailPreparation.blinking
+                  settings.preparationBlinking
                     ? "bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-10 px-6"
                     : "bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] h-10 px-6"
                 }
               >
-                {config.cocktailPreparation.blinking ? "On" : "Off"}
+                {settings.preparationBlinking ? "On" : "Off"}
               </Button>
             </div>
-            <div className="pt-2">
-              <Button
-                onClick={() => applyLighting("preparation", true)}
-                disabled={applying !== null}
-                className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
-              >
-                {applying === "preparation" ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Applying...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-5 w-5 mr-2" />
-                    Apply
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={() => applyLED("preparation", true)}
+              disabled={applying !== null}
+              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base disabled:opacity-50"
+            >
+              {applying === "preparation" ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Play className="h-5 w-5 mr-2" />
+                  Test (3s)
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg hover:shadow-xl transition-shadow">
+        {/* Finished Settings */}
+        <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3 text-lg text-[hsl(var(--cocktail-text))]">
-              <Badge className="bg-[hsl(var(--cocktail-primary))] text-black font-bold text-base px-3 py-1">✓</Badge>
-              Finished
-            </CardTitle>
+            <CardTitle className="text-lg text-[hsl(var(--cocktail-text))]">🟢 Finished</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Choose Color</label>
+              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color</label>
               <div className="grid grid-cols-5 gap-2">
                 {colorPresets.map((preset) => (
                   <button
                     key={preset.value}
-                    onClick={() => updateConfig("cocktailFinished.color", preset.value)}
+                    onClick={() => {
+                      const newSettings = { ...settings, finishedColor: preset.value }
+                      saveSettings(newSettings)
+                    }}
                     className={`w-full aspect-square rounded-xl border-2 transition-all hover:scale-110 ${
-                      config.cocktailFinished.color === preset.value
+                      settings.finishedColor === preset.value
                         ? "border-[hsl(var(--cocktail-primary))] scale-110 shadow-lg"
                         : "border-[hsl(var(--cocktail-card-border))]"
                     }`}
@@ -475,96 +403,97 @@ export default function LightingControl() {
               </div>
               <input
                 type="color"
-                value={config.cocktailFinished.color}
-                onChange={(e) => updateConfig("cocktailFinished.color", e.target.value)}
+                value={settings.finishedColor}
+                onChange={(e) => {
+                  const newSettings = { ...settings, finishedColor: e.target.value }
+                  saveSettings(newSettings)
+                }}
                 className="w-full h-12 rounded-xl border-2 border-[hsl(var(--cocktail-card-border))] cursor-pointer"
               />
             </div>
             <div className="flex items-center justify-between p-3 rounded-xl bg-[hsl(var(--cocktail-card-bg))]/50 border border-[hsl(var(--cocktail-card-border))]/30">
               <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Blinking</label>
               <Button
-                variant={config.cocktailFinished.blinking ? "default" : "outline"}
+                variant={settings.finishedBlinking ? "default" : "outline"}
                 size="sm"
-                onClick={() => updateConfig("cocktailFinished.blinking", !config.cocktailFinished.blinking)}
+                onClick={() => {
+                  const newSettings = { ...settings, finishedBlinking: !settings.finishedBlinking }
+                  saveSettings(newSettings)
+                }}
                 className={
-                  config.cocktailFinished.blinking
+                  settings.finishedBlinking
                     ? "bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-10 px-6"
                     : "bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] h-10 px-6"
                 }
               >
-                {config.cocktailFinished.blinking ? "On" : "Off"}
+                {settings.finishedBlinking ? "On" : "Off"}
               </Button>
             </div>
-            <div className="pt-2">
-              <Button
-                onClick={() => applyLighting("finished", true)}
-                disabled={applying !== null}
-                className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
-              >
-                {applying === "finished" ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Applying...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-5 w-5 mr-2" />
-                    Apply
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              onClick={() => applyLED("finished", true)}
+              disabled={applying !== null}
+              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base disabled:opacity-50"
+            >
+              {applying === "finished" ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Play className="h-5 w-5 mr-2" />
+                  Test (3s)
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg hover:shadow-xl transition-shadow">
+        {/* Idle Settings */}
+        <Card className="bg-gradient-to-br from-[hsl(var(--cocktail-card-bg))] to-[hsl(var(--cocktail-card-bg))]/80 border-[hsl(var(--cocktail-card-border))]/50 shadow-lg">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-3 text-lg text-[hsl(var(--cocktail-text))]">
-              <div className="p-2 rounded-lg bg-[hsl(var(--cocktail-primary))]/10">
-                <Palette className="h-5 w-5 text-[hsl(var(--cocktail-primary))]" />
-              </div>
-              Idle Mode
-            </CardTitle>
+            <CardTitle className="text-lg text-[hsl(var(--cocktail-text))]">💤 Idle Mode</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color Scheme</label>
-              <div className="grid grid-cols-1 gap-2">
+              <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Scheme</label>
+              <div className="grid grid-cols-2 gap-2">
                 {idleSchemes.map((scheme) => (
                   <Button
                     key={scheme.value}
-                    variant={config.idleMode.scheme === scheme.value ? "default" : "outline"}
-                    onClick={() => updateConfig("idleMode.scheme", scheme.value)}
+                    variant={settings.idleScheme === scheme.value ? "default" : "outline"}
+                    onClick={() => {
+                      const newSettings = { ...settings, idleScheme: scheme.value }
+                      saveSettings(newSettings)
+                    }}
                     className={
-                      config.idleMode.scheme === scheme.value
-                        ? "bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-12 justify-start"
-                        : "bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] h-12 justify-start"
+                      settings.idleScheme === scheme.value
+                        ? "bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-12"
+                        : "bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] h-12"
                     }
                   >
-                    <span className="text-xl mr-3">{scheme.icon}</span>
+                    <span className="mr-2">{scheme.icon}</span>
                     {scheme.name}
                   </Button>
                 ))}
               </div>
             </div>
-            {(config.idleMode.scheme === "static" ||
-              config.idleMode.scheme === "pulse" ||
-              config.idleMode.scheme === "blink") && (
+
+            {(settings.idleScheme === "static" ||
+              settings.idleScheme === "pulse" ||
+              settings.idleScheme === "blink") && (
               <div className="space-y-3">
-                <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">
-                  {config.idleMode.scheme === "static"
-                    ? "Static Color"
-                    : config.idleMode.scheme === "pulse"
-                      ? "Pulse Color"
-                      : "Blink Color"}
-                </label>
+                <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color</label>
                 <div className="grid grid-cols-5 gap-2">
                   {colorPresets.map((preset) => (
                     <button
                       key={preset.value}
-                      onClick={() => updateConfig("idleMode.colors", [preset.value])}
+                      onClick={() => {
+                        const newSettings = { ...settings, idleColor: preset.value }
+                        saveSettings(newSettings)
+                      }}
                       className={`w-full aspect-square rounded-xl border-2 transition-all hover:scale-110 ${
-                        config.idleMode.colors[0] === preset.value
+                        settings.idleColor === preset.value
                           ? "border-[hsl(var(--cocktail-primary))] scale-110 shadow-lg"
                           : "border-[hsl(var(--cocktail-card-border))]"
                       }`}
@@ -575,31 +504,33 @@ export default function LightingControl() {
                 </div>
                 <input
                   type="color"
-                  value={config.idleMode.colors[0] || "#ffffff"}
-                  onChange={(e) => updateConfig("idleMode.colors", [e.target.value])}
+                  value={settings.idleColor}
+                  onChange={(e) => {
+                    const newSettings = { ...settings, idleColor: e.target.value }
+                    saveSettings(newSettings)
+                  }}
                   className="w-full h-12 rounded-xl border-2 border-[hsl(var(--cocktail-card-border))] cursor-pointer"
                 />
               </div>
             )}
-            <div className="pt-2">
-              <Button
-                onClick={() => applyLighting("idle", false)}
-                disabled={applying !== null}
-                className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
-              >
-                {applying === "idle" ? (
-                  <>
-                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                    Applying...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-5 w-5 mr-2" />
-                    Apply
-                  </>
-                )}
-              </Button>
-            </div>
+
+            <Button
+              onClick={saveAndApplyIdle}
+              disabled={applying !== null}
+              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base disabled:opacity-50"
+            >
+              {applying === "idle" ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                <>
+                  <Play className="h-5 w-5 mr-2" />
+                  Apply Idle Mode
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       </div>
