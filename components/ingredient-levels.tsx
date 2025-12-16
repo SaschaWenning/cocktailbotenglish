@@ -17,7 +17,7 @@ import {
   setIngredientLevels,
   type IngredientLevel,
 } from "@/lib/ingredient-level-service"
-import { getIngredientName } from "@/lib/ingredients"
+import { getIngredientById } from "@/lib/ingredients"
 
 export function IngredientLevels() {
   const [levels, setLevels] = useState<IngredientLevel[]>([])
@@ -116,7 +116,16 @@ export function IngredientLevels() {
   }
 
   const getIngredientDisplayName = (ingredientId: string) => {
-    return getIngredientName(ingredientId)
+    const ingredient = getIngredientById(ingredientId)
+    if (ingredient) {
+      return ingredient.name
+    }
+
+    return ingredientId
+      .replace(/^custom-\d+-/, "")
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
   }
 
   const handleLevelEdit = (pumpId: number) => {
@@ -261,7 +270,7 @@ export function IngredientLevels() {
               <div className="bg-black rounded-lg p-4 max-h-60 overflow-y-auto">
                 <div className="font-mono text-sm space-y-1">
                   {debugLogs.length === 0 ? (
-                    <div className="text-gray-500">No Debug Logs Available</div>
+                    <div className="text-gray-500">No debug logs available</div>
                   ) : (
                     debugLogs.map((log, index) => (
                       <div key={index} className="text-green-400">
@@ -272,7 +281,7 @@ export function IngredientLevels() {
                 </div>
               </div>
               <div className="mt-4 text-sm text-[hsl(var(--cocktail-text-muted))]">
-                Current Levels: {levels.length} | Last Updated: {new Date().toLocaleTimeString()}
+                Current Levels: {levels.length} | Last Update: {new Date().toLocaleTimeString()}
               </div>
             </CardContent>
           </Card>
@@ -404,7 +413,7 @@ export function IngredientLevels() {
                     <Button
                       onClick={() => setTempValue("")}
                       className="flex-1 h-8 text-sm bg-red-600 text-white hover:bg-red-700"
-                      title="Clear"
+                      title="Delete"
                     >
                       <X className="h-4 w-4" />
                     </Button>

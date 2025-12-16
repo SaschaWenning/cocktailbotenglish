@@ -57,15 +57,67 @@ export default function ServiceMenu({
   const [serviceTabs, setServiceTabs] = useState<string[]>([])
   const [showInfoModal, setShowInfoModal] = useState(false)
 
+  const migrateTabConfig = (config: AppConfig): AppConfig => {
+    const germanToEnglishMap: Record<string, { id: string; name: string }> = {
+      Alkoholfrei: { id: "virgin", name: "Non-Alcoholic" },
+      "Neues Rezept": { id: "recipe-creator", name: "New Recipe" },
+      Füllstände: { id: "levels", name: "Fill Levels" },
+      Zutaten: { id: "ingredients", name: "Ingredients" },
+      Kalibrierung: { id: "calibration", name: "Calibration" },
+      Reinigung: { id: "cleaning", name: "Cleaning" },
+      Entlüften: { id: "venting", name: "Venting" },
+      "Ausgeblendete Cocktails": { id: "hidden-cocktails", name: "Hidden Cocktails" },
+      Beleuchtung: { id: "lighting", name: "Lighting" },
+      Servicemenü: { id: "service", name: "Service Menu" },
+    }
+
+    const migratedTabs = config.tabs.map((tab) => {
+      // Check if the tab name is German
+      if (germanToEnglishMap[tab.name]) {
+        const englishTab = germanToEnglishMap[tab.name]
+        console.log(`[v0] Service menu: Migrating tab "${tab.name}" to "${englishTab.name}"`)
+        return {
+          ...tab,
+          id: englishTab.id,
+          name: englishTab.name,
+        }
+      }
+      return tab
+    })
+
+    return {
+      ...config,
+      tabs: migratedTabs,
+    }
+  }
+
   useEffect(() => {
     const loadTabConfig = async () => {
       try {
-        const response = await fetch("/api/tab-config")
-        if (!response.ok) throw new Error("Failed to load tab config")
+        console.log("[v0] Service menu: Loading tab config from localStorage...")
+        const stored = localStorage.getItem("tab-config")
+        let config: AppConfig
 
-        const config: AppConfig = await response.json()
+        if (stored) {
+          console.log("[v0] Service menu: Tab config found in localStorage")
+          const parsedConfig = JSON.parse(stored)
+
+          config = migrateTabConfig(parsedConfig)
+
+          // Save the migrated config back to localStorage
+          localStorage.setItem("tab-config", JSON.stringify(config))
+          console.log("[v0] Service menu: Migrated and saved tab config:", config)
+        } else {
+          console.log("[v0] Service menu: No localStorage config, using default config")
+          const { defaultTabConfig } = await import("@/lib/tab-config")
+          config = defaultTabConfig
+          localStorage.setItem("tab-config", JSON.stringify(config))
+          console.log("[v0] Service menu: Saved default config to localStorage")
+        }
+
         const serviceTabIds = config.tabs.filter((tab) => tab.location === "service").map((tab) => tab.id)
 
+        console.log("[v0] Service menu: Service tab IDs:", serviceTabIds)
         setTabConfig(config)
         setServiceTabs(serviceTabIds)
 
@@ -94,8 +146,7 @@ export default function ServiceMenu({
           "shots",
           "recipe-creator",
           "hidden-cocktails",
-          "beleuchtung",
-          // Removed statistics from fallback tabs
+          "lighting",
         ])
         setActiveServiceTab("levels")
       }
@@ -156,22 +207,17 @@ export default function ServiceMenu({
             />
           </div>
         )
-      case "beleuchtung":
+      case "lighting":
         return <LightingControl />
       case "venting":
-      case "entlueften":
         return <PumpVenting pumpConfig={pumpConfig} />
       case "levels":
-      case "fuellstaende":
         return <IngredientLevels pumpConfig={pumpConfig} onLevelsUpdated={onLevelsUpdated} />
       case "cleaning":
-      case "reinigung":
         return <PumpCleaning pumpConfig={pumpConfig} />
       case "calibration":
-      case "kalibrierung":
         return <PumpCalibration pumpConfig={pumpConfig} onConfigUpdate={onConfigUpdate} />
       case "ingredients":
-      case "zutaten":
         return (
           <IngredientManager
             onClose={() => {
@@ -182,7 +228,6 @@ export default function ServiceMenu({
           />
         )
       case "settings":
-      case "einstellungen":
         return (
           <div className="space-y-6">
             <PasswordSettings />
@@ -190,17 +235,26 @@ export default function ServiceMenu({
               onClose={() => {
                 const firstTab = serviceTabs.length > 0 ? serviceTabs[0] : "levels"
                 setActiveServiceTab(firstTab)
-                // Reload tab config in parent component
                 onTabConfigReload?.()
-                // Reload local service menu config
                 const loadTabConfig = async () => {
                   try {
-                    const response = await fetch("/api/tab-config")
-                    if (!response.ok) throw new Error("Failed to load tab config")
+                    console.log("[v0] Service menu: Reloading tab config from localStorage...")
+                    const stored = localStorage.getItem("tab-config")
+                    let config: AppConfig
 
-                    const config: AppConfig = await response.json()
+                    if (stored) {
+                      console.log("[v0] Service menu: Reloaded config from localStorage")
+                      const parsedConfig = JSON.parse(stored)
+                      config = migrateTabConfig(parsedConfig)
+                    } else {
+                      console.log("[v0] Service menu: No config in localStorage after save, using default")
+                      const { defaultTabConfig } = await import("@/lib/tab-config")
+                      config = defaultTabConfig
+                    }
+
                     const serviceTabIds = config.tabs.filter((tab) => tab.location === "service").map((tab) => tab.id)
 
+                    console.log("[v0] Service menu: Reloaded service tab IDs:", serviceTabIds)
                     setTabConfig(config)
                     setServiceTabs(serviceTabIds)
                   } catch (error) {
@@ -213,7 +267,6 @@ export default function ServiceMenu({
           </div>
         )
       case "hidden-cocktails":
-      case "ausgeblendete-cocktails":
         return (
           <HiddenCocktailsManager
             onClose={() => {
@@ -313,7 +366,7 @@ export default function ServiceMenu({
               <Info className="h-12 w-12 text-[hsl(var(--cocktail-primary))]" />
               <h3 className="text-xl font-bold text-[hsl(var(--cocktail-text))]">License Notice</h3>
               <p className="text-[hsl(var(--cocktail-text-muted))] text-center text-sm leading-relaxed">
-                This software and the associated construction manual are intended for private use only.
+                This software and the associated building instructions are intended for private use only.
                 <br />
                 <br />
                 Any commercial use - especially the construction and sale of the Cocktailbot, use in gastronomy or at

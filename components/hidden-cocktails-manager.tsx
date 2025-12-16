@@ -132,12 +132,12 @@ export default function HiddenCocktailsManager({ onClose }: HiddenCocktailsManag
                   {updating === cocktail.id ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Showing...
+                      Unhiding...
                     </>
                   ) : (
                     <>
                       <Eye className="mr-2 h-4 w-4" />
-                      Show Again
+                      Unhide
                     </>
                   )}
                 </Button>

@@ -49,7 +49,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
     }
 
     return pumpConfig
-      .filter((pump) => pump.enabled) // Only active pumps are shown
+      .filter((pump) => pump.enabled) // Nur aktivierte Pumpen anzeigen
       .map((pump) => {
         const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
         const cleanName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")
@@ -244,7 +244,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
               <h2 className="text-xl font-semibold text-[hsl(var(--cocktail-text))]">{cleanName} Shot</h2>
 
               <div className="w-full max-w-xs">
-                <h4 className="text-base mb-2 text-center text-[hsl(var(--cocktail-text))]">Select shot size:</h4>
+                <h4 className="text-base mb-2 text-center text-[hsl(var(--cocktail-text))]">Select Shot Size:</h4>
                 <div className="flex gap-3 justify-center">
                   {availableSizes.map((size) => (
                     <button
@@ -294,7 +294,7 @@ export default function ShotSelector({ pumpConfig, ingredientLevels, onShotCompl
                   onCancel={handleKeyboardCancel}
                   value={inputValue}
                   layout="numeric"
-                  title="Enter shot size (ml)"
+                  title="Enter Shot Size (ml)"
                 />
               </div>
             </div>

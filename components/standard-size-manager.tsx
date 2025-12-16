@@ -134,7 +134,7 @@ const StandardSizeManager = ({ onSizesChange }: StandardSizeManagerProps) => {
           <Input
             value={newSize}
             readOnly
-            placeholder="Add new size"
+            placeholder="Neue Größe hinzufügen"
             onClick={() => handleInputClick("new-size", newSize)}
             className="flex-1 bg-[hsl(var(--cocktail-bg))] border-[hsl(var(--cocktail-card-border))] text-[hsl(var(--cocktail-text))] cursor-pointer"
           />

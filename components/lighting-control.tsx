@@ -145,7 +145,7 @@ export default function LightingControl() {
       if (isTest && (mode === "preparation" || mode === "finished")) {
         toast({
           title: "Test Mode",
-          description: `${modeNames[mode]} will be shown for 3 seconds, then return to Idle mode.`,
+          description: `${modeNames[mode]} will be shown for 3 seconds, then back to Idle mode.`,
         })
 
         setTimeout(async () => {
@@ -168,7 +168,7 @@ export default function LightingControl() {
       console.error("[v0] Error applying lighting:", error)
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       toast({
-        title: "Error Applying",
+        title: "Application Error",
         description: `Lighting could not be applied: ${errorMessage}`,
         variant: "destructive",
       })
@@ -283,7 +283,7 @@ export default function LightingControl() {
             </div>
             <div>
               <h2 className="text-2xl lg:text-3xl font-bold text-[hsl(var(--cocktail-text))]">LED Lighting</h2>
-              <p className="text-sm text-[hsl(var(--cocktail-text-muted))]">Control the RGB lighting</p>
+              <p className="text-sm text-[hsl(var(--cocktail-text-muted))]">Control RGB lighting</p>
             </div>
           </div>
         </div>

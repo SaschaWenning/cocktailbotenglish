@@ -36,19 +36,19 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     if (cleaningProcessRef.current.cancel) return
     setCleaningStatus("cleaning")
 
-    // Clean each pump in sequence
+    // Clean each pump sequentially
     for (let i = 0; i < enabledPumps.length; i++) {
       const pump = enabledPumps[i]
       setCurrentPump(pump.id)
 
-      // Check if process was paused or canceled
+      // Check if process was paused or cancelled
       if (cleaningProcessRef.current.cancel) return
 
       try {
         // Run pump for 10 seconds
         await cleanPumpWithPauseSupport(pump.id, 10000)
 
-        // If process was canceled during cleaning, stop
+        // If process was cancelled during cleaning, exit
         if (cleaningProcessRef.current.cancel) return
 
         setPumpsDone((prev) => [...prev, pump.id])
@@ -65,7 +65,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
     setCleaningStatus("complete")
   }
 
-  // Function to clean a pump with pause support
+  // Funktion zum Reinigen einer Pumpe mit Unterstützung für Pausen
   const cleanPumpWithPauseSupport = async (pumpId: number, duration: number) => {
     try {
       await cleanPump(pumpId, duration)
@@ -110,7 +110,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             Automatic Pump Cleaning
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Clean all pumps in sequence with warm water and detergent
+            Clean all pumps sequentially with warm water and dish soap
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -118,8 +118,8 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <ol className="list-decimal pl-4 space-y-1 text-sm">
-                <li>Prepare a container with warm water and some detergent.</li>
-                <li>Place the suction hoses of all pumps into this container.</li>
+                <li>Prepare a container with warm water and a little dish soap.</li>
+                <li>Place the suction hoses of all pumps in this container.</li>
                 <li>Place an empty collection container under the outlets.</li>
               </ol>
             </AlertDescription>
@@ -214,7 +214,7 @@ export default function PumpCleaning({ pumpConfig }: PumpCleaningProps) {
                 <AlertTriangle className="h-4 w-4 text-[hsl(var(--cocktail-warning))]" />
                 <AlertDescription className="text-[hsl(var(--cocktail-text))]">
                   <p className="font-medium mb-1">Important:</p>
-                  <p>Now rinse the pumps with clean water to remove detergent residue.</p>
+                  <p>Rinse the pumps with clean water now to remove soap residue.</p>
                 </AlertDescription>
               </Alert>
 

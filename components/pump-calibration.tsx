@@ -255,7 +255,7 @@ export default function PumpCalibration({ pumpConfig: initialConfig, onConfigUpd
                     <SelectTrigger
                       className={`${pump.enabled ? "bg-[hsl(var(--cocktail-card-bg))]" : "bg-gray-800 opacity-50"} text-white border-[hsl(var(--cocktail-card-border))]`}
                     >
-                      <SelectValue placeholder="Select ingredient" />
+                      <SelectValue placeholder="Select Ingredient" />
                     </SelectTrigger>
                     <SelectContent className="bg-black text-white border-[hsl(var(--cocktail-card-border))]">
                       {allIngredients.map((ingredient) => (

@@ -60,8 +60,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
     if (!newIngredient.name.trim()) return
 
     console.log("[v0] Adding ingredient:", newIngredient.name)
-    const sanitizedName = newIngredient.name.toLowerCase().replace(/[^a-z0-9]/g, "-")
-    const id = `custom-${sanitizedName}`
+    const id = `custom-${Date.now()}-${newIngredient.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
     const ingredient: Ingredient = {
       id,
       name: newIngredient.name.trim(),
@@ -160,7 +159,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                 <CardTitle className="text-white">Manage Ingredients</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 overflow-auto flex-1">
-                {/* Add New Ingredient */}
+                {/* Add new ingredient */}
                 <div className="space-y-4 p-4 border border-[hsl(var(--cocktail-card-border))] rounded-lg bg-[hsl(var(--cocktail-card-bg))]">
                   <h3 className="font-semibold text-white">Add New Ingredient</h3>
                   <div className="space-y-3">
@@ -172,7 +171,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                         id="ingredient-name"
                         value={newIngredient.name}
                         readOnly
-                        placeholder="e.g. Strawberry juice"
+                        placeholder="e.g. Strawberry Juice"
                         className="bg-white text-black border-[hsl(var(--cocktail-card-border))] placeholder:text-gray-400 cursor-pointer"
                         onClick={openKeyboard}
                       />
@@ -195,7 +194,7 @@ export function IngredientManager({ onClose }: IngredientManagerProps) {
                   </div>
                 </div>
 
-                {/* Display Custom Ingredients */}
+                {/* Display custom ingredients */}
                 {customIngredients.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="font-semibold text-white">Your Custom Ingredients</h3>

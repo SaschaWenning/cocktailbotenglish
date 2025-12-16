@@ -31,7 +31,7 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         const savedPassword = localStorage.getItem("customPassword")
         setCustomPassword(savedPassword || "")
       } catch (error) {
-        console.error("Error loading custom password:", error) // Translated from "Fehler beim Laden des benutzerdefinierten Passworts:"
+        console.error("Error loading custom password:", error)
       }
     }
   }, [isOpen])
@@ -69,27 +69,26 @@ export default function PasswordModal({ isOpen, onClose, onSuccess }: PasswordMo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            Password Required {/* Translated from "Passwort erforderlich" */}
+            Password Required
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">Please enter the password to edit recipes:</Label>{" "}
-            {/* Translated from "Bitte gib das Passwort ein, um Rezepte zu bearbeiten:" */}
+            <Label htmlFor="password">Please enter the password to edit recipes:</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={`bg-[hsl(var(--cocktail-bg))] border-[hsl(var(--cocktail-card-border))] ${error ? "border-[hsl(var(--cocktail-error))]" : ""}`}
-              placeholder="Enter password" // Translated from "Passwort eingeben"
+              placeholder="Enter password"
               autoComplete="off"
               readOnly
               onFocus={() => setShowKeyboard(true)}
             />
             {error && (
-              <p className="text-[hsl(var(--cocktail-error))] text-sm">Wrong password. Please try again.</p> // Translated from "Falsches Passwort. Bitte versuche es erneut."
+              <p className="text-[hsl(var(--cocktail-error))] text-sm">Incorrect password. Please try again.</p>
             )}
           </div>
 

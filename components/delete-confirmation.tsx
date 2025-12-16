@@ -23,7 +23,6 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
   const [isDeleting, setIsDeleting] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(true)
 
-  // Reset password when dialog opens
   useEffect(() => {
     if (isOpen) {
       setPassword("")
@@ -80,7 +79,7 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
 
         <Alert className="bg-[hsl(var(--cocktail-error))]/10 border-[hsl(var(--cocktail-error))]/30">
           <AlertDescription className="text-[hsl(var(--cocktail-text))]">
-            Do you really want to delete the cocktail <strong>{cocktailName}</strong>? This action cannot be undone.
+            Are you sure you want to delete the cocktail <strong>{cocktailName}</strong>? This action cannot be undone.
           </AlertDescription>
         </Alert>
 
@@ -98,7 +97,9 @@ export default function DeleteConfirmation({ isOpen, onClose, onConfirm, cocktai
               readOnly
               onFocus={() => setShowKeyboard(true)}
             />
-            {error && <p className="text-[hsl(var(--cocktail-error))] text-sm">Wrong password. Please try again.</p>}
+            {error && (
+              <p className="text-[hsl(var(--cocktail-error))] text-sm">Incorrect password. Please try again.</p>
+            )}
           </div>
 
           {showKeyboard && (

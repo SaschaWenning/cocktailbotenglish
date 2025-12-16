@@ -42,7 +42,7 @@ export default function PasswordSettings() {
       setShowKeyboardModal(false)
       toast({
         title: "Password saved",
-        description: "The custom password has been saved successfully.",
+        description: "Your custom password has been successfully saved.",
       })
     } catch (error) {
       console.error("Error saving password:", error)
@@ -93,12 +93,12 @@ export default function PasswordSettings() {
             Password Settings
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Manage your custom password for accessing settings.
+            Manage your custom password for access to settings.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-[hsl(var(--cocktail-text))]">Current custom password:</Label>
+            <Label className="text-[hsl(var(--cocktail-text))]">Current Custom Password:</Label>
             <div className="flex items-center gap-2">
               <Input
                 type={showPassword ? "text" : "password"}
