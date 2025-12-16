@@ -77,17 +77,21 @@ export default function LightingControl() {
     try {
       console.log("[v0] Applying lighting mode:", mode, "isTest:", isTest)
 
-      console.log("[v0] Saving config before applying:", config)
-      const saveResponse = await fetch("/api/lighting-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      })
+      if (!isTest) {
+        console.log("[v0] Saving config:", JSON.stringify(config))
+        const saveResponse = await fetch("/api/lighting-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(config),
+        })
 
-      if (!saveResponse.ok) {
-        throw new Error("Failed to save configuration")
+        if (!saveResponse.ok) {
+          const errorText = await saveResponse.text()
+          console.error("[v0] Failed to save config:", errorText)
+          throw new Error("Failed to save configuration")
+        }
+        console.log("[v0] Config saved successfully")
       }
-      console.log("[v0] Config saved successfully")
 
       let body: any = {}
 
@@ -121,7 +125,7 @@ export default function LightingControl() {
         body = { mode: "off" }
       }
 
-      console.log("[v0] Sending lighting control request:", body)
+      console.log("[v0] Sending lighting control request:", JSON.stringify(body))
       const res = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -133,7 +137,7 @@ export default function LightingControl() {
       if (!res.ok) {
         const errorText = await res.text()
         console.error("[v0] API error response:", errorText)
-        throw new Error(`HTTP ${res.status}: ${errorText}`)
+        throw new Error(`Failed to apply lighting: ${errorText}`)
       }
 
       const modeNames: Record<string, string> = {
@@ -167,12 +171,16 @@ export default function LightingControl() {
             idleBody = { mode: "idle", scheme: config.idleMode.scheme }
           }
 
-          console.log("[v0] Returning to idle with body:", idleBody)
-          await fetch("/api/lighting-control", {
+          console.log("[v0] Returning to idle with body:", JSON.stringify(idleBody))
+          const idleRes = await fetch("/api/lighting-control", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify(idleBody),
           })
+
+          if (!idleRes.ok) {
+            console.error("[v0] Failed to return to idle mode")
+          }
         }, 3000)
       } else {
         toast({
@@ -181,7 +189,7 @@ export default function LightingControl() {
         })
       }
 
-      console.log("[v0] Lighting applied and saved successfully")
+      console.log("[v0] Lighting applied successfully")
     } catch (error) {
       console.error("[v0] Error applying lighting:", error)
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
