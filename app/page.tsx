@@ -618,7 +618,7 @@ export default function Home() {
         await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.JSON.parse(JSON.stringify({ mode: "cocktailFinished" })),
+          body: JSON.stringify({ mode: "cocktailFinished" }),
         })
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
