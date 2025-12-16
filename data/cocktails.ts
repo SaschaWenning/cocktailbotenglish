@@ -51,7 +51,6 @@ export const cocktails: Cocktail[] = [
     recipe: [
       { ingredientId: "malibu", amount: 80 },
       { ingredientId: "pineapple-juice", amount: 150 },
-      // Cream of Coconut add manually
     ],
   },
   {
@@ -138,7 +137,6 @@ export const cocktails: Cocktail[] = [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "lime-juice", amount: 60 },
       { ingredientId: "soda-water", amount: 100, manual: true, instructions: "Add 100ml soda water" },
-      // Add mint manually
     ],
   },
   {
@@ -157,7 +155,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "long-island-iced-tea",
     name: "Long Island Iced Tea",
-    description: "Classic, strong cocktail with five different spirits and cola",
+    description: "Classic strong cocktail with five different spirits and cola",
     image: "/images/cocktails/long_island_iced_tea.jpg",
     alcoholic: true,
     ingredients: ["15ml Dark Rum", "15ml Triple Sec", "15ml Vodka", "15ml Tequila", "15ml Gin", "30ml Lime Juice"],
@@ -197,7 +195,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "swimming-pool",
     name: "Swimming Pool",
-    description: "Blue, tropical cocktail with vodka and pineapple juice",
+    description: "Blue tropical cocktail with vodka and pineapple juice",
     image: "/images/cocktails/swimming_pool.jpg",
     alcoholic: true,
     ingredients: [
@@ -231,7 +229,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "touch-down",
     name: "Touch Down",
-    description: "Fruity cocktail with dark rum, triple sec and passion fruit juice",
+    description: "Fruity cocktail with dark rum, Triple Sec and passion fruit juice",
     image: "/images/cocktails/touch_down.jpg",
     alcoholic: true,
     ingredients: ["60ml Dark Rum", "40ml Triple Sec", "140ml Passion Fruit Juice", "10ml Lime Juice", "20ml Grenadine"],
@@ -246,7 +244,7 @@ export const cocktails: Cocktail[] = [
   {
     id: "zombie",
     name: "Zombie",
-    description: "Strong, fruity cocktail with dark rum and various fruit juices",
+    description: "Strong fruity cocktail with dark rum and various fruit juices",
     image: "/images/cocktails/zombie.jpg",
     alcoholic: true,
     ingredients: [
@@ -393,14 +391,14 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Ice cubes",
+        name: "Ice Cubes",
         amount: "200g",
         instruction: "Fill glass halfway with ice",
       },
       {
-        name: "Orange slice",
+        name: "Orange Slice",
         amount: "1 slice",
-        instruction: "As garnish on glass rim",
+        instruction: "As garnish on the rim",
       },
     ],
   },
@@ -418,12 +416,12 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Soda water",
+        name: "Soda Water",
         amount: "50ml",
-        instruction: "To top up and for fizz effect",
+        instruction: "For topping and fizz effect",
       },
       {
-        name: "Lime slice",
+        name: "Lime Slice",
         amount: "1 slice",
         instruction: "As garnish",
       },
@@ -444,12 +442,12 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Crushed ice",
+        name: "Crushed Ice",
         amount: "150g",
         instruction: "For tropical feeling",
       },
       {
-        name: "Passion fruit pulp",
+        name: "Passion Fruit Pulp",
         amount: "1 tsp",
         instruction: "As topping on top",
       },
@@ -472,10 +470,10 @@ export const cocktails: Cocktail[] = [
       {
         name: "Cream",
         amount: "20ml",
-        instruction: "Carefully pour on top for layering effect",
+        instruction: "Carefully pour on top for layered effect",
       },
       {
-        name: "Orange zest",
+        name: "Orange Zest",
         amount: "1 pinch",
         instruction: "As aromatic topping",
       },
@@ -496,14 +494,14 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Ice cubes",
+        name: "Ice Cubes",
         amount: "200g",
         instruction: "Fill glass completely with ice",
       },
       {
-        name: "Extra grenadine",
+        name: "Extra Grenadine",
         amount: "5ml",
-        instruction: "Slowly run down glass rim for sunrise effect",
+        instruction: "Slowly let it run down the glass rim for sunrise effect",
       },
     ],
   },

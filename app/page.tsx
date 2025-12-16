@@ -32,9 +32,44 @@ import { Progress } from "@/components/ui/progress"
 import { Check, GlassWater } from "lucide-react"
 import TermsOfService from "@/components/terms-of-service"
 import LightingControl from "@/components/lighting-control"
+import { defaultTabConfig } from "@/lib/tab-config" // Import defaultTabConfig
 
 // Anzahl der Cocktails pro Seite
 const COCKTAILS_PER_PAGE = 9
+
+const migrateTabConfig = (config: AppConfig): AppConfig => {
+  const germanToEnglishMap: Record<string, { id: string; name: string }> = {
+    Alkoholfrei: { id: "virgin", name: "Non-Alcoholic" },
+    "Neues Rezept": { id: "recipe-creator", name: "New Recipe" },
+    Füllstände: { id: "levels", name: "Fill Levels" },
+    Zutaten: { id: "ingredients", name: "Ingredients" },
+    Kalibrierung: { id: "calibration", name: "Calibration" },
+    Reinigung: { id: "cleaning", name: "Cleaning" },
+    Entlüften: { id: "venting", name: "Venting" },
+    "Ausgeblendete Cocktails": { id: "hidden-cocktails", name: "Hidden Cocktails" },
+    Beleuchtung: { id: "lighting", name: "Lighting" },
+    Servicemenü: { id: "service", name: "Service Menu" },
+  }
+
+  const migratedTabs = config.tabs.map((tab) => {
+    // Check if the tab name is German
+    if (germanToEnglishMap[tab.name]) {
+      const englishTab = germanToEnglishMap[tab.name]
+      console.log(`[v0] Migrating tab "${tab.name}" to "${englishTab.name}"`)
+      return {
+        ...tab,
+        id: englishTab.id,
+        name: englishTab.name,
+      }
+    }
+    return tab
+  })
+
+  return {
+    ...config,
+    tabs: migratedTabs,
+  }
+}
 
 export default function Home() {
   const [selectedCocktail, setSelectedCocktail] = useState<Cocktail | null>(null)
@@ -212,7 +247,7 @@ export default function Home() {
         setCocktailsData(cocktails)
       }
     } catch (error) {
-      console.error("Fehler beim Laden der Daten:", error)
+      console.error("Error loading data:", error)
       console.log("[v0] Using empty fallback - no server imports in browser")
       setCocktailsData([])
     }
@@ -223,7 +258,7 @@ export default function Home() {
       const config = await getPumpConfig()
       setPumpConfig(config)
     } catch (error) {
-      console.error("Fehler beim Laden der Pumpenkonfiguration:", error)
+      console.error("Error loading pump configuration:", error)
       console.log("[v0] Using fallback pump configuration")
       setPumpConfig(initialPumpConfig)
     }
@@ -258,7 +293,7 @@ export default function Home() {
       const lowLevels = levels.filter((level) => level.currentAmount < 100)
       setLowIngredients(lowLevels.map((level) => level.ingredientId))
     } catch (error) {
-      console.error("Fehler beim Laden der Füllstände:", error)
+      console.error("Error loading ingredient levels:", error)
       console.log("[v0] Using empty ingredient levels as fallback")
       const defaultLevels: IngredientLevel[] = initialPumpConfig.map((pump) => ({
         pumpId: pump.id,
@@ -278,7 +313,7 @@ export default function Home() {
       const ingredients = await getAllIngredients()
       setAllIngredientsData(ingredients)
     } catch (error) {
-      console.error("Fehler beim Laden der Zutaten:", error)
+      console.error("Error loading ingredients:", error)
       console.log("[v0] Using empty fallback ingredients - no server imports in browser")
       setAllIngredientsData([])
     }
@@ -286,25 +321,35 @@ export default function Home() {
 
   const loadTabConfig = async () => {
     try {
-      console.log("[v0] Loading tab config from API...")
-      const response = await fetch("/api/tab-config")
+      console.log("[v0] Loading tab configuration from localStorage...")
+      const stored = localStorage.getItem("tab-config")
+      let config: AppConfig
 
-      if (!response.ok) {
-        console.error("[v0] Tab config API response not ok:", response.status, response.statusText)
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      if (stored) {
+        console.log("[v0] Found tab config in localStorage")
+        const parsedConfig = JSON.parse(stored)
+
+        config = migrateTabConfig(parsedConfig)
+
+        // Save the migrated config back to localStorage
+        localStorage.setItem("tab-config", JSON.stringify(config))
+        console.log("[v0] Migrated and saved tab config:", config)
+      } else {
+        console.log("[v0] No localStorage config found, using default")
+        config = defaultTabConfig
+        localStorage.setItem("tab-config", JSON.stringify(config))
+        console.log("[v0] Saved default config to localStorage")
       }
 
-      const config: AppConfig = await response.json()
       const mainTabIds = config.tabs.filter((tab) => tab.location === "main").map((tab) => tab.id)
 
-      console.log("[v0] Tab config loaded successfully:", config)
+      console.log("[v0] Final tab config to apply:", config)
       console.log("[v0] Main tab IDs:", mainTabIds)
       setTabConfig(config)
       setMainTabs(mainTabIds)
 
-      if (mainTabIds.length > 0 && !mainTabIds.includes(activeTab) && activeTab !== "service") {
-        console.log("[v0] Setting active tab to first main tab:", mainTabIds[0])
-        setActiveTab(mainTabIds[0])
+      if (mainTabs.length > 0 && !mainTabs.includes(activeTab) && activeTab !== "service") {
+        setActiveTab(mainTabs[0])
       }
     } catch (error) {
       console.error("[v0] Error loading tab config:", error)
@@ -439,15 +484,15 @@ export default function Home() {
       setShowDeleteConfirmation(false)
 
       toast({
-        title: "Cocktail gelöscht",
-        description: `${cocktailToDelete.name} wurde erfolgreich gelöscht.`,
+        title: "Cocktail Deleted",
+        description: `${cocktailToDelete.name} was successfully deleted.`,
       })
     } catch (error) {
-      console.error("Fehler beim Löschen des Cocktails:", error)
+      console.error("Error deleting cocktail:", error)
 
       toast({
-        title: "Fehler beim Löschen",
-        description: "Der Cocktail konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+        title: "Error Deleting",
+        description: "The cocktail could not be deleted. Please try again.",
         variant: "destructive",
       })
     }
@@ -492,14 +537,14 @@ export default function Home() {
       console.log("[v0] PumpConfig not available, loading...")
       await loadPumpConfig()
       if (!pumpConfig || pumpConfig.length === 0) {
-        setErrorMessage("Pumpenkonfiguration nicht verfügbar. Bitte versuchen Sie es erneut.")
+        setErrorMessage("Pump configuration not available. Please try again.")
         return
       }
     }
 
     setIsMaking(true)
     setProgress(0)
-    setStatusMessage("Bereite Cocktail vor...")
+    setStatusMessage("Preparing cocktail...")
     setErrorMessage(null)
     setManualIngredients([])
 
@@ -510,13 +555,25 @@ export default function Home() {
       const scaleFactor = selectedSize / totalRecipeVolume
 
       const manualRecipeItems = cocktail.recipe
-        .filter((item) => item?.manual === true)
-        .map((item) => ({
-          ingredientId: item.ingredientId,
-          amount: Math.round(item.amount * scaleFactor),
-          instructions: undefined,
-        }))
+        .filter((item) => item?.manual === true || item?.type === "manual")
+        .map((item) => {
+          const ingredientName =
+            allIngredientsData.reduce(
+              (acc, ingredient) => {
+                acc[ingredient.id] = { name: ingredient.name }
+                return acc
+              },
+              {} as Record<string, { name: string }>,
+            )?.[item.ingredientId]?.name ?? item.ingredientId.replace(/^custom-\d+-/, "")
+          const ml = Math.round((Number(item.amount) || 0) * scaleFactor)
+          return {
+            ingredientName,
+            ml,
+            instruction: item.instruction,
+          }
+        })
 
+      console.log("[v0] Manual recipe items:", manualRecipeItems)
       setManualIngredients(manualRecipeItems)
 
       const estimatedDuration = calculateCocktailDuration(cocktail, currentPumpConfig, selectedSize)
@@ -533,7 +590,7 @@ export default function Home() {
       let intervalId: NodeJS.Timeout
       intervalId = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 95) {
+          if (prev >= 100) {
             clearInterval(intervalId)
             return prev
           }
@@ -561,14 +618,14 @@ export default function Home() {
         await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailFinished" }),
+          body: JSON.JSON.parse(JSON.stringify({ mode: "cocktailFinished" })),
         })
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
       }
 
       if (manualRecipeItems.length > 0) {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) automatically prepared! Please add manual ingredients.`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) prepared automatically! Please add manual ingredients.`)
         setTimeout(() => {
           setShowManualIngredientsModal(true)
           setTimeout(() => {
@@ -577,7 +634,7 @@ export default function Home() {
           }, 6000)
         }, 2000)
       } else {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) fertig!`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) ready!`)
       }
 
       setShowSuccess(true)
@@ -605,8 +662,8 @@ export default function Home() {
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Fehler bei der Zubereitung!")
-      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
+      setStatusMessage("Error during preparation!")
+      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setManualIngredients([])
       setTimeout(() => setIsMaking(false), 3000)
     }
@@ -651,7 +708,8 @@ export default function Home() {
     )
 
     for (const recipeItem of cocktail.recipe) {
-      if (recipeItem.manual) {
+      if (recipeItem.manual || recipeItem.type === "manual") {
+        console.log("[v0] Main page: Skipping manual ingredient", recipeItem.ingredientId)
         continue
       }
 
@@ -725,21 +783,21 @@ export default function Home() {
 
       if (data.success) {
         toast({
-          title: "Kiosk-Modus wird beendet",
-          description: "Die Anwendung wird in wenigen Sekunden geschlossen.",
+          title: "Exiting Kiosk Mode",
+          description: "The application will close in a few seconds.",
         })
       } else {
         toast({
-          title: "Fehler",
-          description: "Kiosk-Modus konnte nicht beendet werden.",
+          title: "Error",
+          description: "Kiosk mode could not be exited.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Fehler beim Beenden des Kiosk-Modus:", error)
+      console.error("Error exiting kiosk mode:", error)
       toast({
-        title: "Fehler",
-        description: "Verbindungsproblem beim Beenden des Kiosk-Modus.",
+        title: "Error",
+        description: "Connection problem when exiting kiosk mode.",
         variant: "destructive",
       })
     }
@@ -774,7 +832,8 @@ export default function Home() {
 
     const imageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"]
 
-    const extensionsToTry = originalExt
+    // FIX: Declare extensionsToToTry before using it.
+    const extensionsToToTry = originalExt
       ? [originalExt, ...imageExtensions.filter((ext) => ext !== originalExt)]
       : imageExtensions
 
@@ -783,7 +842,7 @@ export default function Home() {
     const strategies: string[] = []
 
     for (const basePath of basePaths) {
-      for (const ext of extensionsToTry) {
+      for (const ext of extensionsToToTry) {
         strategies.push(`${basePath}${filenameWithoutExt}.${ext}`)
       }
       strategies.push(`${basePath}${filename}`)
@@ -890,14 +949,14 @@ export default function Home() {
     )
 
     const manualRecipeItems = cocktail.recipe
-      .filter((item) => item?.manual === true)
+      .filter((item) => item?.manual === true || item?.type === "manual")
       .map((item) => {
         const ingredientName =
           ingredientLookup?.[item.ingredientId]?.name ?? item.ingredientId.replace(/^custom-\d+-/, "")
         const totalRecipeVolume = cocktail.recipe.reduce((t, it) => t + (Number(it?.amount) || 0), 0) || 1
         const scaleFactor = selectedSize / totalRecipeVolume
         const ml = Math.round((Number(item.amount) || 0) * scaleFactor)
-        return { ingredientName, ml }
+        return { ingredientName, ml, instruction: item.instruction } // Include the instruction/description
       })
 
     return (
@@ -944,17 +1003,17 @@ export default function Home() {
                         ingredientName = item.ingredientId.replace(/^custom-\d+-/, "")
                       }
 
+                      const isManual = item.manual === true || item.type === "manual"
+
                       return (
-                        <li key={index} className={`flex items-center ${item.manual === true ? "opacity-60" : ""}`}>
+                        <li key={index} className={`flex items-center ${isManual ? "opacity-60" : ""}`}>
                           <span className="mr-2 text-[hsl(var(--cocktail-primary))]">•</span>
                           <span>
                             {Math.round(
                               item.amount * (selectedSize / (cocktail.recipe.reduce((t, it) => t + it.amount, 0) || 1)),
                             )}
                             ml {ingredientName}
-                            {item.manual === true && (
-                              <span className="text-[hsl(var(--cocktail-text-muted))] ml-2">(manual)</span>
-                            )}
+                            {isManual && <span className="text-[hsl(var(--cocktail-text-muted))] ml-2">(manual)</span>}
                           </span>
                         </li>
                       )
@@ -965,7 +1024,7 @@ export default function Home() {
               <div className="md:w-2/5 flex flex-col">
                 <div className="flex flex-col items-center mb-6">
                   <h4 className="text-lg font-semibold mb-4 text-[hsl(var(--cocktail-text))] text-center">
-                    Cocktail size:
+                    Cocktail Size:
                   </h4>
                   <div className="flex gap-2 w-full justify-center">
                     {allAvailableSizes.map((size) => (
@@ -1009,7 +1068,7 @@ export default function Home() {
                     disabled={!ingredientsAvailable || isMaking}
                     className="w-full bg-[#00ff00] hover:bg-[#00ff00]/90 text-black font-bold py-3 px-6 rounded-lg text-base"
                   >
-                    {isMaking ? "Preparing..." : "Prepare Cocktail"}
+                    {isMaking ? "Preparation in progress..." : "Prepare Cocktail"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1025,18 +1084,22 @@ export default function Home() {
           </div>
         </div>
         {isCompleted &&
-          // Translated text check from German to English
           statusMessage.includes("Please add manual ingredients.") &&
           cocktail &&
           manualRecipeItems.length > 0 && (
             <div className="mt-3 p-4 bg-[hsl(var(--cocktail-card-bg))]/50 rounded-b-lg">
-              <div className="font-medium">
+              <div className="font-medium text-foreground">
                 Please add the following ingredient{manualRecipeItems.length > 1 ? "s" : ""}:
               </div>
-              <ul className="list-disc pl-6 mt-1 space-y-1">
+              <ul className="list-disc pl-6 mt-1 space-y-1 text-foreground">
                 {manualRecipeItems.map((item, index) => (
                   <li key={index} className="text-base leading-tight">
-                    {item.ml}ml {item.ingredientName}
+                    <div className="font-semibold">
+                      {item.ml}ml {item.ingredientName}
+                    </div>
+                    {item.instruction && (
+                      <div className="text-sm text-muted-foreground italic mt-1">{item.instruction}</div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -1103,7 +1166,7 @@ export default function Home() {
       case "cocktails":
         return (
           <div className="space-y-8">
-            <h2 className="text-2xl font-bold text-[hsl(var(--cocktail-text))] text-center">Cocktails with Alcohol</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--cocktail-text))] text-center">Alcoholic Cocktails</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {currentPageCocktails.map((cocktail) => (
@@ -1374,29 +1437,27 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-4">
-                    {manualIngredients.map((item, index) => {
-                      const ingredient = allIngredientsData.find((ing) => ing.id === item.ingredientId)
-                      return (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--cocktail-card-bg))]/50 border border-[hsl(var(--cocktail-card-border))]"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-3 h-3 rounded-full bg-[hsl(var(--cocktail-primary))]"></div>
-                            <span className="font-medium text-[hsl(var(--cocktail-text))]">
-                              {ingredient?.name || item.ingredientId}
-                            </span>
+                    {manualIngredients.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--cocktail-card-bg))]/50 border border-[hsl(var(--cocktail-card-border))]"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-10 h-10 rounded-full bg-[hsl(var(--cocktail-primary))]/20 flex items-center justify-center flex-shrink-0">
+                            <Plus className="h-5 w-5 text-[hsl(var(--cocktail-primary))]" />
                           </div>
-                          <span className="text-lg font-semibold text-[hsl(var(--cocktail-primary))]">
-                            {item.amount}ml
-                          </span>
+                          <div className="flex-1">
+                            <div className="font-semibold text-[hsl(var(--cocktail-text))]">{item.ingredientName}</div>
+                            <div className="text-sm text-[hsl(var(--cocktail-text))]/70">{item.ml}ml</div>
+                            {item.instruction && (
+                              <div className="text-sm text-[hsl(var(--cocktail-text))]/60 italic mt-1">
+                                {item.instruction}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )
-                    })}
-                  </div>
-
-                  <div className="text-center text-sm text-[hsl(var(--cocktail-text-muted))]">
-                    This window will close automatically...
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

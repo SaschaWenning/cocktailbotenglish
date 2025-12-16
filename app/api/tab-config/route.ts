@@ -1,26 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { type AppConfig, defaultTabConfig } from "@/lib/tab-config"
-import { promises as fs } from "fs"
-import path from "path"
 
 export const dynamic = "force-dynamic"
 
-const CONFIG_FILE_PATH = path.join(process.cwd(), "data", "tab-config.json")
-
-// In-memory cache for tab config
-let cachedTabConfig: AppConfig | null = null
+let storedTabConfig: AppConfig | null = null
 
 function validateAndUpdateConfig(storedConfig: AppConfig): AppConfig {
   const requiredTabIds = defaultTabConfig.tabs.map((tab) => tab.id)
   const storedTabIds = storedConfig.tabs.map((tab) => tab.id)
 
-  // Check if all required tabs are present
+  // Prüfe, ob alle erforderlichen Tabs vorhanden sind
   const missingTabs = requiredTabIds.filter((id) => !storedTabIds.includes(id))
 
   if (missingTabs.length > 0) {
     console.log("[v0] Missing tabs detected, updating configuration:", missingTabs)
 
-    // Add missing tabs from default configuration
+    // Füge fehlende Tabs aus der Standard-Konfiguration hinzu
     const updatedTabs = [...storedConfig.tabs]
     missingTabs.forEach((tabId) => {
       const defaultTab = defaultTabConfig.tabs.find((tab) => tab.id === tabId)
@@ -29,7 +24,9 @@ function validateAndUpdateConfig(storedConfig: AppConfig): AppConfig {
       }
     })
 
-    return { ...storedConfig, tabs: updatedTabs }
+    const updatedConfig = { ...storedConfig, tabs: updatedTabs }
+    storedTabConfig = updatedConfig
+    return updatedConfig
   }
 
   return storedConfig
@@ -37,28 +34,13 @@ function validateAndUpdateConfig(storedConfig: AppConfig): AppConfig {
 
 async function getStoredConfig(): Promise<AppConfig> {
   try {
-    // Check cache first
-    if (cachedTabConfig) {
-      console.log("[v0] Tab config loaded from cache")
-      return validateAndUpdateConfig(cachedTabConfig)
+    if (storedTabConfig) {
+      console.log("[v0] Tab config loaded from memory:", storedTabConfig)
+      return validateAndUpdateConfig(storedTabConfig)
     }
 
-    // Try to read from file
-    try {
-      const fileContent = await fs.readFile(CONFIG_FILE_PATH, "utf-8")
-      const config: AppConfig = JSON.parse(fileContent)
-      console.log("[v0] Tab config loaded from file:", config)
-      cachedTabConfig = config
-      return validateAndUpdateConfig(config)
-    } catch (fileError: any) {
-      if (fileError.code === "ENOENT") {
-        console.log("[v0] No tab config file found, using default config")
-        // Save default config to file
-        await saveStoredConfig(defaultTabConfig)
-        return defaultTabConfig
-      }
-      throw fileError
-    }
+    console.log("[v0] No stored config, returning default")
+    return defaultTabConfig
   } catch (error) {
     console.error("[v0] Error in getStoredConfig:", error)
     return defaultTabConfig
@@ -67,20 +49,8 @@ async function getStoredConfig(): Promise<AppConfig> {
 
 async function saveStoredConfig(config: AppConfig): Promise<void> {
   try {
-    // Ensure data directory exists
-    const dataDir = path.dirname(CONFIG_FILE_PATH)
-    try {
-      await fs.access(dataDir)
-    } catch {
-      await fs.mkdir(dataDir, { recursive: true })
-    }
-
-    // Write to file
-    await fs.writeFile(CONFIG_FILE_PATH, JSON.stringify(config, null, 2), "utf-8")
-
-    // Update cache
-    cachedTabConfig = config
-    console.log("[v0] Tab config saved to file:", CONFIG_FILE_PATH)
+    storedTabConfig = config
+    console.log("[v0] Tab config saved to memory:", config)
   } catch (error) {
     console.error("[v0] Error saving tab config:", error)
     throw error
