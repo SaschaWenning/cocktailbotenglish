@@ -178,10 +178,45 @@ export default function Home() {
   const loadAndApplyIdleLighting = async () => {
     try {
       console.log("[v0] Loading and applying idle LED configuration...")
+
+      // Load saved settings
+      const savedSettings = localStorage.getItem("led-settings")
+      let idleMode: any = { mode: "idle", scheme: "rainbow" }
+
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings)
+        console.log("[v0] Loaded LED settings from localStorage:", settings)
+
+        if (settings.idleScheme === "static") {
+          idleMode = { mode: "color", color: settings.idleColor }
+        } else if (settings.idleScheme === "off") {
+          idleMode = { mode: "off" }
+        } else if (settings.idleScheme === "pulse") {
+          idleMode = { mode: "idle", scheme: "pulse", color: settings.idleColor }
+        } else if (settings.idleScheme === "blink") {
+          idleMode = { mode: "idle", scheme: "blink", color: settings.idleColor }
+        } else {
+          idleMode = { mode: "idle", scheme: "rainbow" }
+        }
+
+        // Also apply brightness
+        if (settings.brightness !== undefined) {
+          await fetch("/api/lighting-control", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              mode: "brightness",
+              brightness: settings.brightness,
+            }),
+          })
+        }
+      }
+
+      console.log("[v0] Applying idle mode:", idleMode)
       const response = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "idle" }),
+        body: JSON.stringify(idleMode),
       })
 
       if (response.ok) {
@@ -598,15 +633,24 @@ export default function Home() {
         })
       }, progressInterval)
 
-      try {
-        await fetch("/api/lighting-control", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailPreparation" }),
-        })
-      } catch (error) {
-        console.error("[v0] Error activating preparation lighting:", error)
+      const savedSettings = localStorage.getItem("led-settings")
+      let prepMode: any = { mode: "cocktailPreparation", color: "#ff0000", blinking: true }
+
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings)
+        prepMode = {
+          mode: "cocktailPreparation",
+          color: settings.preparationColor || "#ff0000",
+          blinking: settings.preparationBlinking !== undefined ? settings.preparationBlinking : true,
+        }
       }
+
+      console.log("[v0] Applying preparation mode:", prepMode)
+      await fetch("/api/lighting-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prepMode),
+      })
 
       const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
       await makeCocktail(cocktail, currentPumpConfig, selectedSize, category)
@@ -615,10 +659,23 @@ export default function Home() {
       setProgress(100)
 
       try {
+        const savedSettings = localStorage.getItem("led-settings")
+        let finishMode: any = { mode: "cocktailFinished", color: "#00ff00", blinking: false }
+
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          finishMode = {
+            mode: "cocktailFinished",
+            color: settings.finishedColor || "#00ff00",
+            blinking: settings.finishedBlinking !== undefined ? settings.finishedBlinking : false,
+          }
+        }
+
+        console.log("[v0] Applying finished mode:", finishMode)
         await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailFinished" }),
+          body: JSON.stringify(finishMode),
         })
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
@@ -652,10 +709,28 @@ export default function Home() {
         setShowSuccess(false)
         setSelectedCocktail(null)
 
+        const savedSettings = localStorage.getItem("led-settings")
+        let idleMode: any = { mode: "idle", scheme: "rainbow" }
+
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          if (settings.idleScheme === "static") {
+            idleMode = { mode: "color", color: settings.idleColor }
+          } else if (settings.idleScheme === "off") {
+            idleMode = { mode: "off" }
+          } else if (settings.idleScheme === "pulse") {
+            idleMode = { mode: "idle", scheme: "pulse", color: settings.idleColor }
+          } else if (settings.idleScheme === "blink") {
+            idleMode = { mode: "idle", scheme: "blink", color: settings.idleColor }
+          } else {
+            idleMode = { mode: "idle", scheme: "rainbow" }
+          }
+        }
+
         fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "idle" }),
+          body: JSON.stringify(idleMode),
         }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, displayDuration)
     } catch (error) {
