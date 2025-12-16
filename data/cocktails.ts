@@ -51,7 +51,7 @@ export const cocktails: Cocktail[] = [
     recipe: [
       { ingredientId: "malibu", amount: 80 },
       { ingredientId: "pineapple-juice", amount: 150 },
-      // Cream of Coconut to be added manually
+      // Cream of Coconut add manually
     ],
   },
   {
@@ -89,7 +89,13 @@ export const cocktails: Cocktail[] = [
     description: "Refreshing cocktail with passion fruit and vanilla",
     image: "/images/cocktails/solero.jpg",
     alcoholic: true,
-    ingredients: ["100ml Passion Fruit Juice", "80ml Orange Juice", "20ml Lime Juice", "20ml Vanilla Syrup", "60ml Vodka"],
+    ingredients: [
+      "100ml Passion Fruit Juice",
+      "80ml Orange Juice",
+      "20ml Lime Juice",
+      "20ml Vanilla Syrup",
+      "60ml Vodka",
+    ],
     recipe: [
       { ingredientId: "passion-fruit-juice", amount: 100 },
       { ingredientId: "orange-juice", amount: 80 },
@@ -127,7 +133,7 @@ export const cocktails: Cocktail[] = [
     description: "Classic cocktail with rum, lime and mint",
     image: "/images/cocktails/mojito.jpg",
     alcoholic: true,
-    ingredients: ["60ml Rum", "60ml Lime Juice", "100ml Soda Water (manual)", "Fresh Mint Leaves"],
+    ingredients: ["60ml Rum", "60ml Lime Juice", "100ml Soda Water (manual)", "Fresh mint leaves"],
     recipe: [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "lime-juice", amount: 60 },
@@ -268,7 +274,13 @@ export const cocktails: Cocktail[] = [
     description: "Classic tiki cocktail with dark rum and almond syrup",
     image: "/images/cocktails/mai_tai.jpg",
     alcoholic: true,
-    ingredients: ["60ml Dark Rum", "15ml Orange Liqueur", "50ml Pineapple Juice", "15ml Almond Syrup", "20ml Lime Juice"],
+    ingredients: [
+      "60ml Dark Rum",
+      "15ml Orange Liqueur",
+      "50ml Pineapple Juice",
+      "15ml Almond Syrup",
+      "20ml Lime Juice",
+    ],
     recipe: [
       { ingredientId: "dark-rum", amount: 60 },
       { ingredientId: "triple-sec", amount: 15 },
@@ -277,7 +289,6 @@ export const cocktails: Cocktail[] = [
       { ingredientId: "lime-juice", amount: 20 },
     ],
   },
-  // New non-alcoholic cocktails with images
   {
     id: "tropical-sunrise",
     name: "Tropical Sunrise",
@@ -382,12 +393,12 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Ice Cubes",
+        name: "Ice cubes",
         amount: "200g",
         instruction: "Fill glass halfway with ice",
       },
       {
-        name: "Orange Slice",
+        name: "Orange slice",
         amount: "1 slice",
         instruction: "As garnish on glass rim",
       },
@@ -407,12 +418,12 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Soda Water",
+        name: "Soda water",
         amount: "50ml",
-        instruction: "For topping and fizz effect",
+        instruction: "To top up and for fizz effect",
       },
       {
-        name: "Lime Slice",
+        name: "Lime slice",
         amount: "1 slice",
         instruction: "As garnish",
       },
@@ -433,12 +444,12 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Crushed Ice",
+        name: "Crushed ice",
         amount: "150g",
         instruction: "For tropical feeling",
       },
       {
-        name: "Passion Fruit Pulp",
+        name: "Passion fruit pulp",
         amount: "1 tsp",
         instruction: "As topping on top",
       },
@@ -461,10 +472,10 @@ export const cocktails: Cocktail[] = [
       {
         name: "Cream",
         amount: "20ml",
-        instruction: "Pour carefully on top for layered effect",
+        instruction: "Carefully pour on top for layering effect",
       },
       {
-        name: "Orange Zest",
+        name: "Orange zest",
         amount: "1 pinch",
         instruction: "As aromatic topping",
       },
@@ -485,14 +496,14 @@ export const cocktails: Cocktail[] = [
     ],
     manualIngredients: [
       {
-        name: "Ice Cubes",
+        name: "Ice cubes",
         amount: "200g",
         instruction: "Fill glass completely with ice",
       },
       {
-        name: "Extra Grenadine",
+        name: "Extra grenadine",
         amount: "5ml",
-        instruction: "Let run down slowly on glass rim for sunrise effect",
+        instruction: "Slowly run down glass rim for sunrise effect",
       },
     ],
   },

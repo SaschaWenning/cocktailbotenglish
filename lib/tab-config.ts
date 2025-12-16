@@ -4,7 +4,7 @@ export interface TabConfig {
   icon?: string
   location: "main" | "service"
   passwordProtected?: boolean
-  alwaysVisible?: boolean // For tabs that must always be visible (e.g., Service menu)
+  alwaysVisible?: boolean // For tabs that must always be visible (e.g. Service Menu)
 }
 
 export interface AppConfig {
