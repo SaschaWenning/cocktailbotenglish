@@ -121,6 +121,7 @@ export default function LightingControl() {
         body = { mode: "off" }
       }
 
+      console.log("[v0] Sending lighting control request:", body)
       const res = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -150,10 +151,27 @@ export default function LightingControl() {
 
         setTimeout(async () => {
           console.log("[v0] Test complete, returning to idle mode")
+
+          let idleBody: any = {}
+          if (config.idleMode.scheme === "static" && config.idleMode.colors.length > 0) {
+            idleBody = { mode: "color", color: config.idleMode.colors[0] }
+          } else if (config.idleMode.scheme === "off") {
+            idleBody = { mode: "off" }
+          } else if (config.idleMode.scheme === "pulse" || config.idleMode.scheme === "blink") {
+            idleBody = {
+              mode: "idle",
+              scheme: config.idleMode.scheme,
+              color: config.idleMode.colors.length > 0 ? config.idleMode.colors[0] : "#ffffff",
+            }
+          } else {
+            idleBody = { mode: "idle", scheme: config.idleMode.scheme }
+          }
+
+          console.log("[v0] Returning to idle with body:", idleBody)
           await fetch("/api/lighting-control", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ mode: "idle" }),
+            body: JSON.stringify(idleBody),
           })
         }, 3000)
       } else {
@@ -168,8 +186,8 @@ export default function LightingControl() {
       console.error("[v0] Error applying lighting:", error)
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       toast({
-        title: "Application Error",
-        description: `Lighting could not be applied: ${errorMessage}`,
+        title: "Error",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
