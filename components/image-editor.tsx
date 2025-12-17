@@ -37,6 +37,7 @@ export default function ImageEditor({ isOpen, onClose, cocktail, onSave }: Image
       return
     }
 
+    // Test the path with the API
     try {
       const response = await fetch(`/api/test-image?path=${encodeURIComponent(url)}`)
       const results = await response.json()
@@ -141,7 +142,7 @@ export default function ImageEditor({ isOpen, onClose, cocktail, onSave }: Image
             {testResults && (
               <div className="text-xs bg-gray-800 p-3 rounded font-mono max-h-40 overflow-y-auto">
                 <div className="text-green-400 mb-2">
-                  Working: {testResults.workingPaths.length} of {testResults.testResults.length}
+                  Works: {testResults.workingPaths.length} of {testResults.testResults.length}
                 </div>
                 {testResults.testResults.map((result: any, index: number) => (
                   <div key={index} className={result.exists ? "text-green-400" : "text-red-400"}>

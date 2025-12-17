@@ -8,20 +8,20 @@ interface AlphaKeyboardProps {
   onBackspace: () => void
   onClear: () => void
   onConfirm: () => void
-  onCancel?: () => void // Füge optionale onCancel Funktion hinzu
+  onCancel?: () => void // Add optional onCancel function
 }
 
 export default function AlphaKeyboard({ onKeyPress, onBackspace, onClear, onConfirm, onCancel }: AlphaKeyboardProps) {
-  // Erste Reihe: q bis p (10 Tasten)
+  // First row: q to p (10 keys)
   const row1 = ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p"]
-  // Zweite Reihe: a bis l (9 Tasten)
+  // Second row: a to l (9 keys)
   const row2 = ["a", "s", "d", "f", "g", "h", "j", "k", "l"]
-  // Dritte Reihe: y bis m (7 Tasten) - y und z vertauscht für deutsches Layout
+  // Third row: y to m (7 keys) - y and z swapped for German layout
   const row3 = ["y", "x", "c", "v", "b", "n", "m"]
 
   return (
     <div className="bg-black border border-[hsl(var(--cocktail-card-border))] rounded-lg p-1.5 shadow-lg max-w-sm mx-auto">
-      {/* Erste Reihe - 10 Tasten */}
+      {/* First row - 10 keys */}
       <div className="grid grid-cols-10 gap-0.5 mb-0.5">
         {row1.map((key) => (
           <Button
@@ -53,7 +53,7 @@ export default function AlphaKeyboard({ onKeyPress, onBackspace, onClear, onConf
         {row3.map((key) => (
           <Button
             key={key}
-            className="h-6 text-xs font-medium bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] active:bg-[hsl(var(--cocktail-primary))] active:text-black transition-colors"
+            className="h-6 text-xs font-medium bg-[hsl(var(--cocktail-card-bg))] text-white border-[hsl(var(--cocktail-card-border))] hover:bg-[hsl(var(--cocktail-card-border))] hover:text-[hsl(var(--cocktail-primary))] active:bg-[hsl(var(--cocktail-primary))] active:text-black transition-colors"
             onClick={() => onKeyPress(key)}
           >
             {key.toUpperCase()}

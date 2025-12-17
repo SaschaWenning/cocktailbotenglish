@@ -11,10 +11,9 @@ import { toast } from "@/components/ui/use-toast"
 
 interface TabConfigSettingsProps {
   onClose: () => void
-  open: boolean
 }
 
-export default function TabConfigSettings({ onClose, open }: TabConfigSettingsProps) {
+export default function TabConfigSettings({ onClose }: TabConfigSettingsProps) {
   const [config, setConfig] = useState<AppConfig | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -23,33 +22,19 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
 
   useEffect(() => {
     loadConfig()
-  }, [open])
+  }, [])
 
   const loadConfig = async () => {
     try {
       setLoading(true)
+      console.log("[v0] Loading tab configuration...")
 
-      let currentConfig: AppConfig
+      const response = await fetch("/api/tab-config")
+      if (!response.ok) throw new Error("Failed to load tab config")
 
-      try {
-        console.log("[v0] Loading tab config in settings...")
-        const stored = localStorage.getItem("tab-config")
-        if (stored) {
-          console.log("[v0] Found stored config in localStorage")
-          currentConfig = JSON.parse(stored)
-        } else {
-          console.log("[v0] No stored config, fetching from API")
-          const response = await fetch("/api/tab-config")
-          if (!response.ok) throw new Error("Failed to load tab config")
-          currentConfig = await response.json()
-          localStorage.setItem("tab-config", JSON.stringify(currentConfig))
-        }
-      } catch (error) {
-        console.error("[v0] Error loading tab config:", error)
-        currentConfig = defaultTabConfig
-      }
+      const currentConfig: AppConfig = await response.json()
+      console.log("[v0] Tab config loaded:", currentConfig)
 
-      console.log("[v0] Loaded config in settings:", currentConfig)
       setConfig(currentConfig)
       setOriginalConfig(JSON.parse(JSON.stringify(currentConfig)))
       setHasChanges(false)
@@ -57,9 +42,11 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
       console.error("[v0] Error loading tab config:", error)
       toast({
         title: "Error",
-        description: "Could not load configuration.",
+        description: "Configuration could not be loaded.",
         variant: "destructive",
       })
+      setConfig(defaultTabConfig)
+      setOriginalConfig(JSON.parse(JSON.stringify(defaultTabConfig)))
     } finally {
       setLoading(false)
     }
@@ -70,34 +57,27 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
 
     try {
       setSaving(true)
+      console.log("[v0] Saving tab configuration:", config)
 
-      console.log("[v0] Saving tab config to localStorage:", config)
-      localStorage.setItem("tab-config", JSON.stringify(config))
+      const response = await fetch("/api/tab-config", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(config),
+      })
 
-      try {
-        const response = await fetch("/api/tab-config", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(config),
-        })
-
-        if (!response.ok) {
-          console.warn("[v0] API save failed, but localStorage save succeeded")
-        } else {
-          console.log("[v0] Successfully synced to API")
-        }
-      } catch (error) {
-        console.warn("[v0] API save failed, but localStorage save succeeded:", error)
+      if (!response.ok) {
+        throw new Error("Failed to save tab config")
       }
 
+      console.log("[v0] Tab config saved successfully")
       setOriginalConfig(JSON.parse(JSON.stringify(config)))
       setHasChanges(false)
 
       toast({
         title: "Saved",
-        description: "Tab configuration has been saved successfully.",
+        description: "Tab configuration was successfully saved.",
       })
 
       setTimeout(() => {
@@ -107,7 +87,7 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
       console.error("[v0] Error saving config:", error)
       toast({
         title: "Error",
-        description: "Could not save configuration.",
+        description: "Configuration could not be saved.",
         variant: "destructive",
       })
     } finally {
@@ -320,7 +300,7 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold" style={{ color: "hsl(var(--cocktail-text))" }}>
-              Loading Configuration
+              Loading configuration
             </h3>
             <p style={{ color: "hsl(var(--cocktail-text-muted))" }}>Please wait...</p>
           </div>
@@ -341,16 +321,16 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-semibold" style={{ color: "hsl(var(--cocktail-text))" }}>
-              Loading Error
+              Error loading
             </h3>
-            <p style={{ color: "hsl(var(--cocktail-error))" }}>Could not load configuration.</p>
+            <p style={{ color: "hsl(var(--cocktail-error))" }}>Configuration could not be loaded.</p>
           </div>
           <Button
             onClick={loadConfig}
             className="mt-6 text-white"
             style={{ backgroundColor: "hsl(var(--cocktail-primary))" }}
           >
-            Try Again
+            Try again
           </Button>
         </div>
       </div>
@@ -379,7 +359,7 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
               Settings
             </h1>
             <p className="text-lg" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-              Configure your tab layout
+              Configure your tab arrangement
             </p>
           </div>
           <div className="flex gap-3">
@@ -435,7 +415,7 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
               style={{ backgroundColor: "hsl(var(--cocktail-primary))" }}
             />
             <p className="font-medium" style={{ color: "hsl(var(--cocktail-primary))" }}>
-              You have unsaved changes. Click "Save" to apply them.
+              You have unsaved changes. Click "Save" to apply the changes.
             </p>
           </div>
         </div>
@@ -461,8 +441,8 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
                 How does it work?
               </h3>
               <p className="leading-relaxed" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                Here you can configure which tabs appear in the main navigation and which ones in the service menu. Use
-                the arrow buttons to move tabs between areas. The service menu always remains available in the main
+                Here you can configure which tabs are displayed in the main navigation and which in the service menu.
+                Use the arrow keys to move tabs between areas. The service menu always remains available in the main
                 navigation.
               </p>
             </div>
@@ -633,7 +613,7 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
                 <ArrowLeft className="h-4 w-4" style={{ color: "hsl(var(--cocktail-primary))" }} />
               </div>
               <span className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                To main navigation
+                To Main Navigation
               </span>
             </div>
             <div
@@ -644,10 +624,10 @@ export default function TabConfigSettings({ onClose, open }: TabConfigSettingsPr
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: "hsl(var(--cocktail-card-bg))" }}
               >
-                <ArrowRight className="h-4 w-4" style={{ color: "hsl(var(--cocktail-text-muted))" }} />
+                <ArrowRight className="h-4 w-4" style={{ color: "hsl(var(--cocktail-primary))" }} />
               </div>
               <span className="text-sm" style={{ color: "hsl(var(--cocktail-text-muted))" }}>
-                To service menu
+                To Service Menu
               </span>
             </div>
           </div>

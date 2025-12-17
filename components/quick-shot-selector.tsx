@@ -34,11 +34,11 @@ export default function QuickShotSelector({ pumpConfig, ingredientLevels, onShot
     loadIngredients()
   }, [])
 
-  const shotSize = 20 // Feste Größe: 20ml
+  const shotSize = 20 // Fixed size: 20ml
 
   const getAllAvailableIngredients = () => {
     return pumpConfig
-      .filter((pump) => pump.enabled) // Nur aktivierte Pumpen anzeigen
+      .filter((pump) => pump.enabled) // Only show enabled pumps
       .map((pump) => {
         const ingredient = allIngredients.find((i) => i.id === pump.ingredient)
         const ingredientName = ingredient?.name || pump.ingredient.replace(/^custom-\d+-/, "")

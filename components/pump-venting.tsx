@@ -22,14 +22,14 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
 
   const enabledPumps = pumpConfig.filter((pump) => pump.enabled)
 
-  // Automatic Venting of all pumps
+  // Automatic venting of all pumps
   const startAutoVenting = async () => {
     setAutoVentingStatus("venting")
     setProgress(0)
     setPumpsDone([])
     setCurrentPump(null)
 
-    // Vent each pump sequentially for 2 seconds
+    // Vent each pump in sequence for 2 seconds
     for (let i = 0; i < enabledPumps.length; i++) {
       const pump = enabledPumps[i]
       setCurrentPump(pump.id)
@@ -87,7 +87,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
             Automatic Venting
           </CardTitle>
           <CardDescription className="text-[hsl(var(--cocktail-text-muted))]">
-            Vent all pumps sequentially for 2 seconds
+            Vent all pumps in sequence for 2 seconds
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -95,7 +95,7 @@ export default function PumpVenting({ pumpConfig }: PumpVentingProps) {
             <AlertDescription className="text-[hsl(var(--cocktail-text))] text-sm">
               <p className="font-medium mb-1">Preparation:</p>
               <p>
-                Place a collection container under the outlets and ensure all suction hoses are in their respective
+                Place a collection container under the outlets and ensure all suction hoses are in the respective
                 liquids.
               </p>
             </AlertDescription>
