@@ -15,15 +15,15 @@ export interface LightingConfig {
 
 export const defaultConfig: LightingConfig = {
   cocktailPreparation: {
-    color: "#ff0000", // Red for preparation
+    color: "#ff0000", // Rot für Zubereitung
     blinking: true,
   },
   cocktailFinished: {
-    color: "#00ff00", // Green for finished
+    color: "#00ff00", // Grün für fertig
     blinking: false,
   },
   idleMode: {
     scheme: "static",
-    colors: ["#0000ff"], // Blue for idle
+    colors: ["#0000ff"], // Blau für Idle
   },
 }

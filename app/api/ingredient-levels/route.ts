@@ -18,14 +18,6 @@ export async function GET() {
       })),
     })
   } catch (error) {
-    // This allows the frontend to use localStorage fallback
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return NextResponse.json({
-        success: true,
-        levels: [],
-      })
-    }
-
     console.error("Error loading ingredient levels:", error)
     return NextResponse.json(
       {

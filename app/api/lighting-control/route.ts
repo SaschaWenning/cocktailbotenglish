@@ -6,12 +6,11 @@ import path from "path"
 const execFileAsync = promisify(execFile)
 
 async function runLed(...args: string[]): Promise<void> {
+  const scriptPath = path.join(process.cwd(), "led_client.py")
+  console.log("[v0] LED command:", { scriptPath, args })
   try {
-    const scriptPath = path.join(process.cwd(), "scripts", "led_client.py")
-    console.log("[v0] Running LED command:", scriptPath, args)
-    const { stdout, stderr } = await execFileAsync("python3", [scriptPath, ...args])
-    if (stdout) console.log("[v0] LED stdout:", stdout)
-    if (stderr) console.error("[v0] LED stderr:", stderr)
+    const result = await execFileAsync("python3", [scriptPath, ...args])
+    console.log("[v0] LED command success:", result)
   } catch (error) {
     console.error("[v0] LED command failed:", error)
     throw error
@@ -35,13 +34,15 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Lighting control POST request:", { mode, color, brightness, blinking, scheme })
 
+    if (mode === "brightness" && brightness !== undefined) {
+      await runLed("BRIGHT", String(brightness))
+      console.log(`[v0] LED Brightness set to: ${brightness}`)
+      return NextResponse.json({ success: true })
+    }
+
     if (brightness !== undefined) {
       await runLed("BRIGHT", String(brightness))
       console.log(`[v0] LED Brightness set to: ${brightness}`)
-    }
-
-    if (mode === "brightness") {
-      return NextResponse.json({ success: true })
     }
 
     await sendLightingControlCommand(mode, color, brightness, blinking, scheme)
@@ -57,12 +58,26 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     console.log("[v0] Lighting control GET request - testing with rainbow")
-    await runLed("RAINBOW")
+    await runLed("RAINBOW", "30")
     return NextResponse.json({ success: true, message: "Rainbow test started" })
   } catch (error) {
     console.error("[v0] Error testing lighting:", error)
     return NextResponse.json({ error: "Failed to test lighting" }, { status: 500 })
   }
+}
+
+async function loadIdleConfig() {
+  try {
+    const configResponse = await fetch("http://localhost:3000/api/lighting-config")
+    if (configResponse.ok) {
+      const config = await configResponse.json()
+      return config.idleMode
+    }
+  } catch (error) {
+    console.error("[v0] Error loading idle config:", error)
+  }
+  // Fallback to rainbow
+  return { scheme: "rainbow", colors: [] }
 }
 
 async function sendLightingControlCommand(
@@ -73,49 +88,100 @@ async function sendLightingControlCommand(
   scheme?: string,
 ) {
   try {
-    console.log("[v0] sendLightingControlCommand:", { mode, color, brightness, blinking, scheme })
-
     switch (mode) {
       case "cocktailPreparation":
       case "preparation":
-        const prepRgb = { r: 255, g: 0, b: 0 }
-        await runLed("BLINK", String(prepRgb.r), String(prepRgb.g), String(prepRgb.b))
-        console.log(`[v0] LED: Preparation BLINK RGB(${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
+        try {
+          const configResponse = await fetch("http://localhost:3000/api/lighting-config")
+          if (configResponse.ok) {
+            const config = await configResponse.json()
+            const prepColor = config.cocktailPreparation?.color || "#ffff00"
+            const rgb = hexToRgb(prepColor)
+            if (rgb && config.cocktailPreparation?.blinking) {
+              await runLed("BLINK", String(rgb.r), String(rgb.g), String(rgb.b))
+              console.log(`[v0] LED Mode: Preparation (BLINK RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
+            } else if (rgb) {
+              await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
+              console.log(`[v0] LED Mode: Preparation (COLOR RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
+            } else {
+              await runLed("BUSY")
+              console.log("[v0] LED Mode: Preparation (BUSY fallback)")
+            }
+          } else {
+            await runLed("BUSY")
+            console.log("[v0] LED Mode: Preparation (BUSY fallback)")
+          }
+        } catch (error) {
+          await runLed("BUSY")
+          console.log("[v0] LED Mode: Preparation (BUSY fallback)")
+        }
         break
 
       case "cocktailFinished":
       case "finished":
-        const finishRgb = { r: 0, g: 255, b: 0 }
-        await runLed("COLOR", String(finishRgb.r), String(finishRgb.g), String(finishRgb.b))
-        console.log(`[v0] LED: Finished COLOR RGB(${finishRgb.r}, ${finishRgb.g}, ${finishRgb.b})`)
+        try {
+          const configResponse = await fetch("http://localhost:3000/api/lighting-config")
+          if (configResponse.ok) {
+            const config = await configResponse.json()
+            const finishColor = config.cocktailFinished?.color || "#00ff00"
+            const rgb = hexToRgb(finishColor)
+            if (rgb && config.cocktailFinished?.blinking) {
+              await runLed("BLINK", String(rgb.r), String(rgb.g), String(rgb.b))
+              console.log(`[v0] LED Mode: Finished (BLINK RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
+            } else if (rgb) {
+              await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
+              console.log(`[v0] LED Mode: Finished (COLOR RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
+            } else {
+              await runLed("READY")
+              console.log("[v0] LED Mode: Finished (READY fallback)")
+            }
+          } else {
+            await runLed("READY")
+            console.log("[v0] LED Mode: Finished (READY fallback)")
+          }
+        } catch (error) {
+          await runLed("READY")
+          console.log("[v0] LED Mode: Finished (READY fallback)")
+        }
         break
 
       case "idle":
-        if (scheme === "pulse" && color) {
-          const rgb = hexToRgb(color)
-          if (rgb) {
-            await runLed("PULSE", String(rgb.r), String(rgb.g), String(rgb.b))
-            console.log(`[v0] LED: Idle PULSE RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
-          }
-        } else if (scheme === "blink" && color) {
-          const rgb = hexToRgb(color)
-          if (rgb) {
-            await runLed("BLINK", String(rgb.r), String(rgb.g), String(rgb.b))
-            console.log(`[v0] LED: Idle BLINK RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
-          }
-        } else if (scheme === "static" && color) {
-          const rgb = hexToRgb(color)
+        const idleConfig = await loadIdleConfig()
+        console.log("[v0] Applying saved idle config:", idleConfig)
+
+        if (idleConfig.scheme === "rainbow") {
+          await runLed("RAINBOW")
+          console.log("[v0] LED Mode: Idle (Rainbow)")
+        } else if (idleConfig.scheme === "static" && idleConfig.colors.length > 0) {
+          const rgb = hexToRgb(idleConfig.colors[0])
           if (rgb) {
             await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
-            console.log(`[v0] LED: Idle STATIC RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
+            console.log(`[v0] LED Mode: Idle (Static RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
           }
-        } else if (scheme === "off") {
+        } else if (idleConfig.scheme === "pulse" && idleConfig.colors.length > 0) {
+          const rgb = hexToRgb(idleConfig.colors[0])
+          if (rgb) {
+            await runLed("PULSE", String(rgb.r), String(rgb.g), String(rgb.b))
+            console.log(`[v0] LED Mode: Idle (PULSE RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
+          }
+        } else if (idleConfig.scheme === "blink" && idleConfig.colors.length > 0) {
+          const rgb = hexToRgb(idleConfig.colors[0])
+          if (rgb) {
+            await runLed("BLINK", String(rgb.r), String(rgb.g), String(rgb.b))
+            console.log(`[v0] LED Mode: Idle (BLINK RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
+          }
+        } else if (idleConfig.scheme === "off") {
           await runLed("OFF")
-          console.log("[v0] LED: Idle OFF")
+          console.log("[v0] LED Mode: Idle (Off)")
         } else {
-          await runLed("PULSE", "255", "255", "255")
-          console.log("[v0] LED: Idle PULSE white (fallback)")
+          await runLed("RAINBOW")
+          console.log("[v0] LED Mode: Idle (Fallback Rainbow)")
         }
+        break
+
+      case "off":
+        await runLed("OFF")
+        console.log("[v0] LED Mode: Off")
         break
 
       case "color":
@@ -123,14 +189,9 @@ async function sendLightingControlCommand(
           const rgb = hexToRgb(color)
           if (rgb) {
             await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
-            console.log(`[v0] LED: COLOR RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
+            console.log(`[v0] LED color set: RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
           }
         }
-        break
-
-      case "off":
-        await runLed("OFF")
-        console.log("[v0] LED: OFF")
         break
 
       default:
@@ -139,9 +200,10 @@ async function sendLightingControlCommand(
 
     return true
   } catch (error) {
-    console.error("[v0] Error sending LED command:", error)
-    throw error
+    console.error("[v0] Error sending lighting control command:", error)
+    return false
   }
 }
 
+export const runtime = "nodejs"
 export const dynamic = "force-dynamic"

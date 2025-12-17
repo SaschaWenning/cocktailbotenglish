@@ -4,13 +4,14 @@ export interface TabConfig {
   icon?: string
   location: "main" | "service"
   passwordProtected?: boolean
-  alwaysVisible?: boolean // Comment translated: For tabs that must always be visible (e.g. Service menu)
+  alwaysVisible?: boolean // For tabs that must always be visible (e.g. Service Menu)
 }
 
 export interface AppConfig {
   tabs: TabConfig[]
 }
 
+// Default configuration
 export const defaultTabConfig: AppConfig = {
   tabs: [
     {
@@ -74,7 +75,7 @@ export const defaultTabConfig: AppConfig = {
       passwordProtected: true,
     },
     {
-      id: "lighting",
+      id: "beleuchtung",
       name: "Lighting",
       location: "service",
       passwordProtected: true,

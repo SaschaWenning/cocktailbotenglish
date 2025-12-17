@@ -36,5 +36,3 @@ export async function hexToRgb(hex: string): Promise<{ r: number; g: number; b: 
       }
     : null
 }
-
-// Additional utility functions can be added here

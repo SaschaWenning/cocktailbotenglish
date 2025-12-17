@@ -5,12 +5,12 @@ import type { PumpConfig } from "@/types/pump"
 
 // Check if we're in a Node.js environment
 function isNodeEnvironment(): boolean {
-  try {
-    // More reliable check for Node.js environment
-    return typeof process !== "undefined" && process.release !== undefined && process.release.name === "node"
-  } catch {
-    return false
-  }
+  return (
+    typeof process !== "undefined" &&
+    process.versions != null &&
+    process.versions.node != null &&
+    typeof window === "undefined"
+  )
 }
 
 let fs: typeof import("fs/promises") | null = null
@@ -332,7 +332,7 @@ export async function makeCocktailAction(cocktail: Cocktail, pumpConfig: PumpCon
   const delayedItems = scaledRecipe.filter((item) => item.delayed === true)
   const immediateItems = scaledRecipe.filter((item) => item.delayed !== true)
 
-  console.log(`[v0] Sofortige Zutaten: ${immediateItems.length}, Verzögerte Zutaten: ${delayedItems.length}`)
+  console.log(`[v0] Immediate ingredients: ${immediateItems.length}, Delayed ingredients: ${delayedItems.length}`)
 
   // Sammle Pumpen-Updates für Level-Reduktion
   const levelUpdates: { pumpId: number; amount: number }[] = []
@@ -362,10 +362,10 @@ export async function makeCocktailAction(cocktail: Cocktail, pumpConfig: PumpCon
   await Promise.all(immediatePumpPromises)
 
   if (delayedItems.length > 0) {
-    console.log(`[v0] Warte 2 Sekunden vor dem Hinzufügen von ${delayedItems.length} verzögerten Zutaten...`)
+    console.log(`[v0] Waiting 2 seconds before adding ${delayedItems.length} delayed ingredients...`)
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    // Füge verzögerte Zutaten hinzu
+    // Add delayed ingredients
     for (const item of delayedItems) {
       const pump = pumpConfig.find((p) => p.ingredient === item.ingredientId)
 

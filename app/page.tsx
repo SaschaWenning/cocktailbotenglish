@@ -32,44 +32,9 @@ import { Progress } from "@/components/ui/progress"
 import { Check, GlassWater } from "lucide-react"
 import TermsOfService from "@/components/terms-of-service"
 import LightingControl from "@/components/lighting-control"
-import { defaultTabConfig } from "@/lib/tab-config" // Import defaultTabConfig
 
 // Anzahl der Cocktails pro Seite
 const COCKTAILS_PER_PAGE = 9
-
-const migrateTabConfig = (config: AppConfig): AppConfig => {
-  const germanToEnglishMap: Record<string, { id: string; name: string }> = {
-    Alkoholfrei: { id: "virgin", name: "Non-Alcoholic" },
-    "Neues Rezept": { id: "recipe-creator", name: "New Recipe" },
-    Füllstände: { id: "levels", name: "Fill Levels" },
-    Zutaten: { id: "ingredients", name: "Ingredients" },
-    Kalibrierung: { id: "calibration", name: "Calibration" },
-    Reinigung: { id: "cleaning", name: "Cleaning" },
-    Entlüften: { id: "venting", name: "Venting" },
-    "Ausgeblendete Cocktails": { id: "hidden-cocktails", name: "Hidden Cocktails" },
-    Beleuchtung: { id: "lighting", name: "Lighting" },
-    Servicemenü: { id: "service", name: "Service Menu" },
-  }
-
-  const migratedTabs = config.tabs.map((tab) => {
-    // Check if the tab name is German
-    if (germanToEnglishMap[tab.name]) {
-      const englishTab = germanToEnglishMap[tab.name]
-      console.log(`[v0] Migrating tab "${tab.name}" to "${englishTab.name}"`)
-      return {
-        ...tab,
-        id: englishTab.id,
-        name: englishTab.name,
-      }
-    }
-    return tab
-  })
-
-  return {
-    ...config,
-    tabs: migratedTabs,
-  }
-}
 
 export default function Home() {
   const [selectedCocktail, setSelectedCocktail] = useState<Cocktail | null>(null)
@@ -111,11 +76,6 @@ export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const [showTerms, setShowTerms] = useState(false)
-
-  // Added states for the makeCocktail function updates
-  const [currentCocktail, setCurrentCocktail] = useState<Cocktail | null>(null)
-  const [currentSize, setCurrentSize] = useState<"small" | "medium" | "large" | null>(null)
-  const [showPreparationDialog, setShowPreparationDialog] = useState(false)
 
   const handleCocktailPageChange = (page: number) => {
     setCurrentPage(page)
@@ -182,53 +142,20 @@ export default function Home() {
 
   const loadAndApplyIdleLighting = async () => {
     try {
-      console.log("[v0] Page: Loading and applying idle LED configuration...")
-
-      // Load saved settings
-      const savedSettings = localStorage.getItem("led-settings")
-      let idleMode: any = { mode: "idle", scheme: "rainbow" }
-      let brightness: number | undefined
-
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings)
-        console.log("[v0] Page: Loaded LED settings from localStorage:", settings)
-
-        if (settings.idleScheme === "static") {
-          idleMode = { mode: "color", color: settings.idleColor }
-        } else if (settings.idleScheme === "off") {
-          idleMode = { mode: "off" }
-        } else if (settings.idleScheme === "pulse") {
-          idleMode = { mode: "idle", scheme: "pulse", color: settings.idleColor }
-        } else if (settings.idleScheme === "blink") {
-          idleMode = { mode: "idle", scheme: "blink", color: settings.idleColor }
-        } else {
-          idleMode = { mode: "idle", scheme: "rainbow" }
-        }
-
-        brightness = settings.brightness
-      }
-
-      if (brightness !== undefined) {
-        idleMode.brightness = brightness
-      }
-
-      console.log("[v0] Page: Applying idle mode:", idleMode)
+      console.log("[v0] Loading and applying idle LED configuration...")
       const response = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(idleMode),
+        body: JSON.stringify({ mode: "idle" }),
       })
 
-      console.log(`[v0] Page: Idle LED response status: ${response.status}`)
-
       if (response.ok) {
-        console.log("[v0] Page: Idle LED configuration applied successfully")
+        console.log("[v0] Idle LED configuration applied successfully")
       } else {
-        const errorText = await response.text()
-        console.error("[v0] Page: Failed to apply idle LED configuration:", response.status, errorText)
+        console.error("[v0] Failed to apply idle LED configuration:", response.status)
       }
     } catch (error) {
-      console.error("[v0] Page: Error applying idle LED configuration:", error)
+      console.error("[v0] Error applying idle LED configuration:", error)
     }
   }
 
@@ -285,7 +212,7 @@ export default function Home() {
         setCocktailsData(cocktails)
       }
     } catch (error) {
-      console.error("Error loading data:", error)
+      console.error("Fehler beim Laden der Daten:", error)
       console.log("[v0] Using empty fallback - no server imports in browser")
       setCocktailsData([])
     }
@@ -296,7 +223,7 @@ export default function Home() {
       const config = await getPumpConfig()
       setPumpConfig(config)
     } catch (error) {
-      console.error("Error loading pump configuration:", error)
+      console.error("Fehler beim Laden der Pumpenkonfiguration:", error)
       console.log("[v0] Using fallback pump configuration")
       setPumpConfig(initialPumpConfig)
     }
@@ -331,7 +258,7 @@ export default function Home() {
       const lowLevels = levels.filter((level) => level.currentAmount < 100)
       setLowIngredients(lowLevels.map((level) => level.ingredientId))
     } catch (error) {
-      console.error("Error loading ingredient levels:", error)
+      console.error("Fehler beim Laden der Füllstände:", error)
       console.log("[v0] Using empty ingredient levels as fallback")
       const defaultLevels: IngredientLevel[] = initialPumpConfig.map((pump) => ({
         pumpId: pump.id,
@@ -351,7 +278,7 @@ export default function Home() {
       const ingredients = await getAllIngredients()
       setAllIngredientsData(ingredients)
     } catch (error) {
-      console.error("Error loading ingredients:", error)
+      console.error("Fehler beim Laden der Zutaten:", error)
       console.log("[v0] Using empty fallback ingredients - no server imports in browser")
       setAllIngredientsData([])
     }
@@ -359,35 +286,25 @@ export default function Home() {
 
   const loadTabConfig = async () => {
     try {
-      console.log("[v0] Loading tab configuration from localStorage...")
-      const stored = localStorage.getItem("tab-config")
-      let config: AppConfig
+      console.log("[v0] Loading tab config from API...")
+      const response = await fetch("/api/tab-config")
 
-      if (stored) {
-        console.log("[v0] Found tab config in localStorage")
-        const parsedConfig = JSON.parse(stored)
-
-        config = migrateTabConfig(parsedConfig)
-
-        // Save the migrated config back to localStorage
-        localStorage.setItem("tab-config", JSON.stringify(config))
-        console.log("[v0] Migrated and saved tab config:", config)
-      } else {
-        console.log("[v0] No localStorage config found, using default")
-        config = defaultTabConfig
-        localStorage.setItem("tab-config", JSON.stringify(config))
-        console.log("[v0] Saved default config to localStorage")
+      if (!response.ok) {
+        console.error("[v0] Tab config API response not ok:", response.status, response.statusText)
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
+      const config: AppConfig = await response.json()
       const mainTabIds = config.tabs.filter((tab) => tab.location === "main").map((tab) => tab.id)
 
-      console.log("[v0] Final tab config to apply:", config)
+      console.log("[v0] Tab config loaded successfully:", config)
       console.log("[v0] Main tab IDs:", mainTabIds)
       setTabConfig(config)
       setMainTabs(mainTabIds)
 
-      if (mainTabs.length > 0 && !mainTabs.includes(activeTab) && activeTab !== "service") {
-        setActiveTab(mainTabs[0])
+      if (mainTabIds.length > 0 && !mainTabIds.includes(activeTab) && activeTab !== "service") {
+        console.log("[v0] Setting active tab to first main tab:", mainTabIds[0])
+        setActiveTab(mainTabIds[0])
       }
     } catch (error) {
       console.error("[v0] Error loading tab config:", error)
@@ -522,15 +439,15 @@ export default function Home() {
       setShowDeleteConfirmation(false)
 
       toast({
-        title: "Cocktail Deleted",
-        description: `${cocktailToDelete.name} was successfully deleted.`,
+        title: "Cocktail gelöscht",
+        description: `${cocktailToDelete.name} wurde erfolgreich gelöscht.`,
       })
     } catch (error) {
-      console.error("Error deleting cocktail:", error)
+      console.error("Fehler beim Löschen des Cocktails:", error)
 
       toast({
-        title: "Error Deleting",
-        description: "The cocktail could not be deleted. Please try again.",
+        title: "Fehler beim Löschen",
+        description: "Der Cocktail konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
         variant: "destructive",
       })
     }
@@ -571,60 +488,35 @@ export default function Home() {
       return
     }
 
-    // Map selectedSize to the string literal types expected by makeCocktail
-    let sizeLiteral: "small" | "medium" | "large"
-    if (selectedSize <= 250) {
-      sizeLiteral = "small"
-    } else if (selectedSize <= 350) {
-      sizeLiteral = "medium"
-    } else {
-      sizeLiteral = "large"
-    }
-
     if (!pumpConfig || pumpConfig.length === 0) {
       console.log("[v0] PumpConfig not available, loading...")
       await loadPumpConfig()
       if (!pumpConfig || pumpConfig.length === 0) {
-        setErrorMessage("Pump configuration not available. Please try again.")
+        setErrorMessage("Pumpenkonfiguration nicht verfügbar. Bitte versuchen Sie es erneut.")
         return
       }
     }
 
+    setIsMaking(true)
+    setProgress(0)
+    setStatusMessage("Bereite Cocktail vor...")
     setErrorMessage(null)
     setManualIngredients([])
 
     try {
-      setIsMaking(true)
-      setProgress(0)
-      setCurrentCocktail(cocktail)
-      setCurrentSize(sizeLiteral)
-      setShowPreparationDialog(true)
-
       const currentPumpConfig = pumpConfig
 
       const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
       const scaleFactor = selectedSize / totalRecipeVolume
 
       const manualRecipeItems = cocktail.recipe
-        .filter((item) => item?.manual === true || item?.type === "manual")
-        .map((item) => {
-          const ingredientName =
-            allIngredientsData.reduce(
-              (acc, ingredient) => {
-                acc[ingredient.id] = { name: ingredient.name }
-                return acc
-              },
-              {} as Record<string, { name: string }>,
-            )?.[item.ingredientId]?.name ?? item.ingredientId.replace(/^custom-\d+-/, "")
-          const ml = Math.round((Number(item.amount) || 0) * scaleFactor)
-          return {
-            ingredientName,
-            ml,
-            instruction: item.instruction,
-          }
-        })
+        .filter((item) => item?.manual === true)
+        .map((item) => ({
+          ingredientId: item.ingredientId,
+          amount: Math.round(item.amount * scaleFactor),
+          instructions: undefined,
+        }))
 
-      console.log("[v0] Manual recipe items:", manualRecipeItems)
       setManualIngredients(manualRecipeItems)
 
       const estimatedDuration = calculateCocktailDuration(cocktail, currentPumpConfig, selectedSize)
@@ -641,7 +533,7 @@ export default function Home() {
       let intervalId: NodeJS.Timeout
       intervalId = setInterval(() => {
         setProgress((prev) => {
-          if (prev >= 100) {
+          if (prev >= 95) {
             clearInterval(intervalId)
             return prev
           }
@@ -649,55 +541,34 @@ export default function Home() {
         })
       }, progressInterval)
 
-      const savedSettings = localStorage.getItem("led-settings")
-      let prepMode: any = { mode: "cocktailPreparation", color: "#ff0000", blinking: true }
-
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings)
-        prepMode = {
-          mode: "cocktailPreparation",
-          color: settings.preparationColor || "#ff0000",
-          blinking: settings.preparationBlinking !== undefined ? settings.preparationBlinking : true,
-        }
+      try {
+        await fetch("/api/lighting-control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "cocktailPreparation" }),
+        })
+      } catch (error) {
+        console.error("[v0] Error activating preparation lighting:", error)
       }
 
-      console.log("[v0] Applying preparation mode:", prepMode)
-      await fetch("/api/lighting-control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(prepMode),
-      })
-
-      await makeCocktail(cocktail, sizeLiteral) // Call the actual makeCocktail function
+      const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
+      await makeCocktail(cocktail, currentPumpConfig, selectedSize, category)
 
       clearInterval(intervalId)
       setProgress(100)
 
       try {
-        const savedSettings = localStorage.getItem("led-settings")
-        let finishMode: any = { mode: "cocktailFinished", color: "#00ff00", blinking: false }
-
-        if (savedSettings) {
-          const settings = JSON.parse(savedSettings)
-          finishMode = {
-            mode: "cocktailFinished",
-            color: settings.finishedColor || "#00ff00",
-            blinking: settings.finishedBlinking !== undefined ? settings.finishedBlinking : false,
-          }
-        }
-
-        console.log("[v0] Applying finished mode:", finishMode)
         await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finishMode),
+          body: JSON.stringify({ mode: "cocktailFinished" }),
         })
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
       }
 
       if (manualRecipeItems.length > 0) {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) prepared automatically! Please add manual ingredients.`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) automatically prepared! Please add manual ingredients.`)
         setTimeout(() => {
           setShowManualIngredientsModal(true)
           setTimeout(() => {
@@ -706,7 +577,7 @@ export default function Home() {
           }, 6000)
         }, 2000)
       } else {
-        setStatusMessage(`${cocktail.name} (${selectedSize}ml) ready!`)
+        setStatusMessage(`${cocktail.name} (${selectedSize}ml) fertig!`)
       }
 
       setShowSuccess(true)
@@ -724,49 +595,20 @@ export default function Home() {
         setShowSuccess(false)
         setSelectedCocktail(null)
 
-        const savedSettings = localStorage.getItem("led-settings")
-        let idleMode: any = { mode: "idle", scheme: "rainbow" }
-
-        if (savedSettings) {
-          const settings = JSON.parse(savedSettings)
-          if (settings.idleScheme === "static") {
-            idleMode = { mode: "color", color: settings.idleColor }
-          } else if (settings.idleScheme === "off") {
-            idleMode = { mode: "off" }
-          } else if (settings.idleScheme === "pulse") {
-            idleMode = { mode: "idle", scheme: "pulse", color: settings.idleColor }
-          } else if (settings.idleScheme === "blink") {
-            idleMode = { mode: "idle", scheme: "blink", color: settings.idleColor }
-          } else {
-            idleMode = { mode: "idle", scheme: "rainbow" }
-          }
-        }
-
         fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(idleMode),
+          body: JSON.stringify({ mode: "idle" }),
         }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, displayDuration)
     } catch (error) {
-      console.error("[v0] Page: Error making cocktail:", error)
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
-      setStatusMessage("Error during preparation!")
-      setErrorMessage(error instanceof Error ? error.message : "Unknown error")
+      setStatusMessage("Fehler bei der Zubereitung!")
+      setErrorMessage(error instanceof Error ? error.message : "Unbekannter Fehler")
       setManualIngredients([])
-      setTimeout(() => {
-        setIsMaking(false)
-        setShowPreparationDialog(false)
-      }, 3000)
-    } finally {
-      // Ensure isMaking is reset, even if there's an error
-      // Note: The actual reset might happen inside the success/error timeouts as well.
-      // This is a safety net.
-      if (!isMaking) {
-        setIsMaking(false)
-      }
+      setTimeout(() => setIsMaking(false), 3000)
     }
   }
 
@@ -809,8 +651,7 @@ export default function Home() {
     )
 
     for (const recipeItem of cocktail.recipe) {
-      if (recipeItem.manual || recipeItem.type === "manual") {
-        console.log("[v0] Main page: Skipping manual ingredient", recipeItem.ingredientId)
+      if (recipeItem.manual) {
         continue
       }
 
@@ -884,21 +725,21 @@ export default function Home() {
 
       if (data.success) {
         toast({
-          title: "Exiting Kiosk Mode",
-          description: "The application will close in a few seconds.",
+          title: "Kiosk-Modus wird beendet",
+          description: "Die Anwendung wird in wenigen Sekunden geschlossen.",
         })
       } else {
         toast({
-          title: "Error",
-          description: "Kiosk mode could not be exited.",
+          title: "Fehler",
+          description: "Kiosk-Modus konnte nicht beendet werden.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error("Error exiting kiosk mode:", error)
+      console.error("Fehler beim Beenden des Kiosk-Modus:", error)
       toast({
-        title: "Error",
-        description: "Connection problem when exiting kiosk mode.",
+        title: "Fehler",
+        description: "Verbindungsproblem beim Beenden des Kiosk-Modus.",
         variant: "destructive",
       })
     }
@@ -933,8 +774,7 @@ export default function Home() {
 
     const imageExtensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg"]
 
-    // FIX: Declare extensionsToToTry before using it.
-    const extensionsToToTry = originalExt
+    const extensionsToTry = originalExt
       ? [originalExt, ...imageExtensions.filter((ext) => ext !== originalExt)]
       : imageExtensions
 
@@ -943,7 +783,7 @@ export default function Home() {
     const strategies: string[] = []
 
     for (const basePath of basePaths) {
-      for (const ext of extensionsToToTry) {
+      for (const ext of extensionsToTry) {
         strategies.push(`${basePath}${filenameWithoutExt}.${ext}`)
       }
       strategies.push(`${basePath}${filename}`)
@@ -1050,14 +890,14 @@ export default function Home() {
     )
 
     const manualRecipeItems = cocktail.recipe
-      .filter((item) => item?.manual === true || item?.type === "manual")
+      .filter((item) => item?.manual === true)
       .map((item) => {
         const ingredientName =
           ingredientLookup?.[item.ingredientId]?.name ?? item.ingredientId.replace(/^custom-\d+-/, "")
         const totalRecipeVolume = cocktail.recipe.reduce((t, it) => t + (Number(it?.amount) || 0), 0) || 1
         const scaleFactor = selectedSize / totalRecipeVolume
         const ml = Math.round((Number(item.amount) || 0) * scaleFactor)
-        return { ingredientName, ml, instruction: item.instruction } // Include the instruction/description
+        return { ingredientName, ml }
       })
 
     return (
@@ -1104,17 +944,17 @@ export default function Home() {
                         ingredientName = item.ingredientId.replace(/^custom-\d+-/, "")
                       }
 
-                      const isManual = item.manual === true || item.type === "manual"
-
                       return (
-                        <li key={index} className={`flex items-center ${isManual ? "opacity-60" : ""}`}>
+                        <li key={index} className={`flex items-center ${item.manual === true ? "opacity-60" : ""}`}>
                           <span className="mr-2 text-[hsl(var(--cocktail-primary))]">•</span>
                           <span>
                             {Math.round(
                               item.amount * (selectedSize / (cocktail.recipe.reduce((t, it) => t + it.amount, 0) || 1)),
                             )}
                             ml {ingredientName}
-                            {isManual && <span className="text-[hsl(var(--cocktail-text-muted))] ml-2">(manual)</span>}
+                            {item.manual === true && (
+                              <span className="text-[hsl(var(--cocktail-text-muted))] ml-2">(manual)</span>
+                            )}
                           </span>
                         </li>
                       )
@@ -1125,7 +965,7 @@ export default function Home() {
               <div className="md:w-2/5 flex flex-col">
                 <div className="flex flex-col items-center mb-6">
                   <h4 className="text-lg font-semibold mb-4 text-[hsl(var(--cocktail-text))] text-center">
-                    Cocktail Size:
+                    Cocktail size:
                   </h4>
                   <div className="flex gap-2 w-full justify-center">
                     {allAvailableSizes.map((size) => (
@@ -1169,7 +1009,7 @@ export default function Home() {
                     disabled={!ingredientsAvailable || isMaking}
                     className="w-full bg-[#00ff00] hover:bg-[#00ff00]/90 text-black font-bold py-3 px-6 rounded-lg text-base"
                   >
-                    {isMaking ? "Preparation in progress..." : "Prepare Cocktail"}
+                    {isMaking ? "Preparing..." : "Prepare Cocktail"}
                   </Button>
                   <Button
                     variant="outline"
@@ -1185,22 +1025,18 @@ export default function Home() {
           </div>
         </div>
         {isCompleted &&
+          // Translated text check from German to English
           statusMessage.includes("Please add manual ingredients.") &&
           cocktail &&
           manualRecipeItems.length > 0 && (
             <div className="mt-3 p-4 bg-[hsl(var(--cocktail-card-bg))]/50 rounded-b-lg">
-              <div className="font-medium text-foreground">
+              <div className="font-medium">
                 Please add the following ingredient{manualRecipeItems.length > 1 ? "s" : ""}:
               </div>
-              <ul className="list-disc pl-6 mt-1 space-y-1 text-foreground">
+              <ul className="list-disc pl-6 mt-1 space-y-1">
                 {manualRecipeItems.map((item, index) => (
                   <li key={index} className="text-base leading-tight">
-                    <div className="font-semibold">
-                      {item.ml}ml {item.ingredientName}
-                    </div>
-                    {item.instruction && (
-                      <div className="text-sm text-muted-foreground italic mt-1">{item.instruction}</div>
-                    )}
+                    {item.ml}ml {item.ingredientName}
                   </li>
                 ))}
               </ul>
@@ -1267,7 +1103,7 @@ export default function Home() {
       case "cocktails":
         return (
           <div className="space-y-8">
-            <h2 className="text-2xl font-bold text-[hsl(var(--cocktail-text))] text-center">Alcoholic Cocktails</h2>
+            <h2 className="text-2xl font-bold text-[hsl(var(--cocktail-text))] text-center">Cocktails with Alcohol</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {currentPageCocktails.map((cocktail) => (
@@ -1538,58 +1374,33 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-4">
-                    {manualIngredients.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--cocktail-card-bg))]/50 border border-[hsl(var(--cocktail-card-border))]"
-                      >
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="w-10 h-10 rounded-full bg-[hsl(var(--cocktail-primary))]/20 flex items-center justify-center flex-shrink-0">
-                            <Plus className="h-5 w-5 text-[hsl(var(--cocktail-primary))]" />
+                    {manualIngredients.map((item, index) => {
+                      const ingredient = allIngredientsData.find((ing) => ing.id === item.ingredientId)
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-4 rounded-lg bg-[hsl(var(--cocktail-card-bg))]/50 border border-[hsl(var(--cocktail-card-border))]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 rounded-full bg-[hsl(var(--cocktail-primary))]"></div>
+                            <span className="font-medium text-[hsl(var(--cocktail-text))]">
+                              {ingredient?.name || item.ingredientId}
+                            </span>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-semibold text-[hsl(var(--cocktail-text))]">{item.ingredientName}</div>
-                            <div className="text-sm text-[hsl(var(--cocktail-text))]/70">{item.ml}ml</div>
-                            {item.instruction && (
-                              <div className="text-sm text-[hsl(var(--cocktail-text))]/60 italic mt-1">
-                                {item.instruction}
-                              </div>
-                            )}
-                          </div>
+                          <span className="text-lg font-semibold text-[hsl(var(--cocktail-primary))]">
+                            {item.amount}ml
+                          </span>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
+                  </div>
+
+                  <div className="text-center text-sm text-[hsl(var(--cocktail-text-muted))]">
+                    This window will close automatically...
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </div>
-        )}
-
-        {showPreparationDialog && currentCocktail && currentSize && (
-          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
-            <Card className="w-full max-w-lg mx-auto border-[hsl(var(--cocktail-card-border))] bg-black text-[hsl(var(--cocktail-text))]">
-              <CardContent className="pt-8 pb-8 space-y-6">
-                <div className="flex flex-col items-center gap-6">
-                  <div className="w-24 h-24 rounded-full bg-[hsl(var(--cocktail-primary))]/10 flex items-center justify-center">
-                    <GlassWater className="h-12 w-12 text-[hsl(var(--cocktail-primary))]" />
-                  </div>
-                  <h2 className="text-2xl font-semibold text-center">{statusMessage}</h2>
-                </div>
-                <div className="space-y-3">
-                  <Progress value={progress} className="h-4" />
-                  <div className="text-center text-lg text-[hsl(var(--cocktail-text-muted))]">
-                    {progress}% completed
-                  </div>
-                </div>
-                {errorMessage && (
-                  <Alert className="bg-[hsl(var(--cocktail-error))]/10 border-[hsl(var(--cocktail-error))]/30">
-                    <AlertCircle className="h-4 w-4 text-[hsl(var(--cocktail-error))]" />
-                    <AlertDescription className="text-[hsl(var(--cocktail-error))]">{errorMessage}</AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
           </div>
         )}
       </div>
