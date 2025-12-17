@@ -99,7 +99,7 @@ export function IngredientLevels() {
 
         if (data.success && data.levels) {
           setLevels(data.levels)
-          await setIngredientLevels(data.levels)
+          await setIngredientLevels(data.levels, true)
           return
         }
       }
