@@ -560,92 +560,6 @@ export default function Home() {
     return totalDuration
   }
 
-  const makeCocktailWrapper = async (cocktail: Cocktail, size: "small" | "medium" | "large") => {
-    try {
-      setIsMaking(true)
-      setProgress(0)
-      setCurrentCocktail(cocktail)
-      setCurrentSize(size)
-      setShowPreparationDialog(true)
-
-      console.log("[v0] Page: Applying preparation LED (red blinking)")
-      await fetch("/api/lighting-control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "preparation",
-          color: "#ff0000",
-          blinking: true,
-        }),
-      })
-
-      // Mocking the actual makeCocktail call with placeholder logic
-      const estimatedDuration = calculateCocktailDuration(
-        cocktail,
-        pumpConfig,
-        size === "small" ? 200 : size === "medium" ? 300 : 400,
-      ) // Use a placeholder for size mapping
-      const progressInterval = Math.max(100, estimatedDuration / 100)
-
-      const intervalId = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(intervalId)
-            return prev
-          }
-          return prev + 1
-        })
-      }, progressInterval)
-
-      // Simulate cocktail making process
-      await new Promise((resolve) => setTimeout(resolve, estimatedDuration))
-
-      clearInterval(intervalId)
-      setProgress(100)
-
-      console.log("[v0] Page: Applying finished LED (green static)")
-      await fetch("/api/lighting-control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "finished",
-          color: "#00ff00",
-          blinking: false,
-        }),
-      })
-
-      setTimeout(() => {
-        setShowPreparationDialog(false)
-        setCurrentCocktail(null)
-        setCurrentSize(null)
-        setProgress(0)
-
-        console.log("[v0] Page: Returning to idle LED mode")
-        loadAndApplyIdleLighting()
-      }, 5000)
-
-      toast({
-        title: "Cocktail Ready!",
-        description: `Your ${cocktail.name} is ready to enjoy!`,
-      })
-      await loadIngredientLevels() // Ensure levels are updated after making
-      window.dispatchEvent(new CustomEvent("cocktail-data-refresh")) // Trigger global refresh
-    } catch (error) {
-      console.error("[v0] Page: Error making cocktail:", error)
-      setIsMaking(false)
-      setShowPreparationDialog(false)
-      toast({
-        title: "Error",
-        description: "Failed to make cocktail",
-        variant: "destructive",
-      })
-
-      loadAndApplyIdleLighting()
-    } finally {
-      setIsMaking(false) // Ensure isMaking is reset
-    }
-  }
-
   const handleMakeCocktail = async () => {
     if (!selectedCocktail || isMaking) {
       return
@@ -657,7 +571,7 @@ export default function Home() {
       return
     }
 
-    // Map selectedSize to the string literal types expected by makeCocktailWrapper
+    // Map selectedSize to the string literal types expected by makeCocktail
     let sizeLiteral: "small" | "medium" | "large"
     if (selectedSize <= 250) {
       sizeLiteral = "small"
@@ -680,6 +594,12 @@ export default function Home() {
     setManualIngredients([])
 
     try {
+      setIsMaking(true)
+      setProgress(0)
+      setCurrentCocktail(cocktail)
+      setCurrentSize(sizeLiteral)
+      setShowPreparationDialog(true)
+
       const currentPumpConfig = pumpConfig
 
       const totalRecipeVolume = cocktail.recipe.reduce((total, item) => total + item.amount, 0)
@@ -748,7 +668,6 @@ export default function Home() {
         body: JSON.stringify(prepMode),
       })
 
-      const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
       await makeCocktail(cocktail, sizeLiteral) // Call the actual makeCocktail function
 
       clearInterval(intervalId)
@@ -830,13 +749,24 @@ export default function Home() {
         }).catch((error) => console.error("[v0] Error returning to idle lighting:", error))
       }, displayDuration)
     } catch (error) {
+      console.error("[v0] Page: Error making cocktail:", error)
       let intervalId: NodeJS.Timeout
       clearInterval(intervalId)
       setProgress(0)
       setStatusMessage("Error during preparation!")
       setErrorMessage(error instanceof Error ? error.message : "Unknown error")
       setManualIngredients([])
-      setTimeout(() => setIsMaking(false), 3000)
+      setTimeout(() => {
+        setIsMaking(false)
+        setShowPreparationDialog(false)
+      }, 3000)
+    } finally {
+      // Ensure isMaking is reset, even if there's an error
+      // Note: The actual reset might happen inside the success/error timeouts as well.
+      // This is a safety net.
+      if (!isMaking) {
+        setIsMaking(false)
+      }
     }
   }
 
