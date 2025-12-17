@@ -190,8 +190,38 @@ export const refillAllIngredients = async (): Promise<void> => {
 }
 
 // Set levels from external source (API load)
-export const setIngredientLevels = async (newLevels: IngredientLevel[]): Promise<void> => {
-  await saveIngredientLevels(newLevels)
+export const setIngredientLevels = async (newLevels: IngredientLevel[], silent = false): Promise<void> => {
+  if (typeof window === "undefined") return
+
+  try {
+    console.log("[v0] Setting ingredient levels:", newLevels.length, "levels", silent ? "(silent)" : "")
+    // Save to localStorage immediately
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newLevels))
+
+    if (!silent) {
+      emitLevelsUpdated()
+
+      // Save to server via API
+      try {
+        const response = await fetch("/api/ingredient-levels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ levels: newLevels }),
+        })
+
+        if (response.ok) {
+          console.log("[v0] Successfully saved levels to server")
+        } else {
+          console.warn("Could not save to server, using localStorage only:", response.statusText)
+        }
+      } catch (apiError) {
+        console.warn("Could not save to server, using localStorage only:", apiError)
+      }
+    }
+  } catch (error) {
+    console.error("Error setting ingredient levels:", error)
+    throw error
+  }
 }
 
 export async function restoreIngredientLevelsFromFile(): Promise<IngredientLevel[]> {

@@ -182,6 +182,7 @@ export default function Home() {
       // Load saved settings
       const savedSettings = localStorage.getItem("led-settings")
       let idleMode: any = { mode: "idle", scheme: "rainbow" }
+      let brightness: number | undefined
 
       if (savedSettings) {
         const settings = JSON.parse(savedSettings)
@@ -199,17 +200,11 @@ export default function Home() {
           idleMode = { mode: "idle", scheme: "rainbow" }
         }
 
-        // Also apply brightness
-        if (settings.brightness !== undefined) {
-          await fetch("/api/lighting-control", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              mode: "brightness",
-              brightness: settings.brightness,
-            }),
-          })
-        }
+        brightness = settings.brightness
+      }
+
+      if (brightness !== undefined) {
+        idleMode.brightness = brightness
       }
 
       console.log("[v0] Applying idle mode:", idleMode)
