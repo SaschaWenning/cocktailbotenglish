@@ -58,13 +58,14 @@ export default function LightingControl() {
         const loaded = JSON.parse(saved)
         setSettings(loaded)
         setTempBrightness(loaded.brightness)
-        console.log("[v0] Loaded LED settings:", loaded)
+        console.log("[v0] LightingControl: Loaded LED settings:", loaded)
       } else {
         setSettings(defaultSettings)
         setTempBrightness(defaultSettings.brightness)
+        console.log("[v0] LightingControl: Using default LED settings")
       }
     } catch (error) {
-      console.error("[v0] Error loading LED settings:", error)
+      console.error("[v0] LightingControl: Error loading LED settings:", error)
       setSettings(defaultSettings)
       setTempBrightness(defaultSettings.brightness)
     } finally {
@@ -76,16 +77,16 @@ export default function LightingControl() {
     try {
       localStorage.setItem("led-settings", JSON.stringify(newSettings))
       setSettings(newSettings)
-      console.log("[v0] Saved LED settings:", newSettings)
+      console.log("[v0] LightingControl: Saved LED settings:", newSettings)
     } catch (error) {
-      console.error("[v0] Error saving LED settings:", error)
+      console.error("[v0] LightingControl: Error saving LED settings:", error)
     }
   }
 
   const applyBrightness = async () => {
     setApplying("brightness")
     try {
-      console.log(`[v0] Setting brightness to ${tempBrightness}`)
+      console.log(`[v0] LightingControl: Applying brightness ${tempBrightness}`)
 
       const response = await fetch("/api/lighting-control", {
         method: "POST",
@@ -96,8 +97,10 @@ export default function LightingControl() {
         }),
       })
 
+      console.log(`[v0] LightingControl: Brightness response status: ${response.status}`)
+
       if (!response.ok) {
-        throw new Error("Failed to set brightness")
+        throw new Error(`Failed to set brightness: ${response.status}`)
       }
 
       const newSettings = { ...settings, brightness: tempBrightness }
@@ -108,9 +111,9 @@ export default function LightingControl() {
         description: `Set to ${Math.round((tempBrightness / 255) * 100)}%`,
       })
 
-      console.log("[v0] Brightness applied successfully")
+      console.log("[v0] LightingControl: Brightness applied successfully")
     } catch (error) {
-      console.error("[v0] Error setting brightness:", error)
+      console.error("[v0] LightingControl: Error setting brightness:", error)
       toast({
         title: "Error",
         description: "Failed to set brightness",
@@ -124,9 +127,10 @@ export default function LightingControl() {
   const saveAndApplyIdle = async () => {
     setApplying("idle")
     try {
-      saveSettings(settings)
+      console.log("[v0] LightingControl: Saving and applying idle mode:", settings.idleScheme)
 
-      console.log("[v0] Applying idle mode:", settings.idleScheme)
+      // Save settings first
+      saveSettings(settings)
 
       let body: any = {}
 
@@ -142,13 +146,19 @@ export default function LightingControl() {
         body = { mode: "idle", scheme: "rainbow" }
       }
 
+      console.log("[v0] LightingControl: Sending request body:", body)
+
       const response = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
 
+      console.log(`[v0] LightingControl: Idle mode response status: ${response.status}`)
+
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] LightingControl: Error response:", errorText)
         throw new Error(`Failed to apply idle mode: ${response.status}`)
       }
 
@@ -156,8 +166,10 @@ export default function LightingControl() {
         title: "Idle Mode Applied",
         description: `${settings.idleScheme} mode activated`,
       })
+
+      console.log("[v0] LightingControl: Idle mode applied successfully")
     } catch (error) {
-      console.error("[v0] Error applying idle mode:", error)
+      console.error("[v0] LightingControl: Error applying idle mode:", error)
       toast({
         title: "Error",
         description: "Failed to apply idle mode",
@@ -292,15 +304,16 @@ export default function LightingControl() {
           {(settings.idleScheme === "static" || settings.idleScheme === "pulse" || settings.idleScheme === "blink") && (
             <div className="space-y-3">
               <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color</label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-7 gap-1.5">
                 {colorPresets.map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => {
                       const newSettings = { ...settings, idleColor: preset.value }
                       setSettings(newSettings)
+                      console.log("[v0] LightingControl: Color changed to:", preset.value)
                     }}
-                    className={`w-full aspect-square rounded-xl border-2 transition-all hover:scale-110 ${
+                    className={`w-full aspect-square rounded-lg border-2 transition-all hover:scale-110 ${
                       settings.idleColor === preset.value
                         ? "border-[hsl(var(--cocktail-primary))] scale-110 shadow-lg"
                         : "border-[hsl(var(--cocktail-card-border))]"
@@ -316,8 +329,9 @@ export default function LightingControl() {
                 onChange={(e) => {
                   const newSettings = { ...settings, idleColor: e.target.value }
                   setSettings(newSettings)
+                  console.log("[v0] LightingControl: Custom color selected:", e.target.value)
                 }}
-                className="w-full h-12 rounded-xl border-2 border-[hsl(var(--cocktail-card-border))] cursor-pointer"
+                className="w-full h-10 rounded-lg border-2 border-[hsl(var(--cocktail-card-border))] cursor-pointer"
               />
             </div>
           )}
