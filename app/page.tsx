@@ -112,6 +112,11 @@ export default function Home() {
 
   const [showTerms, setShowTerms] = useState(false)
 
+  // Added states for the makeCocktail function updates
+  const [currentCocktail, setCurrentCocktail] = useState<Cocktail | null>(null)
+  const [currentSize, setCurrentSize] = useState<"small" | "medium" | "large" | null>(null)
+  const [showPreparationDialog, setShowPreparationDialog] = useState(false)
+
   const handleCocktailPageChange = (page: number) => {
     setCurrentPage(page)
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -177,7 +182,7 @@ export default function Home() {
 
   const loadAndApplyIdleLighting = async () => {
     try {
-      console.log("[v0] Loading and applying idle LED configuration...")
+      console.log("[v0] Page: Loading and applying idle LED configuration...")
 
       // Load saved settings
       const savedSettings = localStorage.getItem("led-settings")
@@ -186,7 +191,7 @@ export default function Home() {
 
       if (savedSettings) {
         const settings = JSON.parse(savedSettings)
-        console.log("[v0] Loaded LED settings from localStorage:", settings)
+        console.log("[v0] Page: Loaded LED settings from localStorage:", settings)
 
         if (settings.idleScheme === "static") {
           idleMode = { mode: "color", color: settings.idleColor }
@@ -207,20 +212,23 @@ export default function Home() {
         idleMode.brightness = brightness
       }
 
-      console.log("[v0] Applying idle mode:", idleMode)
+      console.log("[v0] Page: Applying idle mode:", idleMode)
       const response = await fetch("/api/lighting-control", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(idleMode),
       })
 
+      console.log(`[v0] Page: Idle LED response status: ${response.status}`)
+
       if (response.ok) {
-        console.log("[v0] Idle LED configuration applied successfully")
+        console.log("[v0] Page: Idle LED configuration applied successfully")
       } else {
-        console.error("[v0] Failed to apply idle LED configuration:", response.status)
+        const errorText = await response.text()
+        console.error("[v0] Page: Failed to apply idle LED configuration:", response.status, errorText)
       }
     } catch (error) {
-      console.error("[v0] Error applying idle LED configuration:", error)
+      console.error("[v0] Page: Error applying idle LED configuration:", error)
     }
   }
 
@@ -552,6 +560,92 @@ export default function Home() {
     return totalDuration
   }
 
+  const makeCocktailWrapper = async (cocktail: Cocktail, size: "small" | "medium" | "large") => {
+    try {
+      setIsMaking(true)
+      setProgress(0)
+      setCurrentCocktail(cocktail)
+      setCurrentSize(size)
+      setShowPreparationDialog(true)
+
+      console.log("[v0] Page: Applying preparation LED (red blinking)")
+      await fetch("/api/lighting-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "preparation",
+          color: "#ff0000",
+          blinking: true,
+        }),
+      })
+
+      // Mocking the actual makeCocktail call with placeholder logic
+      const estimatedDuration = calculateCocktailDuration(
+        cocktail,
+        pumpConfig,
+        size === "small" ? 200 : size === "medium" ? 300 : 400,
+      ) // Use a placeholder for size mapping
+      const progressInterval = Math.max(100, estimatedDuration / 100)
+
+      const intervalId = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(intervalId)
+            return prev
+          }
+          return prev + 1
+        })
+      }, progressInterval)
+
+      // Simulate cocktail making process
+      await new Promise((resolve) => setTimeout(resolve, estimatedDuration))
+
+      clearInterval(intervalId)
+      setProgress(100)
+
+      console.log("[v0] Page: Applying finished LED (green static)")
+      await fetch("/api/lighting-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "finished",
+          color: "#00ff00",
+          blinking: false,
+        }),
+      })
+
+      setTimeout(() => {
+        setShowPreparationDialog(false)
+        setCurrentCocktail(null)
+        setCurrentSize(null)
+        setProgress(0)
+
+        console.log("[v0] Page: Returning to idle LED mode")
+        loadAndApplyIdleLighting()
+      }, 5000)
+
+      toast({
+        title: "Cocktail Ready!",
+        description: `Your ${cocktail.name} is ready to enjoy!`,
+      })
+      await loadIngredientLevels() // Ensure levels are updated after making
+      window.dispatchEvent(new CustomEvent("cocktail-data-refresh")) // Trigger global refresh
+    } catch (error) {
+      console.error("[v0] Page: Error making cocktail:", error)
+      setIsMaking(false)
+      setShowPreparationDialog(false)
+      toast({
+        title: "Error",
+        description: "Failed to make cocktail",
+        variant: "destructive",
+      })
+
+      loadAndApplyIdleLighting()
+    } finally {
+      setIsMaking(false) // Ensure isMaking is reset
+    }
+  }
+
   const handleMakeCocktail = async () => {
     if (!selectedCocktail || isMaking) {
       return
@@ -563,6 +657,16 @@ export default function Home() {
       return
     }
 
+    // Map selectedSize to the string literal types expected by makeCocktailWrapper
+    let sizeLiteral: "small" | "medium" | "large"
+    if (selectedSize <= 250) {
+      sizeLiteral = "small"
+    } else if (selectedSize <= 350) {
+      sizeLiteral = "medium"
+    } else {
+      sizeLiteral = "large"
+    }
+
     if (!pumpConfig || pumpConfig.length === 0) {
       console.log("[v0] PumpConfig not available, loading...")
       await loadPumpConfig()
@@ -572,9 +676,6 @@ export default function Home() {
       }
     }
 
-    setIsMaking(true)
-    setProgress(0)
-    setStatusMessage("Preparing cocktail...")
     setErrorMessage(null)
     setManualIngredients([])
 
@@ -648,7 +749,7 @@ export default function Home() {
       })
 
       const category = activeTab === "virgin" ? "virgin" : activeTab === "shots" ? "shots" : "cocktails"
-      await makeCocktail(cocktail, currentPumpConfig, selectedSize, category)
+      await makeCocktail(cocktail, sizeLiteral) // Call the actual makeCocktail function
 
       clearInterval(intervalId)
       setProgress(100)
@@ -1532,6 +1633,33 @@ export default function Home() {
                 </CardContent>
               </Card>
             </div>
+          </div>
+        )}
+
+        {showPreparationDialog && currentCocktail && currentSize && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center">
+            <Card className="w-full max-w-lg mx-auto border-[hsl(var(--cocktail-card-border))] bg-black text-[hsl(var(--cocktail-text))]">
+              <CardContent className="pt-8 pb-8 space-y-6">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="w-24 h-24 rounded-full bg-[hsl(var(--cocktail-primary))]/10 flex items-center justify-center">
+                    <GlassWater className="h-12 w-12 text-[hsl(var(--cocktail-primary))]" />
+                  </div>
+                  <h2 className="text-2xl font-semibold text-center">{statusMessage}</h2>
+                </div>
+                <div className="space-y-3">
+                  <Progress value={progress} className="h-4" />
+                  <div className="text-center text-lg text-[hsl(var(--cocktail-text-muted))]">
+                    {progress}% completed
+                  </div>
+                </div>
+                {errorMessage && (
+                  <Alert className="bg-[hsl(var(--cocktail-error))]/10 border-[hsl(var(--cocktail-error))]/30">
+                    <AlertCircle className="h-4 w-4 text-[hsl(var(--cocktail-error))]" />
+                    <AlertDescription className="text-[hsl(var(--cocktail-error))]">{errorMessage}</AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

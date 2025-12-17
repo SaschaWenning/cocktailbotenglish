@@ -1,10 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { execFile } from "child_process"
+import { promisify } from "util"
+import path from "path"
+
+const execFileAsync = promisify(execFile)
 
 async function runLed(...args: string[]): Promise<void> {
-  console.log("[v0] LED command (mock):", args)
-  // In a real deployment, this would call an external API or hardware controller
-  // For now, we simulate success
-  return Promise.resolve()
+  try {
+    const scriptPath = path.join(process.cwd(), "scripts", "led_client.py")
+    console.log("[v0] Running LED command:", scriptPath, args)
+    const { stdout, stderr } = await execFileAsync("python3", [scriptPath, ...args])
+    if (stdout) console.log("[v0] LED stdout:", stdout)
+    if (stderr) console.error("[v0] LED stderr:", stderr)
+  } catch (error) {
+    console.error("[v0] LED command failed:", error)
+    throw error
+  }
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
@@ -46,7 +57,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     console.log("[v0] Lighting control GET request - testing with rainbow")
-    await runLed("RAINBOW", "30")
+    await runLed("RAINBOW")
     return NextResponse.json({ success: true, message: "Rainbow test started" })
   } catch (error) {
     console.error("[v0] Error testing lighting:", error)
@@ -67,26 +78,16 @@ async function sendLightingControlCommand(
     switch (mode) {
       case "cocktailPreparation":
       case "preparation":
-        const prepRgb = color ? hexToRgb(color) : { r: 255, g: 0, b: 0 }
-        if (prepRgb && blinking) {
-          await runLed("BLINK", String(prepRgb.r), String(prepRgb.g), String(prepRgb.b))
-          console.log(`[v0] LED: Preparation BLINK RGB(${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
-        } else if (prepRgb) {
-          await runLed("COLOR", String(prepRgb.r), String(prepRgb.g), String(prepRgb.b))
-          console.log(`[v0] LED: Preparation COLOR RGB(${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
-        }
+        const prepRgb = { r: 255, g: 0, b: 0 }
+        await runLed("BLINK", String(prepRgb.r), String(prepRgb.g), String(prepRgb.b))
+        console.log(`[v0] LED: Preparation BLINK RGB(${prepRgb.r}, ${prepRgb.g}, ${prepRgb.b})`)
         break
 
       case "cocktailFinished":
       case "finished":
-        const finishRgb = color ? hexToRgb(color) : { r: 0, g: 255, b: 0 }
-        if (finishRgb && blinking) {
-          await runLed("BLINK", String(finishRgb.r), String(finishRgb.g), String(finishRgb.b))
-          console.log(`[v0] LED: Finished BLINK RGB(${finishRgb.r}, ${finishRgb.g}, ${finishRgb.b})`)
-        } else if (finishRgb) {
-          await runLed("COLOR", String(finishRgb.r), String(finishRgb.g), String(finishRgb.b))
-          console.log(`[v0] LED: Finished COLOR RGB(${finishRgb.r}, ${finishRgb.g}, ${finishRgb.b})`)
-        }
+        const finishRgb = { r: 0, g: 255, b: 0 }
+        await runLed("COLOR", String(finishRgb.r), String(finishRgb.g), String(finishRgb.b))
+        console.log(`[v0] LED: Finished COLOR RGB(${finishRgb.r}, ${finishRgb.g}, ${finishRgb.b})`)
         break
 
       case "idle":
@@ -115,7 +116,6 @@ async function sendLightingControlCommand(
           await runLed("OFF")
           console.log("[v0] LED: Idle OFF")
         } else {
-          // Fallback to rainbow if scheme is undefined or invalid
           await runLed("RAINBOW")
           console.log("[v0] LED: Idle RAINBOW (fallback)")
         }
