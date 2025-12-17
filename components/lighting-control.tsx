@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Lightbulb, Sun, Play, Loader2, RotateCcw } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 
-type IdleScheme = "rainbow" | "pulse" | "blink" | "static" | "off"
+type IdleScheme = "pulse" | "blink" | "static" | "off"
 
 interface LightingSettings {
   idleScheme: IdleScheme
@@ -15,7 +15,7 @@ interface LightingSettings {
 }
 
 const defaultSettings: LightingSettings = {
-  idleScheme: "rainbow",
+  idleScheme: "pulse",
   idleColor: "#ffffff",
   brightness: 128,
 }
@@ -34,7 +34,6 @@ const colorPresets = [
 ]
 
 const idleSchemes: Array<{ name: string; value: IdleScheme; icon: string }> = [
-  { name: "Rainbow", value: "rainbow", icon: "🌈" },
   { name: "Pulse", value: "pulse", icon: "✨" },
   { name: "Blink", value: "blink", icon: "⚡" },
   { name: "Static", value: "static", icon: "⚪" },
@@ -56,17 +55,22 @@ export default function LightingControl() {
       const saved = localStorage.getItem("led-settings")
       if (saved) {
         const loaded = JSON.parse(saved)
+        if (loaded.idleScheme === "rainbow") {
+          loaded.idleScheme = "pulse"
+        }
         setSettings(loaded)
         setTempBrightness(loaded.brightness)
         console.log("[v0] LightingControl: Loaded LED settings:", loaded)
       } else {
-        setSettings(defaultSettings)
+        const defaultWithPulse = { ...defaultSettings, idleScheme: "pulse" as IdleScheme }
+        setSettings(defaultWithPulse)
         setTempBrightness(defaultSettings.brightness)
         console.log("[v0] LightingControl: Using default LED settings")
       }
     } catch (error) {
       console.error("[v0] LightingControl: Error loading LED settings:", error)
-      setSettings(defaultSettings)
+      const defaultWithPulse = { ...defaultSettings, idleScheme: "pulse" as IdleScheme }
+      setSettings(defaultWithPulse)
       setTempBrightness(defaultSettings.brightness)
     } finally {
       setLoading(false)
@@ -143,7 +147,7 @@ export default function LightingControl() {
       } else if (settings.idleScheme === "blink") {
         body = { mode: "idle", scheme: "blink", color: settings.idleColor }
       } else {
-        body = { mode: "idle", scheme: "rainbow" }
+        body = { mode: "idle", scheme: "pulse", color: settings.idleColor }
       }
 
       console.log("[v0] LightingControl: Sending request body:", body)
@@ -191,7 +195,9 @@ export default function LightingControl() {
       <div className="flex items-center justify-center py-16 bg-[hsl(var(--cocktail-bg))] min-h-[400px]">
         <div className="text-center space-y-4">
           <Lightbulb className="h-16 w-16 mx-auto animate-pulse text-[hsl(var(--cocktail-primary))]" />
-          <h3 className="text-xl font-semibold text-[hsl(var(--cocktail-text))]">Loading lighting settings</h3>
+          <h3 className="text-xl lg:text-3xl font-semibold text-[hsl(var(--cocktail-text))]">
+            Loading lighting settings
+          </h3>
         </div>
       </div>
     )
