@@ -5,12 +5,12 @@ import type { PumpConfig } from "@/types/pump"
 
 // Check if we're in a Node.js environment
 function isNodeEnvironment(): boolean {
-  return (
-    typeof process !== "undefined" &&
-    process.versions != null &&
-    process.versions.node != null &&
-    typeof window === "undefined"
-  )
+  try {
+    // More reliable check for Node.js environment
+    return typeof process !== "undefined" && process.release !== undefined && process.release.name === "node"
+  } catch {
+    return false
+  }
 }
 
 let fs: typeof import("fs/promises") | null = null

@@ -91,10 +91,7 @@ async function sendLightingControlCommand(
         break
 
       case "idle":
-        if (scheme === "rainbow") {
-          await runLed("RAINBOW")
-          console.log("[v0] LED: Idle RAINBOW")
-        } else if (scheme === "pulse" && color) {
+        if (scheme === "pulse" && color) {
           const rgb = hexToRgb(color)
           if (rgb) {
             await runLed("PULSE", String(rgb.r), String(rgb.g), String(rgb.b))
@@ -116,8 +113,8 @@ async function sendLightingControlCommand(
           await runLed("OFF")
           console.log("[v0] LED: Idle OFF")
         } else {
-          await runLed("RAINBOW")
-          console.log("[v0] LED: Idle RAINBOW (fallback)")
+          await runLed("PULSE", "255", "255", "255")
+          console.log("[v0] LED: Idle PULSE white (fallback)")
         }
         break
 
