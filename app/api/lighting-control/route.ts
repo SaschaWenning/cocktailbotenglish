@@ -66,22 +66,6 @@ export async function GET() {
   }
 }
 
-async function loadIdleConfig() {
-  try {
-    const configResponse = await fetch("http://localhost:3000/api/lighting-config")
-    if (configResponse.ok) {
-      const config = await configResponse.json()
-      console.log("[v0] Loaded idle config:", config.idleMode)
-      return config.idleMode
-    }
-  } catch (error) {
-    console.error("[v0] Error loading idle config:", error)
-  }
-  // Fallback to rainbow
-  console.log("[v0] Using fallback rainbow idle mode")
-  return { scheme: "rainbow", colors: [] }
-}
-
 async function sendLightingControlCommand(
   mode: string,
   color?: string,
