@@ -150,10 +150,10 @@ export default function LightingControl() {
       })
 
       if (!response.ok) {
-        throw new Error("Failed to set brightness")
+        console.error("[v0] Failed to set brightness:", response.status)
+      } else {
+        console.log("[v0] Brightness set to:", value)
       }
-
-      console.log("[v0] Brightness set to:", value)
     } catch (error) {
       console.error("[v0] Error setting brightness:", error)
     }
@@ -207,7 +207,15 @@ export default function LightingControl() {
                 max="255"
                 value={brightness}
                 onChange={(e) => handleBrightnessChange(Number.parseInt(e.target.value))}
-                className="flex-1 h-3 bg-gradient-to-r from-gray-800 via-yellow-400 to-white rounded-lg appearance-none cursor-pointer accent-yellow-500 shadow-md"
+                className="flex-1 h-4 bg-gradient-to-r from-gray-800 via-yellow-400 to-white rounded-lg appearance-none cursor-pointer shadow-md 
+                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full 
+                  [&::-webkit-slider-thumb]:bg-gradient-to-br [&::-webkit-slider-thumb]:from-yellow-300 [&::-webkit-slider-thumb]:to-yellow-500 
+                  [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white
+                  [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:transition-transform
+                  [&::-moz-range-thumb]:w-6 [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:rounded-full 
+                  [&::-moz-range-thumb]:bg-gradient-to-br [&::-moz-range-thumb]:from-yellow-300 [&::-moz-range-thumb]:to-yellow-500 
+                  [&::-moz-range-thumb]:shadow-lg [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white
+                  [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:hover:scale-110 [&::-moz-range-thumb]:transition-transform"
               />
               <span className="text-sm text-[hsl(var(--cocktail-text-muted))] w-16 text-right">{brightness}/255</span>
             </div>
@@ -227,21 +235,20 @@ export default function LightingControl() {
         <CardContent className="space-y-5 pt-6">
           <div className="space-y-3">
             <label className="text-sm font-semibold text-[hsl(var(--cocktail-text))]">Color Scheme</label>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="flex flex-wrap gap-2">
               {idleSchemes.map((scheme) => (
-                <Button
+                <button
                   key={scheme.value}
-                  variant={config.idleMode.scheme === scheme.value ? "default" : "outline"}
                   onClick={() => updateConfig("idleMode.scheme", scheme.value)}
-                  className={
+                  className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                     config.idleMode.scheme === scheme.value
-                      ? "bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-12 justify-start"
-                      : "bg-[hsl(var(--cocktail-button-bg))] hover:bg-[hsl(var(--cocktail-button-hover))] text-[hsl(var(--cocktail-text))] border-[hsl(var(--cocktail-card-border))] h-12 justify-start"
-                  }
+                      ? "bg-[hsl(var(--cocktail-primary))] text-black"
+                      : "bg-[hsl(var(--cocktail-button-bg))] text-[hsl(var(--cocktail-text))] border border-[hsl(var(--cocktail-card-border))]"
+                  }`}
                 >
-                  <span className="text-xl mr-3">{scheme.icon}</span>
+                  <span className="mr-1">{scheme.icon}</span>
                   {scheme.name}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
@@ -256,12 +263,12 @@ export default function LightingControl() {
                     ? "Pulse Color"
                     : "Blink Color"}
               </label>
-              <div className="grid grid-cols-6 gap-0.5">
+              <div className="grid grid-cols-10 gap-1">
                 {colorPresets.map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => updateConfig("idleMode.colors", [preset.value])}
-                    className={`w-full aspect-square rounded-md border transition-all hover:scale-110 ${
+                    className={`w-full aspect-square rounded-md border transition-all hover:scale-125 ${
                       config.idleMode.colors[0] === preset.value
                         ? "border-[hsl(var(--cocktail-primary))] scale-110 shadow-lg border-2"
                         : "border-[hsl(var(--cocktail-card-border))] border-1"
@@ -275,7 +282,7 @@ export default function LightingControl() {
                 type="color"
                 value={config.idleMode.colors[0] || "#ffffff"}
                 onChange={(e) => updateConfig("idleMode.colors", [e.target.value])}
-                className="w-20 h-6 rounded-md border border-[hsl(var(--cocktail-card-border))] cursor-pointer"
+                className="w-16 h-5 rounded-md border border-[hsl(var(--cocktail-card-border))] cursor-pointer"
               />
             </div>
           )}
@@ -283,16 +290,16 @@ export default function LightingControl() {
             <Button
               onClick={() => applyLighting("idle", false)}
               disabled={applying !== null}
-              className="w-full bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold h-14 text-base px-4 disabled:opacity-50"
+              className="px-3 py-1 bg-[hsl(var(--cocktail-primary))] hover:bg-[hsl(var(--cocktail-primary-hover))] text-black font-semibold text-xs disabled:opacity-50"
             >
               {applying === "idle" ? (
                 <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                   Applying...
                 </>
               ) : (
                 <>
-                  <Play className="h-5 w-5 mr-2" />
+                  <Play className="h-3 w-3 mr-1" />
                   Apply
                 </>
               )}
