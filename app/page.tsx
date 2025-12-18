@@ -546,7 +546,7 @@ export default function Home() {
         const lightResponse = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailPreparation" }),
+          body: JSON.stringify({ mode: "preparation" }),
         })
         console.log("[v0] Preparation lighting response:", lightResponse.status)
       } catch (error) {
@@ -564,7 +564,7 @@ export default function Home() {
         const lightResponse = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cocktailFinished" }),
+          body: JSON.stringify({ mode: "finished" }),
         })
         console.log("[v0] Finished lighting response:", lightResponse.status)
       } catch (error) {
