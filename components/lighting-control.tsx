@@ -72,9 +72,9 @@ export default function LightingControl() {
   const applyLighting = async (mode: "idle" | "off", isTest = false) => {
     setApplying(mode)
     try {
-      console.log("[v0] Applying lighting mode:", mode, "isTest:", isTest)
+      console.log("[v0] Applying lighting mode:", mode, "Config:", JSON.stringify(config.idleMode))
 
-      console.log("[v0] Saving config before applying:", config)
+      console.log("[v0] Saving config before applying...")
       const saveResponse = await fetch("/api/lighting-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,25 +86,7 @@ export default function LightingControl() {
       }
       console.log("[v0] Config saved successfully")
 
-      let body: any = {}
-
-      if (mode === "idle") {
-        if (config.idleMode.scheme === "static" && config.idleMode.colors.length > 0) {
-          body = { mode: "color", color: config.idleMode.colors[0] }
-        } else if (config.idleMode.scheme === "off") {
-          body = { mode: "off" }
-        } else if (config.idleMode.scheme === "pulse" || config.idleMode.scheme === "blink") {
-          body = {
-            mode: "idle",
-            scheme: config.idleMode.scheme,
-            color: config.idleMode.colors.length > 0 ? config.idleMode.colors[0] : "#ffffff",
-          }
-        } else {
-          body = { mode: "idle", scheme: config.idleMode.scheme }
-        }
-      } else if (mode === "off") {
-        body = { mode: "off" }
-      }
+      const body = { mode: "idle" }
 
       console.log("[v0] Sending lighting control request:", body)
       const response = await fetch("/api/lighting-control", {
