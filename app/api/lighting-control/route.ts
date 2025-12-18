@@ -79,11 +79,14 @@ async function loadIdleConfig() {
     const configPath = path.join(process.cwd(), "data", "lighting-config.json")
     const data = await fs.readFile(configPath, "utf-8")
     const config = JSON.parse(data)
+    console.log("[v0] Loaded idle config from file:", config.idleMode)
     return config.idleMode
   } catch (error) {
     console.error("[v0] Error loading idle config from file:", error)
+    const defaultIdleMode = { scheme: "static", colors: ["#ffffff"] }
+    console.log("[v0] Using default idle config:", defaultIdleMode)
+    return defaultIdleMode
   }
-  return { scheme: "static", colors: ["#ffffff"] }
 }
 
 async function sendLightingControlCommand(
@@ -113,34 +116,45 @@ async function sendLightingControlCommand(
 
       case "idle":
         const idleConfig = await loadIdleConfig()
-        console.log("[v0] Applying saved idle config:", idleConfig)
+        console.log("[v0] Applying idle config:", JSON.stringify(idleConfig))
 
-        if (idleConfig.scheme === "static" && idleConfig.colors.length > 0) {
-          const rgb = hexToRgb(idleConfig.colors[0])
+        if (!idleConfig || !idleConfig.scheme) {
+          console.error("[v0] Invalid idle config, using fallback white")
+          await runLed("COLOR", "255", "255", "255")
+          return true
+        }
+
+        if (idleConfig.scheme === "static") {
+          const color = idleConfig.colors && idleConfig.colors.length > 0 ? idleConfig.colors[0] : "#ffffff"
+          const rgb = hexToRgb(color)
           if (rgb) {
+            console.log(`[v0] Applying Idle Static color: ${color} -> RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
             await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
             console.log(`[v0] LED Mode: Idle Static (RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
           }
-        } else if (idleConfig.scheme === "pulse" && idleConfig.colors.length > 0) {
-          const rgb = hexToRgb(idleConfig.colors[0])
+        } else if (idleConfig.scheme === "pulse") {
+          const color = idleConfig.colors && idleConfig.colors.length > 0 ? idleConfig.colors[0] : "#ffffff"
+          const rgb = hexToRgb(color)
           if (rgb) {
+            console.log(`[v0] Applying Idle Pulse color: ${color} -> RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
             await runLed("PULSE", String(rgb.r), String(rgb.g), String(rgb.b))
             console.log(`[v0] LED Mode: Idle Pulse (RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
           }
-        } else if (idleConfig.scheme === "blink" && idleConfig.colors.length > 0) {
-          const rgb = hexToRgb(idleConfig.colors[0])
+        } else if (idleConfig.scheme === "blink") {
+          const color = idleConfig.colors && idleConfig.colors.length > 0 ? idleConfig.colors[0] : "#ffffff"
+          const rgb = hexToRgb(color)
           if (rgb) {
+            console.log(`[v0] Applying Idle Blink color: ${color} -> RGB(${rgb.r}, ${rgb.g}, ${rgb.b})`)
             await runLed("BLINK", String(rgb.r), String(rgb.g), String(rgb.b))
             console.log(`[v0] LED Mode: Idle Blink (RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
           }
         } else if (idleConfig.scheme === "off") {
+          console.log("[v0] Applying Idle Off mode")
           await runLed("OFF")
           console.log("[v0] LED Mode: Idle (Off)")
         } else {
-          // Fallback to white
-          const rgb = { r: 255, g: 255, b: 255 }
-          await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
-          console.log("[v0] LED Mode: Idle (Fallback White)")
+          console.warn("[v0] Unknown idle scheme:", idleConfig.scheme, "using white fallback")
+          await runLed("COLOR", "255", "255", "255")
         }
         break
 
