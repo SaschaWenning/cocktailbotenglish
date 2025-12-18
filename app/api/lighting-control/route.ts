@@ -7,13 +7,24 @@ import fs from "fs/promises"
 const execFileAsync = promisify(execFile)
 
 async function runLed(...args: string[]): Promise<void> {
-  const scriptPath = path.join(process.cwd(), "led_client.py")
+  const scriptPath = path.join(process.cwd(), "scripts", "led_client.py")
   console.log("[v0] LED command:", { scriptPath, args })
   try {
+    // Check if script exists
+    try {
+      await fs.access(scriptPath)
+    } catch {
+      console.error("[v0] LED script not found at:", scriptPath)
+      throw new Error(`LED script not found: ${scriptPath}`)
+    }
+
     const result = await execFileAsync("python3", [scriptPath, ...args])
-    console.log("[v0] LED command success:", result)
-  } catch (error) {
-    console.error("[v0] LED command failed:", error)
+    console.log("[v0] LED command success:", result.stdout || "OK")
+    if (result.stderr) {
+      console.log("[v0] LED command stderr:", result.stderr)
+    }
+  } catch (error: any) {
+    console.error("[v0] LED command failed:", error.message || error)
     throw error
   }
 }
