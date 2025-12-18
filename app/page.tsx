@@ -541,12 +541,14 @@ export default function Home() {
         })
       }, progressInterval)
 
+      console.log("[v0] Activating RED BLINK for cocktail preparation")
       try {
-        await fetch("/api/lighting-control", {
+        const lightResponse = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mode: "cocktailPreparation" }),
         })
+        console.log("[v0] Preparation lighting response:", lightResponse.status)
       } catch (error) {
         console.error("[v0] Error activating preparation lighting:", error)
       }
@@ -557,12 +559,14 @@ export default function Home() {
       clearInterval(intervalId)
       setProgress(100)
 
+      console.log("[v0] Activating GREEN SOLID for cocktail finished")
       try {
-        await fetch("/api/lighting-control", {
+        const lightResponse = await fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ mode: "cocktailFinished" }),
         })
+        console.log("[v0] Finished lighting response:", lightResponse.status)
       } catch (error) {
         console.error("[v0] Error activating finished lighting:", error)
       }
@@ -595,6 +599,7 @@ export default function Home() {
         setShowSuccess(false)
         setSelectedCocktail(null)
 
+        console.log("[v0] Returning to idle lighting mode")
         fetch("/api/lighting-control", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

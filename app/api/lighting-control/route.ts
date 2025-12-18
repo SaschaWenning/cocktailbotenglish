@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { execFile } from "child_process"
 import { promisify } from "util"
 import path from "path"
+import fs from "fs/promises"
 
 const execFileAsync = promisify(execFile)
 
@@ -35,12 +36,14 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Lighting control POST request:", { mode, color, brightness, blinking, scheme })
 
     if (mode === "brightness" && brightness !== undefined) {
+      console.log(`[v0] Setting LED brightness to: ${brightness}`)
       await runLed("BRIGHT", String(brightness))
-      console.log(`[v0] LED Brightness set to: ${brightness}`)
+      console.log(`[v0] LED Brightness successfully set to: ${brightness}`)
       return NextResponse.json({ success: true })
     }
 
-    if (brightness !== undefined) {
+    // Apply brightness first if provided with other modes
+    if (brightness !== undefined && mode !== "brightness") {
       await runLed("BRIGHT", String(brightness))
       console.log(`[v0] LED Brightness set to: ${brightness}`)
     }
@@ -68,13 +71,12 @@ export async function GET() {
 
 async function loadIdleConfig() {
   try {
-    const configResponse = await fetch("http://localhost:3000/api/lighting-config")
-    if (configResponse.ok) {
-      const config = await configResponse.json()
-      return config.idleMode
-    }
+    const configPath = path.join(process.cwd(), "data", "lighting-config.json")
+    const data = await fs.readFile(configPath, "utf-8")
+    const config = JSON.parse(data)
+    return config.idleMode
   } catch (error) {
-    console.error("[v0] Error loading idle config:", error)
+    console.error("[v0] Error loading idle config from file:", error)
   }
   return { scheme: "static", colors: ["#ffffff"] }
 }
@@ -90,26 +92,18 @@ async function sendLightingControlCommand(
     switch (mode) {
       case "cocktailPreparation":
       case "preparation":
-        try {
-          const rgb = { r: 255, g: 0, b: 0 } // Red color
-          await runLed("BLINK", String(rgb.r), String(rgb.g), String(rgb.b))
-          console.log(`[v0] LED Mode: Preparation (RED BLINK RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
-        } catch (error) {
-          await runLed("BUSY")
-          console.log("[v0] LED Mode: Preparation (BUSY fallback)")
-        }
+        console.log("[v0] Setting LED to RED BLINK for preparation")
+        const redRgb = { r: 255, g: 0, b: 0 }
+        await runLed("BLINK", String(redRgb.r), String(redRgb.g), String(redRgb.b))
+        console.log(`[v0] LED Mode: Preparation (RED BLINK RGB ${redRgb.r}, ${redRgb.g}, ${redRgb.b})`)
         break
 
       case "cocktailFinished":
       case "finished":
-        try {
-          const rgb = { r: 0, g: 255, b: 0 } // Green color
-          await runLed("COLOR", String(rgb.r), String(rgb.g), String(rgb.b))
-          console.log(`[v0] LED Mode: Finished (GREEN SOLID RGB ${rgb.r}, ${rgb.g}, ${rgb.b})`)
-        } catch (error) {
-          await runLed("READY")
-          console.log("[v0] LED Mode: Finished (READY fallback)")
-        }
+        console.log("[v0] Setting LED to GREEN SOLID for finished")
+        const greenRgb = { r: 0, g: 255, b: 0 }
+        await runLed("COLOR", String(greenRgb.r), String(greenRgb.g), String(greenRgb.b))
+        console.log(`[v0] LED Mode: Finished (GREEN SOLID RGB ${greenRgb.r}, ${greenRgb.g}, ${greenRgb.b})`)
         break
 
       case "idle":
