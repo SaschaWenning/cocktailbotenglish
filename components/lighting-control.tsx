@@ -86,6 +86,8 @@ export default function LightingControl() {
       }
       console.log("[v0] Config saved successfully")
 
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
       const body = { mode: "idle" }
 
       console.log("[v0] Sending lighting control request:", body)
