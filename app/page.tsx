@@ -137,7 +137,11 @@ export default function Home() {
 
     loadData()
 
-    loadAndApplyIdleLighting()
+    const hasInitialized = sessionStorage.getItem("led-initialized")
+    if (!hasInitialized) {
+      loadAndApplyIdleLighting()
+      sessionStorage.setItem("led-initialized", "true")
+    }
   }, [])
 
   const loadAndApplyIdleLighting = async () => {
