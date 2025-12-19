@@ -86,7 +86,7 @@ export default function LightingControl() {
       }
       console.log("[v0] Config saved successfully")
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 200))
 
       const body = { mode: "idle" }
 
@@ -103,7 +103,7 @@ export default function LightingControl() {
 
       toast({
         title: "Lighting Applied",
-        description: `${mode.charAt(0).toUpperCase() + mode.slice(1)} mode activated.`,
+        description: `Idle mode activated with your selected color.`,
       })
 
       console.log("[v0] Lighting applied successfully:", mode)
